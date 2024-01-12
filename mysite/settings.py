@@ -111,9 +111,9 @@ WSGI_APPLICATION = 'mysite.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME':'respaldo',
-        'USER':'root',
-        'PASSWORD':'12345678',
+        'NAME': 'original',
+        'USER': 'root',
+        'PASSWORD': 'Root',
         'HOST': 'localhost',
         'PORT': '3306',
     }
