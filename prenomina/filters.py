@@ -21,7 +21,7 @@ class PrenominaFilter(django_filters.FilterSet):
         ('7', 'Faltas'),
         ('8', 'Comisión'),
         ('9', 'Domingo'),
-        ('10', 'Dia extra'),
+        ('10', 'Día de descanso laborado'),
         ('11', 'Vacaciones'),
         ('12', 'Economicos')
     ), method='filtrar_por_incidencias')
