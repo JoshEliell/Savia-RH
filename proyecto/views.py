@@ -221,6 +221,7 @@ def Perfil_vista(request):
     if request.method =='POST' and 'Excel' in request.POST:
         return convert_excel_perfil(perfiles)
 
+
     p = Paginator(perfiles, 50)
     page = request.GET.get('page')
     salidas_list = p.get_page(page)
