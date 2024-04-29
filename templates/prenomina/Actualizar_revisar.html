@@ -45,21 +45,26 @@
                 <h4 class="title is-size-2">Prenomina del empleado</h4>
                 <!-- Button trigger modal -->
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#staticBackdrop">
-                    Programar Incidencias
+                    <i class="fas fa-calendar"></i> Programar Incidencias 
                 </button>
                 
                 <!-- Modal -->
                 <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
                     <div class="modal-dialog">
-                    <form action="{% url 'programar_incidencias' costo.id %}" method="post" enctype="multipart/form-data" id="incidencias-form">
+                    <form action="{% url 'programar_incidencias' costo.id %}" method="post" enctype="multipart/form-data" id="incidencias-form" novalidate>
                         {% csrf_token %}
                         <div class="modal-content">
                             <div class="modal-header">
-                            <h1 class="modal-title fs-5" id="staticBackdropLabel">Programar Incidencias</h1>
+                            <h1 class="modal-title fs-5" id="staticBackdropLabel">Programar Incidencias <i class="fas fa-calendar"></i> </h1>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                             </div>
                             <div class="modal-body">
 
+                                <label>Incidencias</label>
+                                <div class="input-group mb-3">
+                                    {% render_field incapacidadesform.incidencias class="form-control"%}
+                                </div>
+                                {% comment %}
                                 <div class="input-group mb-3">
                                     <select id="incidencias" name="incidencias" class="form-control mb-2">
                                         <option selected disabled>------------</option>
@@ -69,6 +74,7 @@
                                         <option value="4">Permisos sin goce</option>
                                     </select>
                                 </div>
+                                 {% endcomment %}
 
                                 <label>Fecha Inicio</label>
                                 <div class="input-group mb-3">
@@ -123,7 +129,8 @@
                             <th>Estado actual</th>
                             <th>Comentario</th>
                             <th>Cambiar Estado</th>
-                            <th>Subir Archivo</th> <!-- Nueva columna -->
+                            <th>Subir Soporte</th> <!-- Nueva columna -->
+                           
                         </tr>
                     </thead>
                     <tbody>
@@ -185,9 +192,15 @@
                                         <label class="custom-file-label" for="archivo_{{ fecha|date:'Y-m-d' }}">{{ archivo.name|default:'Seleccionar archivo' }}</label>
                                     </div>
                                     {% if archivo %}
-                                        <p>Archivo actual: <a href="{{ archivo.url }}" target="_blank" class="btn btn-success btn-sm"><i class="fa-solid fa-download"></i></a> {{archivo}} </p>
+                                        <p>Archivo actual: 
+                                            <a href="{{ archivo.url }}" target="_blank" class="btn btn-success btn-sm"><i class="fa-solid fa-download"></i></a>
+                                            <small class="text-muted">
+                                                {{archivo}}
+                                            </small>
+                                        </p>
                                     
                                     {% endif %}
+                                    <h1>{{Archivo}}</h1>
                                 </td>
                             </tr>
                         {% endfor %}
@@ -219,7 +232,7 @@
                 var fileInput = $(this).find('.custom-file-input');
 
                 // Valores que habilitarán el input de archivo
-                var enabledValues = ["permiso_goce", "permiso_sin", "incapacidades", "comision", "extra"];
+                var enabledValues = ["permiso_goce", "permiso_sin", "incapacidades", "comision", "día extra","castigo"];
 
                 // Valores adicionales que deshabilitarán el input de archivo
                 var disabledValues = ["vacaciones", "economico"];
@@ -244,36 +257,6 @@
         });
     });
 </script>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var incidenciasForm = document.getElementById('incidencias-form')
-
-        var seleccionarIncidencia = document.getElementById('incidencias');
-
-        // Añadir un listener para el evento change en el select
-        seleccionarIncidencia.addEventListener('change', function() {
-            // Obtener el valor seleccionado
-            var seleccionado = seleccionarIncidencia.value;
-            var showSoporte = document.getElementById('show-soporte')
-
-            //cuando se selecciona se oculta para no subir archivos
-            if (seleccionado === '2'){
-                incidenciasForm.setAttribute('novalidate', '');
-                showSoporte.style.display = 'none'
-            }else{
-                incidenciasForm.removeAttribute('novalidate', '');
-                showSoporte.removeAttribute('style');
-                console.log(seleccionado)
-            }
-           
-        });
-    });
-</script>
-
-
-
-
 
 {% endblock %}
 </body>
