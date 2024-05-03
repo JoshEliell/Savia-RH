@@ -1,5 +1,7 @@
 {% extends 'partials/base.html' %}
+
 {% load widget_tweaks %}
+{% load static %}
 {% load tt_extras %}
 
 <html>
@@ -96,11 +98,14 @@
                                 <div class="input-group mb-3" id="show-soporte">
                                     {% render_field incapacidadesform.url type="file" class="form-control" accept=".png, .jpg, .jpeg, .pdf" %}
                                 </div>
+                                
+                                <input type="hidden" id="prenomina" name="prenomina" value={{prenomina.id}}>
+                                <input type="hidden" id="costo" name="costo" value={{costo.id}}>
 
                             </div>
                             <div class="modal-footer d-flex justify-content-between">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                <button type="submit" name="btn_incidencias" class="btn btn-primary">Guardar</button>
+                                <button type="submit" name="btn_incidencias" class="btn btn-primary" id="btn-programar">Guardar</button>
                             </div>
                         </div>
                     </form>
@@ -257,7 +262,11 @@
         });
     });
 </script>
-
 {% endblock %}
+
+
+{% block js %}
+    <script src="{% static 'js/prenomina/programar_incidencias.js'%}"></script>
+{% endblock js %}
 </body>
 </html>

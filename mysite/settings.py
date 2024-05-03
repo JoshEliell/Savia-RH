@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'esquema',
     'revisar',
     'prenomina',
+    'debug_toolbar',
 ]
 
 
@@ -63,6 +64,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'simple_history.middleware.HistoryRequestMiddleware',
     'django_htmx.middleware.HtmxMiddleware',
+     'debug_toolbar.middleware.DebugToolbarMiddleware',
 
 
 ]
@@ -142,6 +144,10 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
+]
+
+INTERNAL_IPS = [
+    '127.0.0.1',
 ]
 
 

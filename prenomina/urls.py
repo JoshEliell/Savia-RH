@@ -8,7 +8,9 @@ urlpatterns = [
     path('Prenomina', views.Tabla_prenomina, name='Prenomina'),
     path('revisar/<int:pk>/', views.PrenominaRevisar, name='Prenomina_revisar'),
     path('revisar_ajax/<int:pk>/', views.prenomina_revisar_ajax, name='Prenomina_revisar_ajax'),
-    path('programar_incidencias/<int:pk>/',views.programar_incidencias, name="programar_incidencias")
+    path('programar_incidencias/<int:pk>/',views.programar_incidencias, name="programar_incidencias"),
+    #api
+    #path('verificar_incidencias/',views.verificar_incidencia, name="programar_incidencias")
     #path('Perfil/Baja/<int:pk>/', views.Baja_empleado, name='Baja_empleado'),  
 
     

@@ -4249,7 +4249,7 @@ def reporte_pdf_costo_incidencias(costo,bonototal):
     
     pago_doble = 0  
     if dia_extra > 0:
-        pago_doble = Decimal(dia_extra * salario)
+        pago_doble = Decimal(dia_extra * (salario * 2))
         
                         
     #calculo de la prenomina - regla de tres   

@@ -56,6 +56,9 @@ from esquema.models import BonoSolicitado
 from django.db.models import Sum
 
 from .forms import IncapacidadesForm
+
+import json
+from django.http import JsonResponse
 # Create your views here.
 
 @login_required(login_url='user-login')
@@ -141,7 +144,9 @@ def Autorizar_general(prenominas, user_filter,request):
 
 @login_required(login_url='user-login')
 def capturarIncidencias(request, url, incidencia,fecha_incio,fecha_fin,prenomina,comentario,nombre):
-            #error
+            print("entro a la funcion de guardar incidencias al")
+            url = request.FILES.get('url')
+            print(url)
             if incidencia == '1':
                 evento_model = Incapacidades
                 #url = request.FILES['url']
@@ -156,24 +161,27 @@ def capturarIncidencias(request, url, incidencia,fecha_incio,fecha_fin,prenomina
                 #url = request.FILES['url']
                         
             if evento_model:
-                if url:
+                if 'url' in request.FILES:
                     obj, created = evento_model.objects.update_or_create(fecha=fecha_incio, fecha_fin=fecha_fin, prenomina=prenomina, defaults={'comentario': comentario, 'editado': f"E:{nombre.nombres} {nombre.apellidos}"})
                     obj.url = url
                     obj.save()
+                    return JsonResponse({'success': 'Agregado correctamente'}, status=200)
                 else:
                     evento_model.objects.update_or_create(fecha=fecha_incio, fecha_fin=fecha_fin, prenomina=prenomina, defaults={'comentario': comentario, 'editado': f"E:{nombre.nombres} {nombre.apellidos}"})
-            else:
+                    return JsonResponse({'success': 'Agregado correctamente'}, status=200)
+            #else:
                 #  donde nuevo_estado no tiene un mapeo en el diccionario
-                print(f"Error: nuevo_estado desconocido")
+                #print(f"Error: nuevo_estado desconocido")
+            #    return JsonResponse({'poscondicion': 'la opciono seleccioanda no existe'}, status=422)
             
-            messages.success(request, 'Cambios guardados exitosamente')
-            
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+            return JsonResponse({'success': 'Agregado correctamente'}, status=200)
+            #messages.success(request, 'Cambios guardados exitosamente')
+            #return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 @login_required(login_url='user-login')
 def programar_incidencias(request,pk):
     # crea el nuevo dato según el nuevo estado o comentario
-    if request.method == 'POST' and 'btn_incidencias' in request.POST:
+    if request.method == 'POST':
         
         #saber catorcena
         ahora = datetime.date.today()
@@ -198,41 +206,32 @@ def programar_incidencias(request,pk):
             fecha_fin = form_incidencias.cleaned_data['fecha_fin']
             comentario = form_incidencias.cleaned_data['comentario']
             archivo = form_incidencias.cleaned_data['url']
+            print("datos del form ",incidencia,fecha_incio,fecha_fin,comentario,archivo)
             
             #VALIDACIONES
             if fecha_incio > fecha_fin:
-                print("La fecha de inicio es posterior a la fecha final.")
-                messages.error(request, 'La fecha de inicio debe ser menor a la fecha final')
-                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-            
-            if not incidencia:
-                messages.error(request, 'Debes seleccionar una incidencia')
-                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-            
+                return JsonResponse({'poscondicion': 'La fecha de inicio debe ser menor a la fecha final'}, status=422)
+                        
             if fecha_incio < catorcena_actual.fecha_inicial:
-                messages.error(request, 'No puedes agregar una fecha anterior de la catorcena actual')
-                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-            
+                return JsonResponse({'poscondicion': 'No puedes agregar una fecha anterior de la catorcena actual'}, status=422)
+                        
             vacaciones = Vacaciones_dias_tomados.objects.filter(Q(prenomina__status=prenomina.empleado.status, fecha_inicio__range=[fecha_incio, fecha_fin]) | Q(prenomina__status=prenomina.empleado.status, fecha_fin__range=[fecha_incio, fecha_fin]))
             if vacaciones.exists():
-                messages.error(request, 'Ya existen vacaciones dentro del rango de fechas especificado')
-                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-            
+                return JsonResponse({'poscondicion': 'Ya existen vacaciones dentro del rango de fechas especificado'}, status=422)
+                        
             economicos = Economicos_dia_tomado.objects.filter(prenomina__status=prenomina.empleado.status, fecha__range=[fecha_incio, fecha_fin])
-            if economicos.exists():            
-                messages.error(request, 'Ya existen economicos dentro del rango de fechas especificado')
-                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-            
+            if economicos.exists():
+                return JsonResponse({'poscondicion': 'Ya existen economicos dentro del rango de fechas especificado'}, status=422)            
+                        
             festivos = TablaFestivos.objects.filter(dia_festivo__range=[fecha_incio, fecha_fin])
             if festivos.exists():
-                messages.error(request, 'Ya existen festivos dentro del rango de fechas especificado')
-                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))        
+                return JsonResponse({'poscondicion': 'Ya existen festivos dentro del rango de fechas especificado'}, status=422) 
             
-            #VALIDAR INCIDENCIAS - EDITAR UNA INCIDENCIA QUE ESTE DENTRO DEL RANGO DE LA CAT Y VERIFICAR QUE EXISTA EN LA CAT ANTERIOIR
+            #VALIDAR INCIDENCIAS - EDITAR UNA INCIDENCIA QUE ESTE DENTRO DEL RANGO DE LA CAT ACTUAL Y VERIFICAR QUE ESTE PRESENTE EN LA CAT ANTERIOR
             incapacidades = Incapacidades.objects.filter(
                 prenomina__empleado_id=prenomina.empleado.id,
-                fecha__lte=fecha_fin,  # La fecha de inicio de la incapacidad debe ser menor o igual a la fecha fin del rango proporcionado
-                fecha_fin__gte=fecha_incio,   # La fecha fin de la incapacidad debe ser mayor o igual a la fecha inicio del rango proporcionado
+                fecha__lte=fecha_fin, # La fecha de inicio de la incapacidad debe ser menor o igual a la fecha fin del rango proporcionado
+                fecha_fin__gte=fecha_incio, # La fecha fin de la incapacidad debe ser mayor o igual a la fecha inicio del rango proporcionado
             )
             
             castigos = Castigos.objects.filter(
@@ -252,78 +251,67 @@ def programar_incidencias(request,pk):
                 fecha__lte=fecha_fin,
                 fecha_fin__gte=fecha_incio,
             )
-                        
-            if incapacidades.exists():
-                for inca in incapacidades:
-                    print("Fecha", inca.fecha)
-                    print("Fecha fin", inca.fecha_fin)
-                
-                if inca.fecha < catorcena_actual.fecha_inicial:
-                    print("No se puede generar")
-                    messages.error(request, 'Ya existen incapacidades de la catorcena anterior')
-                    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))    
-                else:
-                    #se elimina el soporte asociado
-                    soporte = incapacidades.first()
-                    os.remove(soporte.url.path)
-                    #se elima la incapacidad de la BD
-                    incapacidades.delete()
             
-            if castigos.exists():
-                for castigo in castigos:
-                    print("Fecha", castigo.fecha)
-                    print("Fecha fin", castigo.fecha_fin)
-                
-                if castigo.fecha < catorcena_actual.fecha_inicial:
-                    print("No se puede generar")
-                    messages.error(request, 'Ya existen castigos de la catorcena anterior')
-                    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))    
+            if incapacidades.exists():
+                if incapacidades.filter(fecha__lt=catorcena_actual.fecha_inicial).exists():
+                    return JsonResponse({'poscondicion': 'Ya existen incapacidades registradas para el período especificado - cat anterior'}, status=422)
+            else:
+                incapacidades_actual = Incapacidades.objects.filter(Q(prenomina__empleado_id=prenomina.empleado.id), Q(fecha__range=[fecha_incio, fecha_fin]) | Q(fecha_fin__range=[fecha_incio, fecha_fin]))
+                print("Queryset incapacidades: ", incapacidades_actual)
+                if incapacidades_actual.exists():
+                    #PREGUNTAR SI CANCELA O REGISTRAR
+                    return JsonResponse({'poscondicion': 'Ya existen incapacidades registradas - cat actual'}, status=422)
                 else:
-                    #se elimina el soporte asociado
-                    soporte = incapacidades.first()
-                    os.remove(soporte.url.path)
-                    #se elima la incapacidad de la BD
-                    castigos.delete()
+                    capturarIncidencias(request,archivo, incidencia,fecha_incio,fecha_fin,prenomina,comentario,nombre)
+                    return JsonResponse({'success': 'La incidencia se guardo correctamente'}, status=200)  
+                    
+            if castigos.exists():
+                if castigos.filter(fecha__lt=catorcena_actual.fecha_inicial).exists():
+                    return JsonResponse({'poscondicion': 'Ya existen castigos registrados para el período especificado - cat anterior'}, status=422)
+            else:
+                castigos_actual = Castigos.objects.filter(Q(prenomina__empleado_id=prenomina.empleado.id), Q(fecha__range=[fecha_incio, fecha_fin]) | Q(fecha_fin__range=[fecha_incio, fecha_fin]))
+                if castigos_actual.exists():
+                    #PREGUNTAR SI CANCELA O REGISTRAR
+                    return JsonResponse({'poscondicion': 'Ya existen incapacidades registradas - cat actual'}, status=422)
+                else:
+                    capturarIncidencias(request,archivo, incidencia,fecha_incio,fecha_fin,prenomina,comentario,nombre)
+                    return JsonResponse({'success': 'La incidencia se guardo correctamente'}, status=200) 
+                    
             
             if permisos_goce.exists():
-                for permiso_goce in permisos_goce:
-                    print("Fecha", permiso_goce.fecha)
-                    print("Fecha fin", permiso_goce.fecha_fin)
-                
-                if permiso_goce.fecha < catorcena_actual.fecha_inicial:
-                    print("No se puede generar")
-                    messages.error(request, 'Ya existen permisos con goce de sueldo de la catorcena anterior')
-                    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))    
+                if permisos_goce.filter(fecha__lt=catorcena_actual.fecha_inicial).exists():
+                    return JsonResponse({'poscondicion': 'Ya existen permisos con goce de sueldo registrados para el período especificado - cat anterior'}, status=422)
+            else:
+                permisos_goce = Permiso_goce.objects.filter(Q(prenomina__empleado_id=prenomina.empleado.id), Q(fecha__range=[fecha_incio, fecha_fin]) | Q(fecha_fin__range=[fecha_incio, fecha_fin]))
+                if permisos_goce.exists():
+                    #PREGUNTAR SI CANCELA O REGISTRAR
+                    return JsonResponse({'poscondicion': 'Ya existen incapacidades registradas - cat actual'}, status=422)
                 else:
-                    soporte = permisos_goce.first()
-                    os.remove(soporte.url.path)
-                    #se elima la incapacidad de la BD
-                    permisos_goce.delete()
+                    capturarIncidencias(request,archivo, incidencia,fecha_incio,fecha_fin,prenomina,comentario,nombre)
+                    return JsonResponse({'success': 'La incidencia se guardo correctamente'}, status=200) 
             
             if permisos_sin.exists():
-                for permiso_sin in permisos_sin:
-                    #print(inca)
-                    print("Fecha", permiso_sin.fecha)
-                    print("Fecha fin", permiso_sin.fecha_fin)
-                
-                if permiso_sin.fecha < catorcena_actual.fecha_inicial:
-                    print("No se puede generar")
-                    messages.error(request, 'Ya existen incapacidades de la catorcena anterior')
-                    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))    
+                if permisos_sin.filter(fecha__lt=catorcena_actual.fecha_inicial).exists():
+                    return JsonResponse({'poscondicion': 'Ya existen incapacidades registradas para el período especificado - cat anterior'}, status=422)
+            else:
+                permisos_sin_actual = Permiso_sin.objects.filter(Q(prenomina__empleado_id=prenomina.empleado.id), Q(fecha__range=[fecha_incio, fecha_fin]) | Q(fecha_fin__range=[fecha_incio, fecha_fin]))
+                if permisos_sin_actual.exists():
+                    #PREGUNTAR SI CANCELA O REGISTRAR
+                    return JsonResponse({'poscondicion': 'Ya existen incapacidades registradas - cat actual'}, status=422)
                 else:
-                    #se elimina el soporte asociado
-                    soporte = permisos_sin.first()
-                    os.remove(soporte.url.path)
-                    #se elima la incapacidad de la BD
-                    permisos_sin.delete()
+                    capturarIncidencias(request,archivo, incidencia,fecha_incio,fecha_fin,prenomina,comentario,nombre)
+                    return JsonResponse({'success': 'La incidencia se guardo correctamente'}, status=200)
+                   
+            #capturarIncidencias(request,archivo, incidencia,fecha_incio,fecha_fin,prenomina,comentario,nombre)
+            #return JsonResponse({'success': 'La incidencia se guardo correctamente'}, status=200)  
             
-            capturarIncidencias(request,archivo, incidencia,fecha_incio,fecha_fin,prenomina,comentario,nombre)
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+            
+        else:
+            return JsonResponse({'error': 'Solicitud de validaciones'}, status=422)    
+    
+    else:
+        return JsonResponse({'error': 'Solicitud no válida'}, status=405)
         
-        else:    
-            messages.error(request, 'No se pudo procesar la solicitud, verifique sus datos')
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-
 @login_required(login_url='user-login')
 def prenomina_revisar_ajax(request, pk):
     user_filter = UserDatos.objects.get(user=request.user)
@@ -606,6 +594,64 @@ def PrenominaRevisar(request, pk):
         return render(request, 'prenomina/Actualizar_revisar.html',context)
     else:
         return render(request, 'revisar/403.html')
+
+@login_required(login_url='user-login')
+def verificar_incidencia(request):
+    if request.method == 'POST':
+        # Utiliza request.POST para los datos del formulario que no son archivos
+        # Utiliza request.FILES para los archivos
+        form = IncapacidadesForm(request.POST, request.FILES)
+        if form.is_valid():
+            # Procesa los datos del formulario si es válido
+            #form.save()
+            incidencia = form.cleaned_data['incidencias']
+            fecha = form.cleaned_data['fecha']
+            fecha_fin = form.cleaned_data['fecha_fin']
+            comentario = form.cleaned_data['comentario']
+            url = form.cleaned_data['url']
+            #prenomina = form.cleaned_data['prenomina']
+            #costo = form.cleaned_data['costo']
+            #print("este es el costo ID: ", costo)
+            prenomina = request.POST.get('prenomina')
+            costo = request.POST.get('costo')
+            print(costo)
+            
+            
+            return JsonResponse({'success': True, 'message': 'Formulario válido'})
+        else:
+            errors = form.errors
+            print(errors)
+            return JsonResponse({'success': False, 'errors': errors})
+    else:
+        return JsonResponse({'error': 'Solicitud no válida'}, status=405)
+            
+    #try:
+        #se obtiene la solicitud desde el request 
+        #data = json.loads(request.body)
+        #incidencia = data.get('incidencia')
+        #fecha_inicio = data.get('fechaInicio')
+        #fecha_fin = data.get('fechaFin')
+        #prenomina = data.get('prenomina')     
+        #return JsonResponse({'mensaje':1},status=200,safe=False)
+        
+        #incapacidades = Incapacidades.objects.filter(prenomina_id = prenomina, fecha__lte = fecha_fin, fecha_fin__gte = fecha_inicio)
+        
+        #if incapacidades.exists():
+        #    return JsonResponse({'incidencia': True})
+        #else:         
+        #    return JsonResponse({'incidencia': False})
+        
+    
+    #    return JsonResponse({
+          #'incidencia': incidencia,
+    #       'fecha_inicio': fecha_inicio,
+    #        'fecha_fin': fecha_fin,
+    #        'prenomina': prenomina
+    #    })
+        
+        
+    #except:
+    #    return JsonResponse({'mensaje':'objecto no encontrado'},status=404,safe=False) 
 
 def determinar_estado_general(ultima_autorizacion):
     if ultima_autorizacion is None:
