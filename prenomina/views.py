@@ -2,12 +2,14 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from proyecto.models import UserDatos, Perfil, Catorcenas, Costo, TablaFestivos, Vacaciones, Economicos, Economicos_dia_tomado, Vacaciones_dias_tomados, Empresa, Solicitud_vacaciones, Solicitud_economicos, Trabajos_encomendados
 from proyecto.models import TablaVacaciones,SalarioDatos,DatosISR
+from django.db import transaction
+
 
 from django.db import models
 from django.db.models import Subquery, OuterRef, Q
 from revisar.models import AutorizarPrenomina, Estado
 from proyecto.filters import CostoFilter
-from .models import Prenomina, PrenominaIncidencias
+from .models import Prenomina, PrenominaIncidencias, Incidencia
 from django.core.paginator import Paginator
 from django.shortcuts import render, redirect
 import datetime 
@@ -89,22 +91,104 @@ def Tabla_prenomina(request):
             costo = Costo.objects.filter(status__perfil__distrito=user_filter.distrito, complete=True,  status__perfil__baja=False).order_by("status__perfil__numero_de_trabajador")
 
         prenominas = Prenomina.objects.filter(empleado__in=costo,catorcena=catorcena_actual.id)
-        
+        asistencia = Incidencia.objects.get(id=16)
+        domingo = Incidencia.objects.get(id=5)
+        festivo = Incidencia.objects.get(id=13)
+        economico = Incidencia.objects.get(id=14)
+        vacacion = Incidencia.objects.get(id=15)
+        descanso = Incidencia.objects.get(id=2)
+        festivos = TablaFestivos.objects.filter(dia_festivo__lte=catorcena_actual.fecha_final, dia_festivo__gte=catorcena_actual.fecha_inicial).values_list('dia_festivo', flat=True)
+
         #crear las prenominas actuales si es que ya es nueva catorcena
-        for empleado in costo:
-            #checar si existe prenomina para el empleado en la catorcena actual
-            prenomina_existente = prenominas.filter(empleado=empleado).exists()
-            #si no existe crear una nueva prenomina
-            if not prenomina_existente:
-                nueva_prenomina = Prenomina(empleado=empleado, catorcena=catorcena_actual)
-                nueva_prenomina.save()
-        #costo_filter = CostoFilter(request.GET, queryset=costo)
-        #costo = costo_filter.qs
-        prenominas = Prenomina.objects.filter(empleado__in=costo,catorcena = catorcena_actual.id).order_by("empleado__status__perfil__numero_de_trabajador")
-        
+        incidencias_a_crear = []
+        with transaction.atomic(): # asegura que todas las operaciones dentro del bloque se ejecuten como una única transacción. Si algo falla, se revertirán todos los cambios
+                for empleado in costo:
+                    # checar si existe prenomina para el empleado en la catorcena actual
+                    prenomina_existente = prenominas.filter(empleado=empleado).exists()
+
+                    # si no existe crear una nueva prenomina
+                    if not prenomina_existente:
+                        nueva_prenomina = Prenomina(empleado=empleado, catorcena=catorcena_actual)
+                        nueva_prenomina.save()
+                        #días económicos y de vacaciones para el empleado (el complete es para saber si ya se habia añadido)
+                        economicos_dias = Economicos_dia_tomado.objects.filter(complete=False,prenomina__status=empleado.status,fecha__lte=catorcena_actual.fecha_final, fecha__gte=catorcena_actual.fecha_inicial)
+                        vacaciones_dias = Vacaciones_dias_tomados.objects.filter(complete=False,prenomina__status=empleado.status,fecha_inicio__lte=catorcena_actual.fecha_final, fecha_fin__gte=catorcena_actual.fecha_inicial)
+                        # Crear 14 incidencias para la nueva prenomina
+                        fechas_catorcena = catorcena_actual.get_date_range()
+                        for fecha in fechas_catorcena:
+                            incidencia = asistencia  # Por defecto
+                            #domingo
+                            if fecha.weekday() == 6:  
+                                incidencia = domingo
+                            #festivo
+                            elif fecha in festivos:
+                                incidencia = festivo
+                            # Verificar si la fecha es un día económico
+                            elif economicos_dias.filter(fecha=fecha).exists():
+                                incidencia = economico
+                                economicos_dias.complete = True
+                                economicos_dias.save()
+                            # Verificar si la fecha es un día de vacaciones
+                            else:
+                                for vacacion_dia in vacaciones_dias:
+                                    if vacacion_dia.fecha_inicio <= fecha <= vacacion_dia.fecha_fin:
+                                        if vacacion_dia.dia_inhabil and vacacion_dia.dia_inhabil.numero == fecha.weekday():
+                                            incidencia = descanso
+                                        else:
+                                            incidencia = vacacion
+                                        vacacion_dia.complete = True
+                                        vacacion_dia.save()
+                            nueva_incidencia = PrenominaIncidencias(
+                                prenomina=nueva_prenomina,
+                                fecha=fecha,
+                                incidencia=incidencia  
+                            )
+                            incidencias_a_crear.append(nueva_incidencia)
+
+                # Usar bulk_create para insertar todas las incidencias en un solo paso
+                PrenominaIncidencias.objects.bulk_create(incidencias_a_crear, batch_size=1000) # controlar cuántas instancias se crean por lote
+
+        prenominas = Prenomina.objects.filter(empleado__in=costo,catorcena = catorcena_actual.id).order_by("empleado__status__perfil__numero_de_trabajador").prefetch_related('incidencias')
+        #checa si hay datos pendientes de agregar para días económicos y de vacaciones
+        for prenomina in prenominas:
+            economicos_pendientes = Economicos_dia_tomado.objects.filter(complete=False, prenomina__status=prenomina.empleado.status,fecha__lte=catorcena_actual.fecha_final, fecha__gte=catorcena_actual.fecha_inicial)
+            vacaciones_pendientes = Vacaciones_dias_tomados.objects.filter(complete=False, prenomina__status=prenomina.empleado.status,fecha_inicio__lte=catorcena_actual.fecha_final, fecha_fin__gte=catorcena_actual.fecha_inicial)
+            # Para los días económicos pendientes
+            for dia_economico in economicos_pendientes:
+                # Buscar la incidencia correspondiente en la prenomina actual
+                incidencia_economica = PrenominaIncidencias.objects.filter(
+                    prenomina=prenomina,
+                    fecha=dia_economico.fecha
+                ).first()
+                if incidencia_economica:
+                    # Actualizar la incidencia con el tipo de incidencia económica
+                    incidencia_economica.incidencia = economico
+                    incidencia_economica.save()
+                    # Marcar el día económico como completo
+                    dia_economico.complete = True
+                    dia_economico.save()
+
+            # Para los días de vacaciones pendientes
+            for vacacion_dia in vacaciones_pendientes:
+                # Buscar las incidencias correspondientes en la prenomina actual
+                incidencias_vacaciones = PrenominaIncidencias.objects.filter(
+                    prenomina=prenomina,
+                    fecha__range=(vacacion_dia.fecha_inicio, vacacion_dia.fecha_fin)
+                )
+                for incidencia_vacacion in incidencias_vacaciones:
+                    # Verificar si es un día hábil o de descanso
+                    if vacacion_dia.dia_inhabil and vacacion_dia.dia_inhabil.numero == incidencia_vacacion.fecha.weekday():
+                        incidencia_vacacion.incidencia = descanso
+                    else:
+                        incidencia_vacacion.incidencia = vacacion
+                    incidencia_vacacion.save()
+                # Marcar el día de vacaciones como completo
+                vacacion_dia.complete = True
+                vacacion_dia.save()
+        #checar = prenominas.first()
+        #checar_incidencias = checar.incidencias.all()
         prenomina_filter = PrenominaFilter(request.GET, queryset=prenominas)
         prenominas = prenomina_filter.qs
-
         #para verificar las autotizaciones
         for prenomina in prenominas:
             ultima_autorizacion = AutorizarPrenomina.objects.filter(prenomina=prenomina).order_by('-updated_at').first() #Ultimo modificado
@@ -112,6 +196,9 @@ def Tabla_prenomina(request):
             if ultima_autorizacion is not None:
                 prenomina.valor = ultima_autorizacion.estado.tipo #Esta bien como agarra el dato de RH arriba que es el primero
             prenomina.estado_general = determinar_estado_general(request,ultima_autorizacion)
+            # Añadir las incidencias a cada prenomina
+            incidencias = PrenominaIncidencias.objects.filter(prenomina=prenomina).order_by('fecha')
+            prenomina.incidencias.set(incidencias)
 
         if request.method =='POST' and 'Autorizar' in request.POST:
             if user_filter.tipo.nombre ==  "RH":
@@ -135,7 +222,7 @@ def Tabla_prenomina(request):
         context = {
             'prenomina_filter':prenomina_filter,
             'salidas_list': salidas_list,
-            'prenominas':prenominas
+            'prenominas':prenominas,
         }
         return render(request, 'prenomina/Tabla_prenomina.html', context)
     else:

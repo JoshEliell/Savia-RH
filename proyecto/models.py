@@ -3,6 +3,7 @@ from django.db.models import F, Sum
 from django.contrib.auth.models import User
 from simple_history.models import HistoricalRecords
 from django.core.exceptions import ValidationError
+from datetime import timedelta, date
 
  #Tabla de vacaciones
 class TablaVacaciones(models.Model):
@@ -480,7 +481,10 @@ class Catorcenas(models.Model):
     fecha_inicial = models.DateField(null=True, db_index=True)
     fecha_final = models.DateField(null=True, db_index=True)
     complete = models.BooleanField(default=False)
-
+    
+    def get_date_range(self):
+        return [self.fecha_inicial + timedelta(days=i) for i in range((self.fecha_final - self.fecha_inicial).days + 1)]
+    
     def __str__(self):
         return f' catorcena: {self.catorcena}, inicia {self.fecha_inicial} finaliza: {self.fecha_final}'
     class Meta:

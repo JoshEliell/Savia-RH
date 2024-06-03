@@ -102,6 +102,17 @@ class PatronalAdmin(admin.ModelAdmin):
 
 class SubproyectoAdmin(admin.ModelAdmin):
     list_display = ('proyecto','subproyecto')
+
+class Economicos_dia_tomadoAdmin(admin.ModelAdmin):
+    ordering = ['id']
+    list_display = ('id','prenomina')
+    search_fields = ('prenomina__status__perfil__nombres'),
+
+class Vacaciones_dias_tomadosAdmin(admin.ModelAdmin):
+    ordering = ['id']
+    list_display = ('id','prenomina')
+    search_fields = ('prenomina__status__perfil__nombres'),
+
     # Register your models here.
 admin.site.register(Empresa)
 admin.site.register(Puesto, PuestoAdmin)
@@ -154,5 +165,5 @@ admin.site.register(Bancarios_Batch)
 admin.site.register(Vacaciones_anteriores_Batch)
 admin.site.register(Datos_baja)
 admin.site.register(Empleado_cv)
-admin.site.register(Economicos_dia_tomado)
-admin.site.register(Vacaciones_dias_tomados)
+admin.site.register(Economicos_dia_tomado, Economicos_dia_tomadoAdmin)
+admin.site.register(Vacaciones_dias_tomados, Vacaciones_dias_tomadosAdmin)

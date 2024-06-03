@@ -1812,7 +1812,7 @@ def VacacionesUpdate(request, pk):
                         form.save()
                         #Parte para la prenomina
                         prenomina_dia_tomado = Vacaciones_dias_tomados.objects.create(prenomina=descanso,fecha_inicio=descanso.fecha_inicio,fecha_fin=descanso.fecha_fin,
-                                                                dia_inhabil=descanso.dia_inhabil,comentario=descanso.comentario,editado=descanso.editado)
+                                                                dia_inhabil=descanso.dia_inhabil,comentario=descanso.comentario,editado=descanso.editado,complete=False)
                         return redirect('Tabla_vacaciones_empleados')
             else:
                 messages.error(request, 'Ya a tomado todos sus días de vacaciones')
@@ -2111,7 +2111,7 @@ def EconomicosUpdate(request, pk):
                 orden.save()
                 form.save()
                 prenomina_dia_tomado = Economicos_dia_tomado.objects.create(prenomina=economico,fecha=economico.fecha,
-                                                        comentario=economico.comentario,editado=economico.editado)
+                                                        comentario=economico.comentario,editado=economico.editado,complete=False)
                 return redirect('Tabla_economicos')
 
     context = {'form':form,'economico':economico,'status':status,}
@@ -4894,7 +4894,7 @@ def solicitud_vacacion_verificar(request, pk):
 
                         #Parte para la prenomina
                         prenomina_dia_tomado = Vacaciones_dias_tomados.objects.create(prenomina=vacacion,fecha_inicio=vacacion.fecha_inicio,fecha_fin=vacacion.fecha_fin,
-                                                dia_inhabil=vacacion.dia_inhabil,comentario=vacacion.comentario,editado=vacacion.editado)
+                                                dia_inhabil=vacacion.dia_inhabil,comentario=vacacion.comentario,editado=vacacion.editado,complete=False)
                         messages.success(request, 'Solicitud autorizada y días de vacaciones agregados')
                 elif 'btnRechazar' in request.POST:
                     solicitud = form.save(commit=False)
@@ -5418,7 +5418,7 @@ def solicitud_economico_verificar(request, pk):
                     economico.save()
                     status.save()
                     prenomina_dia_tomado = Economicos_dia_tomado.objects.create(prenomina=economico,fecha=economico.fecha,
-                                                                                comentario=economico.comentario,editado=economico.editado)
+                                                                                comentario=economico.comentario,editado=economico.editado,complete=False)
                     
                     messages.success(request, 'Solicitud autorizada y días economicos agregados')
             
