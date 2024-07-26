@@ -158,8 +158,8 @@ class UserDatos(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     distrito = models.ForeignKey(Distrito, on_delete = models.CASCADE, null=True)
     tipo = models.ForeignKey(TipoPerfil, on_delete = models.CASCADE, null=True)
+    cargo_distrito = models.ForeignKey(Distrito, on_delete = models.CASCADE, null=True, related_name='cargo_distrito')
     numero_de_trabajador = models.IntegerField(null=True,blank=True)
-    distrito = models.ForeignKey(Distrito, on_delete = models.CASCADE, null=True,blank=True)
 
     def __str__(self):
         return f'{self.user}, distrito: {self.distrito} '
