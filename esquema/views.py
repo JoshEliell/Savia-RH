@@ -77,6 +77,9 @@ def listarBonosVarilleros(request):
     if usuario.tipo not in [1,2,3]:
         #se obtiene el perfil del usuario logueado
         solicitante = get_object_or_404(Perfil,numero_de_trabajador = usuario.numero_de_trabajador, distrito = usuario.distrito)
+       
+        
+        
         
         subconsulta_ultima_fecha = AutorizarSolicitudes.objects.values('solicitud_id').annotate(
                 ultima_fecha=Max('created_at')

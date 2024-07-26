@@ -1453,7 +1453,7 @@ def TablaCosto(request):
         else:
             perfil = Perfil.objects.filter(distrito = user_filter.distrito,complete=True)
             costos = Costo.objects.filter(status__perfil__id__in=perfil.all(), complete=True).order_by("status__perfil__numero_de_trabajador")
-
+            
         costo_filter = CostoFilter(request.GET, queryset=costos)
         costos = costo_filter.qs
 
@@ -6885,10 +6885,13 @@ def costo_revisar_anterior(request, pk):
 
 @login_required(login_url='user-login')
 def TablaPrenominas(request):
+
+    
+    
     ids = [9,10,11]
     user_filter = UserDatos.objects.get(user=request.user)
     if user_filter.tipo.id in [4,8,9,10,11,12]: #Perfil RH o observador
-        revisar_perfil = Perfil.objects.get(distrito=user_filter.distrito,numero_de_trabajador=user_filter.numero_de_trabajador)
+        #revisar_perfil = Perfil.objects.get(distrito=user_filter.distrito,numero_de_trabajador=user_filter.numero_de_trabajador)
         if user_filter.tipo.id in [9,10,11]:
             prenominas= Prenomina.objects.all().order_by("empleado__status__perfil__numero_de_trabajador")
         else:
