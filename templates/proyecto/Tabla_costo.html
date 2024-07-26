@@ -256,25 +256,25 @@
                         <td>{{costo.status.perfil.proyecto}}</td>
                         <td>{{costo.status.perfil.subproyecto}}</td>
                         <td>{{costo.status.puesto}}</td>
-                        <td>{{costo.ingreso_mensual_neto_empleado}}</td>
-                        <td class="td_check d-none">{{costo.complemento_salario_catorcenal}}</td>
-                        <td class="td_check d-none">{{costo.apoyo_de_pasajes}}</td>
-                        <td>{{costo.total_percepciones_mensual}}</td>
-                        <td>{{costo.impuesto_estatal}}</td>
-                        <td class="td_check d-none">{{costo.imms_obrero_patronal}}</td>
-                        <td class="td_check d-none">{{costo.sar}}</td>
-                        <td>{{costo.cesantia}}</td>
-                        <td>{{costo.infonavit}}</td>
-                        <td class="td_check d-none">{{costo.isr}}</td>
-                        <td class="td_check d-none">{{costo.apoyo_vist_familiar}}</td>
-                        <td class="td_check d-none">{{costo.estancia}}</td>
-                        <td class="td_check d-none">{{costo.renta}}</td>
-                        <td class="td_check d-none">{{costo.apoyo_estudios}}</td>
-                        <td class="td_check d-none">{{costo.amv}}</td>
-                        <td class="td_check d-none">{{costo.gasolina}}</td>
-                        <td class="td_check d-none">{{costo.apoyo_salud}}</td>
-                        <td>{{costo.total_costo_empresa}}</td>
-                        <td>{{costo.total_apoyosbonos_agregcomis}}</td>
+                        <td><span> ${{costo.ingreso_mensual_neto_empleado}}</span></td>
+                        <td class="td_check d-none"><span> ${{costo.complemento_salario_catorcenal}}</span></td>
+                        <td class="td_check d-none"><span> ${{costo.apoyo_de_pasajes}}</span></td>
+                        <td><span> ${{costo.total_percepciones_mensual}}</span></td>
+                        <td><span> ${{costo.impuesto_estatal}}</span></td>
+                        <td class="td_check d-none"><span> ${{costo.imms_obrero_patronal}}</span></td>
+                        <td class="td_check d-none"><span> ${{costo.sar}}<span></td>
+                        <td><span>${{costo.cesantia}}</span></td>
+                        <td><span>${{costo.infonavit}}</span></td>
+                        <td class="td_check d-none"><span> ${{costo.isr}}</span></td>
+                        <td class="td_check d-none"><span> ${{costo.apoyo_vist_familiar}}</span></td>
+                        <td class="td_check d-none"><span> ${{costo.estancia}}</span></td>
+                        <td class="td_check d-none"><span> ${{costo.renta}}</span></td>
+                        <td class="td_check d-none"><span> ${{costo.apoyo_estudios}}</span></td>
+                        <td class="td_check d-none"><span> ${{costo.amv}}</span></td>
+                        <td class="td_check d-none"><span> ${{costo.gasolina}}</span></td>
+                        <td class="td_check d-none"><span> ${{costo.apoyo_salud}}</span></td>
+                        <td><span> ${{costo.total_costo_empresa}}</span></td>
+                        <td><span> ${{costo.total_apoyosbonos_agregcomis}}</span></td>
                         <td><a class="btn btn-outline-info" id="btnActualizar" type="button" href="{% url 'Costo_revisar' costo.id %}"><i class="fas fa-sack-dollar"></i></a></td>
                     
                         {% if usuario.tipo.admin == True and baja == 'False' and usuario_fijo.distrito == costo.status.perfil.distrito%}
