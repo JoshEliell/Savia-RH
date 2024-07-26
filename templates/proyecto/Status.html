@@ -86,38 +86,70 @@
     <hr>
     <form method="GET" class="row g-3" id="formularioBusqueda">
         {% csrf_token %}
-        <label for="status_filter.form.perfil__numero_de_trabajador"
-            class="col-sm-auto col-form-label text-right"><strong>No. Trabajador:</strong></label>
-        <div class="col-sm-1">
-            {% render_field status_filter.form.numero_de_trabajador class="form-control" %}
+
+        <div class="col-lg-3 col-sm-12">
+            <div class="input-group mb-3">
+            <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-hashtag"></i></span>
+                <div class="form-floating form-floating-group flex-grow-1">   
+                    {{status_filter.form.numero_de_trabajador|add_class:"form-control"|append_attr:"placeholder= No. de trabajador"}}
+                    <label style="color: #121212;" for="id_id">No. de trabajador</label>
+                </div>
+            </div>
         </div>
-        <label for="status_filter.form.perfil__nombres_apellidos" class="col-sm-auto col-form-label text-right">
-            <strong>Nombre:</strong></label>
-        <div class="col-auto">
-            {% render_field status_filter.form.nombres_apellidos class="form-control" %}
+
+        <div class="col-lg-3 col-sm-12">
+            <div class="input-group mb-3">
+            <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-hashtag"></i></span>
+                <div class="form-floating form-floating-group flex-grow-1">   
+                    {{status_filter.form.nombres_apellidos|add_class:"form-control"|append_attr:"placeholder=Nombre"}}
+                    <label style="color: #121212;" for="id_id">Nombre</label>
+                </div>
+            </div>
         </div>
+
         {% if usuario.tipo.id in ids %}
-        <label for="status_filter.form.perfil__distrito" class="col-sm-auto col-form-label text-right">
-            <strong>Distrito:</strong></label>
-        <div class="col-auto">
-            {% render_field status_filter.form.distrito class="form-control" %}
+        <div class="col-lg-3 col-sm-12">
+            <div class="input-group mb-3">
+            <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-hashtag"></i></span>
+                <div class="form-floating form-floating-group flex-grow-1">   
+                    {{status_filter.form.distrito|add_class:"form-control"|append_attr:"placeholder=Distrito"}}
+                    <label style="color: #121212;" for="id_id">Distrito</label>
+                </div>
+            </div>
         </div>
         {% else %}
         {% endif %}
-        <label for="status_filter.form.profesion" class="col-sm-auto col-form-label text-right"><strong>Profesión:</strong></label>
-        <div class="col-auto">
-            {% render_field status_filter.form.profesion class="form-control" %}
+        <div class="col-lg-3 col-sm-12">
+            <div class="input-group mb-3">
+            <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-hashtag"></i></span>
+                <div class="form-floating form-floating-group flex-grow-1">   
+                    {{status_filter.form.profesion|add_class:"form-control"|append_attr:"placeholder= Profesión"}}
+                    <label style="color: #121212;" for="id_id">Profesión</label>
+                </div>
+            </div>
         </div>
-        <label for="status_filter.form.tipo_de_contrato" class="col-sm-auto col-form-label text-right">
-            <strong>Contrato:</strong></label>
-        <div class="col-auto">
-            {% render_field status_filter.form.tipo_de_contrato class="form-control" %}
+
+        <div class="col-lg-3 col-sm-12">
+            <div class="input-group mb-3">
+            <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-hashtag"></i></span>
+                <div class="form-floating form-floating-group flex-grow-1">   
+                    {{status_filter.form.tipo_de_contrato|add_class:"form-control"|append_attr:"placeholder= Contrato"}}
+                    <label style="color: #121212;" for="id_id">Contrato</label>
+                </div>
+            </div>
         </div>
-        <label for="status_filter.form.baja" class="col-sm-auto col-form-label text-right">
-            <strong>Baja:</strong></label>
-        <div class="col-auto">
-            {% render_field status_filter.form.baja class="form-control" %}
+
+        <div class="col-lg-3 col-sm-12">
+            <div class="input-group mb-3">
+            <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-hashtag"></i></span>
+                <div class="form-floating form-floating-group flex-grow-1">   
+                    {{status_filter.form.baja|add_class:"form-control"|append_attr:"placeholder=Baja"}}
+                    <label style="color: #121212;" for="id_id">Baja</label>
+                </div>
+            </div>
         </div>
+
+       
         <div class="col-auto">
             <button class="btn btn-outline-success" type="submit" value="Buscar" id="buscarBtn"><i
                     class="fa-solid fa-magnifying-glass"></i></button>
@@ -128,83 +160,85 @@
 <!-- Aquí empieza la generación de la tabla -->
 <div class="row mt-2">
     <div class="col-md-12">
-        <table class="table table-striped table-hover bg-white">
-            <thead class="text-black" style="background-color: #F5F5F5;">
-                <tr style="background-color:#2A628F;color:#ffffff;">
-                    <th scope="col">Nombre</th>
-                    <th scope="col">Número de trabajador</th>
-                    <th scope="col">Registro Patronal</th>
-                    <th scope="col">NSS</th>
-                    <th scope="col">CURP</th>
-                    <th scope="col">RFC</th>
-                    <th scope="col">Profesión</th>
-                    <th scope="col">No. de Cedula</th>
-                    <th scope="col">Nivel</th>
-                    <th scope="col">Tipo de contrato</th>
-                    <th scope="col">Vencimiento del último contrato</th>
-                    <th scope="col">Tipo de sangre</th>
-                    <th scope="col">Sexo</th>
-                    <th scope="col">Teléfono</th>
-                    <th scope="col">Domicilio completo</th>
-                    <th scope="col">Estado civil</th>
-                    {% if usuario.tipo.admin == True and baja == 'False' %}
-                    <th scope="col">CV</th>     
-                    {% endif %}   
-                    <th scope="col">Detalle</th>
-                    {% if usuario.tipo.admin == True and baja == 'False' %}
-                    <th scope="col">Editar</th>
-                    {% endif %}
-                </tr>
-            </thead>
-            <tbody>
-                {% for estado in salidas_list %}
-                <tr>
-                    <td>{{estado.perfil.nombres}} {{estado.perfil.apellidos}}</td>
-                    <td>{{estado.perfil.numero_de_trabajador}}</td>
-                    <td>{{estado.registro_patronal}}</td>
-                    <td>{{estado.nss}}</td>
-                    <td>{{estado.curp}}</td>
-                    <td>{{estado.rfc}}</td>
-                    <td>{{estado.profesion}}</td>
-                    <td>{{estado.no_cedula}}</td>
-                    <td>{{estado.nivel}}</td>
-                    <td>{{estado.tipo_de_contrato}}</td>
-                    {% if estado.ultimo_contrato_vence|date:'Y-m-d' == "6000-01-01" %}
-                    <td>ESPECIAL</td>
-                    {% elif estado.ultimo_contrato_vence|date:'Y-m-d' == "6001-01-01" %}
-                    <td>INDETERMINADO</td>
-                    {% elif estado.ultimo_contrato_vence|date:'Y-m-d' == "6002-01-01" %}
-                    <td>HONORARIOS</td>
-                    {% elif estado.ultimo_contrato_vence|date:'Y-m-d' == "6003-01-01" %}
-                    <td>NR</td>
-                    {% else %}
-                    <td>{{estado.ultimo_contrato_vence}}</td>
-                    {% endif %}
-                    <td>{{estado.tipo_sangre}}</td>
-                    <td>{{estado.sexo}}</td>
-                    <td>{{estado.telefono}}</td>
-                    <td>{{estado.domicilio}}</td>
-                    <td>{{estado.estado_civil}}</td>
-                    {% if usuario.tipo.admin == True and baja == 'False' %}
-                    <td><a class="btn btn-outline-info" id="btnRevisar" type="button"
-                            href="{% url 'Cv_datos' estado.id %}"><i class="fa-solid fa-book"></i></a>
-                    </td>
-                    
-                    {% endif %}
-                    <td><a class="btn btn-outline-info" id="btnRevisar" type="button"
-                            href="{% url 'Status_revisar' estado.id %}"><i class="fa-solid fa-address-card"></i></a>
-                    </td>
-                    {% if usuario.tipo.admin == True and baja == 'False' and usuario_fijo.distrito == estado.perfil.distrito%}
-                    <td><a class="btn btn-outline-info" id="btnActualizar" type="button"
-                            href="{% url 'Status_update' estado.id %}"><i class="fa-solid fa-pen-to-square"></i></a>
-                    </td>
-                    {% elif usuario.tipo.admin == True and baja == 'False'%}
-                        <td><a class="btn btn-outline-secondary disabled" id="btnActualizar" type="button"><i class="fa-solid fa-pen-to-square"></i></a></td>
-                    {% endif %}
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover bg-white">
+                <thead class="text-black" style="background-color: #F5F5F5;">
+                    <tr style="background-color:#2A628F;color:#ffffff;">
+                        <th scope="col">Nombre</th>
+                        <th scope="col">Número de trabajador</th>
+                        <th scope="col">Registro Patronal</th>
+                        <th scope="col">NSS</th>
+                        <th scope="col">CURP</th>
+                        <th scope="col">RFC</th>
+                        <th scope="col">Profesión</th>
+                        <th scope="col">No. de Cedula</th>
+                        <th scope="col">Nivel</th>
+                        <th scope="col">Tipo de contrato</th>
+                        <th scope="col">Vencimiento del último contrato</th>
+                        <th scope="col">Tipo de sangre</th>
+                        <th scope="col">Sexo</th>
+                        <th scope="col">Teléfono</th>
+                        <th scope="col">Domicilio completo</th>
+                        <th scope="col">Estado civil</th>
+                        {% if usuario.tipo.admin == True and baja == 'False' %}
+                        <th scope="col">CV</th>     
+                        {% endif %}   
+                        <th scope="col">Detalle</th>
+                        {% if usuario.tipo.admin == True and baja == 'False' %}
+                        <th scope="col">Editar</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for estado in salidas_list %}
+                    <tr>
+                        <td>{{estado.perfil.nombres}} {{estado.perfil.apellidos}}</td>
+                        <td>{{estado.perfil.numero_de_trabajador}}</td>
+                        <td>{{estado.registro_patronal}}</td>
+                        <td>{{estado.nss}}</td>
+                        <td>{{estado.curp}}</td>
+                        <td>{{estado.rfc}}</td>
+                        <td>{{estado.profesion}}</td>
+                        <td>{{estado.no_cedula}}</td>
+                        <td>{{estado.nivel}}</td>
+                        <td>{{estado.tipo_de_contrato}}</td>
+                        {% if estado.ultimo_contrato_vence|date:'Y-m-d' == "6000-01-01" %}
+                        <td>ESPECIAL</td>
+                        {% elif estado.ultimo_contrato_vence|date:'Y-m-d' == "6001-01-01" %}
+                        <td>INDETERMINADO</td>
+                        {% elif estado.ultimo_contrato_vence|date:'Y-m-d' == "6002-01-01" %}
+                        <td>HONORARIOS</td>
+                        {% elif estado.ultimo_contrato_vence|date:'Y-m-d' == "6003-01-01" %}
+                        <td>NR</td>
+                        {% else %}
+                        <td>{{estado.ultimo_contrato_vence}}</td>
+                        {% endif %}
+                        <td>{{estado.tipo_sangre}}</td>
+                        <td>{{estado.sexo}}</td>
+                        <td>{{estado.telefono}}</td>
+                        <td>{{estado.domicilio}}</td>
+                        <td>{{estado.estado_civil}}</td>
+                        {% if usuario.tipo.admin == True and baja == 'False' %}
+                        <td><a class="btn btn-outline-info" id="btnRevisar" type="button"
+                                href="{% url 'Cv_datos' estado.id %}"><i class="fa-solid fa-book"></i></a>
+                        </td>
+                        
+                        {% endif %}
+                        <td><a class="btn btn-outline-info" id="btnRevisar" type="button"
+                                href="{% url 'Status_revisar' estado.id %}"><i class="fa-solid fa-address-card"></i></a>
+                        </td>
+                        {% if usuario.tipo.admin == True and baja == 'False' and usuario_fijo.distrito == estado.perfil.distrito%}
+                        <td><a class="btn btn-outline-info" id="btnActualizar" type="button"
+                                href="{% url 'Status_update' estado.id %}"><i class="fa-solid fa-pen-to-square"></i></a>
+                        </td>
+                        {% elif usuario.tipo.admin == True and baja == 'False'%}
+                            <td><a class="btn btn-outline-secondary disabled" id="btnActualizar" type="button"><i class="fa-solid fa-pen-to-square"></i></a></td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        <div>
     </div>
 </div>
 
