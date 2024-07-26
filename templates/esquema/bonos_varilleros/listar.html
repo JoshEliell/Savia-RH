@@ -5,7 +5,7 @@
 {% load tt_extras %}
 
 {% block title %}
-    Bonos Varilleros
+    Solicitudes|Bonos
 {% endblock title %}
     
 
@@ -41,7 +41,7 @@
         <div class="col-12">
             <div class="card shadow">
                 <div class="card-header d-flex justify-content-between">
-                    <div class="card-title"><h5>Bonos Varilleros</h5></div>
+                    <div class="card-title"><h5>Solicitudes Bonos</h5></div>
                     {% comment %} Solo el supervisor y RH puede crear solicitudes de Bonos{% endcomment %}
                     {% if usuario.tipo.id == 5 or usuario.tipo.id == 4 %}
                         <a href="{% url 'crearSolicitudBonosVarilleros' %}" class="btn btn-azul" ><i class="fas fa-plus"></i> Crear solicitud de bono</a>
@@ -52,24 +52,45 @@
                     {% comment %} Realizar Busquedas {% endcomment %}
                     <form method="get">
                         <div class="row g-3 align-items-center">
-                            <div class="col-12 col-md-2">
-                                <label for="" class="fw-bold">Folio</label>
-                                {% render_field autorizaciones_filter.form.folio class="form-control text-capitalize"%}
+                            <div class="col-lg-3 col-sm-12">
+                                <div class="input-group mb-3">
+                                <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-hashtag"></i></span>
+                                    <div class="form-floating form-floating-group flex-grow-1">   
+                                        {{autorizaciones_filter.form.folio|add_class:"form-control"|append_attr:"placeholder= Folio"}}
+                                        <label style="color: #121212;" for="id_id">Folio</label>
+                                    </div>
+                                </div>
                             </div>
                             {% if usuario.tipo.id in ids %}
-                            <div class="col-auto">
-                                <label for="" class="fw-bold">Distrito</label>
-                                {% render_field autorizaciones_filter.form.distrito class="form-control text-capitalize"%}
+                            <div class="col-lg-4 col-sm-12">
+                                <div class="input-group mb-3">
+                                <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-gear"></i></span>
+                                    <div class="form-floating form-floating-group flex-grow-1">   
+                                        {{autorizaciones_filter.form.distrito|add_class:"form-control"|append_attr:"placeholder= Distrito"}}
+                                        <label style="color: #121212;" for="id_id">Distrito</label>
+                                    </div>
+                                </div>
                             </div>
                             {% endif %}
-                            <div class="col-12 col-md-2">
-                                <label for="" class="fw-bold">Estado</label>
-                                {% render_field autorizaciones_filter.form.estado class="form-control text-capitalize"%}
+                            <div class="col-lg-4 col-sm-12">
+                                <div class="input-group mb-3">
+                                <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-gear"></i></span>
+                                    <div class="form-floating form-floating-group flex-grow-1">   
+                                        {{autorizaciones_filter.form.estado|add_class:"form-control"|append_attr:"placeholder= Estado"}}
+                                        <label style="color: #121212;" for="id_id">Estado</label>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-12 col-md-2">
-                                <label for="" class="fw-bold">Bono</label>
-                                {% render_field autorizaciones_filter.form.bono class="form-control text-capitalize"%}
+                            <div class="col-lg-4 col-sm-12">
+                                <div class="input-group mb-3">
+                                <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-gear"></i></span>
+                                    <div class="form-floating form-floating-group flex-grow-1">   
+                                        {{autorizaciones_filter.form.bono|add_class:"form-control"|append_attr:"placeholder= Bono"}}
+                                        <label style="color: #121212;" for="id_id">Bono</label>
+                                    </div>
+                                </div>
                             </div>
+                          
                             {% comment %}si es tipo supervisor o de tipo admimistrador mostrar el filtro{% endcomment %}                                
                             {% if usuario.tipo.id == 5 or usuario.tipo.id == 1 %}
                             <div class="col-auto">
@@ -77,24 +98,43 @@
                                 {% render_field autorizaciones_filter.form.rol class="form-control text-capitalize"%}
                             </div>
                             {% endif %}
-                            <div class="col-12 col-md-2">
-                                <label for="" class="fw-bold">Fecha Inicio - Emisión</label>
-                                {% render_field autorizaciones_filter.form.fecha_inicio type="date" class="form-control"%}
+                            <div id="serie" class="col-lg-2 col-sm-12">
+                                <div class="input-group mb-3">
+                                <span class="input-group-text" id="basic-addon1"><i class="fa-regular fa-calendar"></i></span>
+                                    <div class="form-floating form-floating-group flex-grow-1">   
+                                        {% render_field autorizaciones_filter.form.fecha_inicio type="date" class="form-control" %}
+                                    <label style="color: #121212;" for="id_subproyecto">Emisión Desde:</label>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-12 col-md-2">
-                                <label for="" class="fw-bold">Fecha Fin - Emisión</label>
-                                {% render_field autorizaciones_filter.form.fecha_fin type="date" class="form-control"%}
+                            <div id="serie" class="col-lg-2 col-sm-12">
+                                <div class="input-group mb-3">
+                                <span class="input-group-text" id="basic-addon1"><i class="fa-regular fa-calendar"></i></span>
+                                    <div class="form-floating form-floating-group flex-grow-1">   
+                                        {% render_field autorizaciones_filter.form.fecha_fin type="date" class="form-control" %}
+                                    <label style="color: #121212;" for="id_subproyecto">Emisión Hasta:</label>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-12 col-md-2">
-                                <label for="" class="fw-bold">Fecha Inicio - Revisión</label>
-                                {% render_field autorizaciones_filter.form.fecha_inicio_r type="date" class="form-control"%}
+                            <div id="serie" class="col-lg-2 col-sm-12">
+                                <div class="input-group mb-3">
+                                <span class="input-group-text" id="basic-addon1"><i class="fa-regular fa-calendar"></i></span>
+                                    <div class="form-floating form-floating-group flex-grow-1">   
+                                        {% render_field autorizaciones_filter.form.fecha_inicio_r type="date" class="form-control" %}
+                                    <label style="color: #121212;" for="id_subproyecto">Aprobación Desde:</label>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-12 col-md-2">
-                                <label for="" class="fw-bold">Fecha Fin - Revisión</label>
-                                {% render_field autorizaciones_filter.form.fecha_fin_r type="date" class="form-control"%}
+                            <div id="serie" class="col-lg-2 col-sm-12">
+                                <div class="input-group mb-3">
+                                <span class="input-group-text" id="basic-addon1"><i class="fa-regular fa-calendar"></i></span>
+                                    <div class="form-floating form-floating-group flex-grow-1">   
+                                        {% render_field autorizaciones_filter.form.fecha_fin_r type="date" class="form-control" %}
+                                    <label style="color: #121212;" for="id_subproyecto">Aprobación Hasta:</label>
+                                    </div>
+                                </div>
                             </div>
                             <div class="col-auto">
-                                <br>
                                 <button type="search" class="btn btn-success"><i class="fas fa-search"></i></button>
                             </div>
                         </div>

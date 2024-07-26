@@ -25,7 +25,7 @@
             <div class="card shadow">
                 <div class="card-header d-flex justify-content-between">
                     <div class="card-title">
-                        <h5>Bonos Varilleros</h5>
+                        <h5>Bonos Aprobados</h5>
                         
                     </div>
                 </div>
@@ -47,18 +47,23 @@
                                         <div class="row">
                                             <div class="col-auto">
                                                 <div class="alert alert-primary" role="alert">
-                                                    
-                                                </div>
-                                                <p class="fw-bold">Catorcena {{catorcena.catorcena}}: {{catorcena.fecha_inicial|date:"d/m/Y"}} - {{catorcena.fecha_final|date:"d/m/Y"}}</p> 
+                                                    <p class="fw-bold">Catorcena {{catorcena.catorcena}}: {{catorcena.fecha_inicial|date:"d/m/Y"}} - {{catorcena.fecha_final|date:"d/m/Y"}}</p> 
+                                                </div>           
                                             </div>
                                             <div class="col-auto">
-                                                <p class="fw-bold">Total bonos aprobados: {{cantidad_bonos_aprobados}}</p> 
+                                                <div class="alert alert-dark" role="alert">
+                                                    <p class="fw-bold">Total bonos aprobados: {{cantidad_bonos_aprobados}}</p> 
+                                                </div>   
                                             </div>
                                             <div class="col-auto">
                                                 {% if total_monto is not None%}
+                                                <div class="alert alert-primary" role="alert">
                                                     <p class="fw-bold">Total $: {{total_monto}}</p>
+                                                </div> 
                                                 {% else %}
+                                                <div class="alert alert-dark" role="alert">
                                                     <p class="fw-bold">Total $: 0.00 </p>
+                                                </div>
                                                 {% endif %}
                                             </div>
                                         </div>
@@ -75,52 +80,105 @@
                     <form method="get">
                         <div class="row g-3 align-items-center">
                             <div class="row g-3 align-items-center">
-                                <div class="col-12 col-md-2">
-                                    <label for="" class="fw-bold">Folio</label>
-                                    {% render_field  bonosolicitado_filter.form.folio class="form-control text-capitalize"%}
+                                <div class="col-lg-3 col-sm-12">
+                                    <div class="input-group mb-3">
+                                    <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-hashtag"></i></span>
+                                        <div class="form-floating form-floating-group flex-grow-1">   
+                                            {{bonosolicitado_filter.form.folio|add_class:"form-control"|append_attr:"placeholder= Folio"}}
+                                            <label style="color: #121212;" for="id_id">Folio</label>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="col-12 col-md-2">
-                                    <label for="" class="fw-bold">Nombre</label>
-                                    {% render_field  bonosolicitado_filter.form.nombres_apellidos class="form-control text-capitalize"%}
+                                <div class="col-lg-3 col-sm-12">
+                                    <div class="input-group mb-3">
+                                    <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-user"></i></span>
+                                        <div class="form-floating form-floating-group flex-grow-1">   
+                                            {{bonosolicitado_filter.form.nombres_apellidos|add_class:"form-control"|append_attr:"placeholder= Nombre"}}
+                                            <label style="color: #121212;" for="id_id">Nombre</label>
+                                        </div>
+                                    </div>
                                 </div>
+                              
                                 {% comment %}Filtro se activa dependiendo del perfil{% endcomment %}
                                 {% if usuario.tipo.id in ids %}
-                                    <div class="col-auto">
-                                        <label for="" class="fw-bold">Distrito</label>
-                                    {% render_field  bonosolicitado_filter.form.distrito class="form-control text-capitalize"%}
+                                    <div class="col-lg-3 col-sm-12">
+                                        <div class="input-group mb-3">
+                                        <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-hashtag"></i></span>
+                                            <div class="form-floating form-floating-group flex-grow-1">   
+                                                {{bonosolicitado_filter.form.distrito|add_class:"form-control"|append_attr:"placeholder= Distrito"}}
+                                                <label style="color: #121212;" for="id_id">Distrito</label>
+                                            </div>
+                                        </div>
                                     </div>
                                 {% endif %}
-                                <div class="col-12 col-md-auto">
-                                    <label for="" class="fw-bold">Bono</label>
-                                    {% render_field  bonosolicitado_filter.form.bono class="form-control text-capitalize"%}
+                               
+                                <div class="col-lg-4 col-sm-12">
+                                    <div class="input-group mb-3">
+                                    <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-gear"></i></span>
+                                        <div class="form-floating form-floating-group flex-grow-1">   
+                                            {{bonosolicitado_filter.form.bono|add_class:"form-control"|append_attr:"placeholder= Bono"}}
+                                            <label style="color: #121212;" for="id_id">Bono</label>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="col-12 col-md-auto">
-                                    <label for="" class="fw-bold">Puesto</label>
-                                    {% render_field  bonosolicitado_filter.form.puesto class="form-control text-capitalize"%}
+                                <div class="col-lg-7 col-sm-12">
+                                    <div class="input-group mb-3">
+                                    <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-user-tie"></i></span>
+                                        <div class="form-floating form-floating-group flex-grow-1">   
+                                            {{bonosolicitado_filter.form.puesto|add_class:"form-control"|append_attr:"placeholder= Puesto"}}
+                                            <label style="color: #121212;" for="id_id">Puesto</label>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="col-12 col-md-2">
-                                    <label for="" class="fw-bold">No. Trabajador</label>
-                                    {% render_field  bonosolicitado_filter.form.no_trabajador class="form-control text-capitalize"%}
+                                <div class="col-lg-3 col-sm-12">
+                                    <div class="input-group mb-3">
+                                    <span class="input-group-text" id="basic-addon1"><i class="fa-regular fa-id-badge"></i></span>
+                                        <div class="form-floating form-floating-group flex-grow-1">   
+                                            {{bonosolicitado_filter.form.no_trabajador|add_class:"form-control"|append_attr:"placeholder= No. trabajador"}}
+                                            <label style="color: #121212;" for="id_id">No. trabajador</label>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="col-12 col-md-2">
-                                    <label for="" class="fw-bold">Fecha Inicio - Emisión</label>
-                                    {% render_field  bonosolicitado_filter.form.fecha_inicio type="date" class="form-control"%}
-                                </div>
-                                <div class="col-12 col-md-2">
-                                    <label for="" class="fw-bold">Fecha Fin - Emisión</label>
-                                    {% render_field  bonosolicitado_filter.form.fecha_fin type="date" class="form-control"%}
-                                </div>
-                                <div class="col-12 col-md-2">
-                                    <label for="" class="fw-bold">Fecha Inicio - Aprobación</label>
-                                    {% render_field  bonosolicitado_filter.form.fecha_inicio_a type="date" class="form-control"%}
-                                </div>
-                                <div class="col-12 col-md-2">
-                                    <label for="" class="fw-bold">Fecha Fin - Aprobación</label>
-                                    {% render_field bonosolicitado_filter.form.fecha_fin_a type="date" class="form-control"%}
-                                </div>
-                                <div class="col-12 col-md-2">
-                                    <br>
-                                    <button type="search" class="btn btn-success"><i class="fas fa-search"></i></button>
+                                <div class = "row">
+                                    <div id="serie" class="col-lg-2 col-sm-12">
+                                        <div class="input-group mb-3">
+                                        <span class="input-group-text" id="basic-addon1"><i class="fa-regular fa-calendar"></i></span>
+                                            <div class="form-floating form-floating-group flex-grow-1">   
+                                                {% render_field bonosolicitado_filter.form.fecha_inicio type="date" class="form-control" %}
+                                            <label style="color: #121212;" for="id_subproyecto">Emisión Desde:</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="serie" class="col-lg-2 col-sm-12">
+                                        <div class="input-group mb-3">
+                                        <span class="input-group-text" id="basic-addon1"><i class="fa-regular fa-calendar"></i></span>
+                                            <div class="form-floating form-floating-group flex-grow-1">   
+                                                {% render_field bonosolicitado_filter.form.fecha_fin type="date" class="form-control" %}
+                                            <label style="color: #121212;" for="id_subproyecto">Emisión Hasta:</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="serie" class="col-lg-2 col-sm-12">
+                                        <div class="input-group mb-3">
+                                        <span class="input-group-text" id="basic-addon1"><i class="fa-regular fa-calendar"></i></span>
+                                            <div class="form-floating form-floating-group flex-grow-1">   
+                                                {% render_field bonosolicitado_filter.form.fecha_inicio_a type="date" class="form-control" %}
+                                            <label style="color: #121212;" for="id_subproyecto">Aprobación Desde:</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="serie" class="col-lg-2 col-sm-12">
+                                        <div class="input-group mb-3">
+                                        <span class="input-group-text" id="basic-addon1"><i class="fa-regular fa-calendar"></i></span>
+                                            <div class="form-floating form-floating-group flex-grow-1">   
+                                                {% render_field bonosolicitado_filter.form.fecha_fin_a type="date" class="form-control" %}
+                                            <label style="color: #121212;" for="id_subproyecto">Aprobación Hasta:</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-2 m-2">
+                                        <button type="search" class="btn btn-success"><i class="fas fa-search"></i></button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

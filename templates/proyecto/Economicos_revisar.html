@@ -32,25 +32,28 @@
 
 <hr>
 <hr>
-<div class="container card card-body">
-    <div class="columns is-mobile">
-        <div class="column is-half is-offset-one-quarter">
-            <h4 class="title is-size-2">Detalle días económicos</h4>
+<div class="container">
+    <div class="card">
+        <div class="columns is-mobile">
+        <div class ="card-header">
+            <div class="column is-half is-offset-one-quarter">
+                <h4 class="title is-size-2">Detalle días económicos</h4>
+            </div>
         </div>
-        <hr>
         <div class="card-body">
             <div class="row">
                 <span class="h4">{{empleado.status.perfil.nombres}} {{empleado.status.perfil.apellidos}}</span>
                 <form method="POST">
                     {% csrf_token %}
-                    <li class="nav-item mx-2">
-                        <button type="submit" name="Pdf" class="btn btn-outline-danger" value='Reporte Pdf'>
-                            <i class="fa-solid fa-file-pdf fa-2xl"></i>
-                        </button>
-                    </li>
-                    <hr>
+                    <ul class="nav">
+                        <li class="nav-item mx-2">
+                            <button type="submit" name="Pdf" class="btn btn-outline-danger" value='Reporte Pdf'>
+                                <i class="fa-solid fa-file-pdf fa-2xl"></i>
+                            </button>
+                        </li>
+                    </ul>
                 </form>
-                <table class="table table-striped table-hover bg-white">
+                <table class="table table-striped table-hover bg-white mt-2" >
                     <thead class="text-black" style="background-color: #F5F5F5;">
                         <tr style="background-color:#2A628F;color:#ffffff;">
                             <th scope="col">Periodo</th>
@@ -108,7 +111,6 @@
                         {% endfor %}
                     </tbody>
                 </table>
-                <hr>
                 {% if usuario.tipo.admin == False %}
                 <div class="d-none">
                 {% else %}
@@ -117,6 +119,7 @@
                 <a href="{% url 'Tabla_economicos' %}" class="btn btn-outline-info"><i class="fa-solid fa-backward"></i></a>
             </div>
         </div>
+    </div> 
     </div>
 </div>
 
