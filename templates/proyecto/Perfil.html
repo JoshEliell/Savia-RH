@@ -42,10 +42,12 @@
         <form method=POST>
         {% csrf_token %}
         <div class="col-12">
-            <div class="card card-body">
-                <h5>Tabla Perfil de Empleado</h5>
-                 <div class = "row mt-2 bg-white">
-                    <hr>
+            <div class="card">
+                <div class="card-header">
+                    <h5>Reporte Perfil de Empleado</h5>
+                </div>
+                <div class="card-body">
+                    <div class = "row mt-2 bg-white">
                     <ul class="nav nav-pills">
                         <li class="nav-item mx-2">
                             <button type="submit" name="Excel" class="btn btn-outline-success" value='Reporte Excel'>
@@ -78,27 +80,49 @@
         </div>
         </form>
     </div>
-<div class="card card-body">
+<div class="card">
+    <div class="card-header">
             <h5>Filtro de empleados</h5>
-            <hr>
+    </div>
+    <div class="card-body">
             <form method="GET" class="row g-3">
                 {% csrf_token %}
-                <label for="perfil_filter.form.numero_de_trabajador" class="col-sm-auto col-form-label text-right"><strong>No. Trabajador:</strong></label>
-                <div class="col-auto">
-                       {% render_field perfil_filter.form.numero_de_trabajador class="form-control" %}
+                <div class="col-lg-3 col-sm-12">
+                    <div class="input-group mb-3">
+                    <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-hashtag"></i></span>
+                        <div class="form-floating form-floating-group flex-grow-1">   
+                            {{perfil_filter.form.numero_de_trabajador|add_class:"form-control"|append_attr:"placeholder= No. de trabajador"}}
+                            <label style="color: #121212;" for="id_id">No. de trabajador</label>
+                        </div>
+                    </div>
                 </div>
-                <label for="perfil_filter.form.nombres" class="col-sm-auto col-form-label text-right"><strong>Nombre:</strong></label>
-                <div class="col-auto">
-                       {% render_field perfil_filter.form.nombres_apellidos class="form-control" %}
+                <div class="col-lg-3 col-sm-12">
+                    <div class="input-group mb-3">
+                    <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-user"></i></span>
+                        <div class="form-floating form-floating-group flex-grow-1">   
+                            {{perfil_filter.form.nombres_apellidos|add_class:"form-control"|append_attr:"placeholder= Nombre"}}
+                            <label style="color: #121212;" for="id_id">No. de trabajador</label>
+                        </div>
+                    </div>
                 </div>
-                <label for="perfil_filter.form.empresa" class="col-sm-auto col-form-label text-right"><strong>Empresa:</strong></label>
-                <div class="col-auto">
-                       {% render_field perfil_filter.form.empresa class="form-control" %}
+                <div class="col-lg-3 col-sm-12">
+                    <div class="input-group mb-3">
+                    <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-building"></i></span>
+                        <div class="form-floating form-floating-group flex-grow-1">   
+                            {{perfil_filter.form.empresa|add_class:"form-control"|append_attr:"placeholder= Empresa"}}
+                            <label style="color: #121212;" for="id_id">Empresa</label>
+                        </div>
+                    </div>
                 </div>
                 {% if usuario.tipo.id == 9 or usuario.tipo.id == 10 or usuario.tipo.id == 11 %}
-                <label for="perfil_filter.form.distrito" class="col-sm-auto col-form-label text-right"><strong>Distrito:</strong></label>
-                <div class="col-auto">
-                       {% render_field perfil_filter.form.distrito class="form-control" %}
+                <div class="col-lg-3 col-sm-12">
+                    <div class="input-group mb-3">
+                    <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-building"></i></span>
+                        <div class="form-floating form-floating-group flex-grow-1">   
+                            {{perfil_filter.form.distrito|add_class:"form-control"|append_attr:"placeholder= Distrito"}}
+                            <label style="color: #121212;" for="id_id">Distrito</label>
+                        </div>
+                    </div>
                 </div>
                 {% else %}
                 {% endif %}
@@ -106,6 +130,7 @@
                 <button class="btn btn-outline-success" type="submit" value="Buscar"><i class="fa-solid fa-magnifying-glass"></i></button>
             </div>
             </form>
+    </div>
 </div>
 
 <!-- Aquí empieza la generación de la tabla -->
