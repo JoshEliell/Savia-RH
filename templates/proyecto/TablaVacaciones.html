@@ -73,36 +73,60 @@
         </div>
         </form>
     </div>
-<div class="card card-body">
-            <h5>Filtro vacaciones</h5>
-            <hr>
+
+<div class="card  mt-2">
+    <div class="card-header">
+        <h5>Filtro vacaciones</h5>
+    </div>
+    <div class="card-body">
             <form method="GET" class="row g-3">
                 {% csrf_token %}
-                <label for="vacaciones_filter.form.numero_de_trabajador" class="col-sm-auto col-form-label text-right"><strong># Trabajador:</strong></label>
-                <div class="col-auto">
-                       {% render_field vacaciones_filter.form.numero_de_trabajador class="form-control" %}
+                <div class="col-lg-3 col-sm-12">
+                    <div class="input-group mb-3">
+                    <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-hashtag"></i></span>
+                        <div class="form-floating form-floating-group flex-grow-1">   
+                            {{vacaciones_filter.form.numero_de_trabajador|add_class:"form-control"|append_attr:"placeholder= # Trabajador"}}
+                            <label style="color: #121212;" for="id_id"># Trabajador</label>
+                        </div>
+                    </div>
                 </div>
-                <label for="vacaciones_filter.form.nombres_apellidos" class="col-sm-auto col-form-label text-right"><strong>Nombre:</strong></label>
-                <div class="col-auto">
-                       {% render_field vacaciones_filter.form.nombres_apellidos class="form-control" %}
+                <div class="col-lg-3 col-sm-12">
+                    <div class="input-group mb-3">
+                    <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-user"></i></span>
+                        <div class="form-floating form-floating-group flex-grow-1">   
+                            {{vacaciones_filter.form.nombres_apellidos|add_class:"form-control"|append_attr:"placeholder= Nombre"}}
+                            <label style="color: #121212;" for="id_id">Nombre</label>
+                        </div>
+                    </div>
                 </div>
                 {% if usuario.tipo.id in ids %}
-                <label for="vacaciones_filter.form.distrito" class="col-sm-auto col-form-label text-right"><strong>Distrito:</strong></label>
-                <div class="col-auto">
-                     {% render_field vacaciones_filter.form.distrito class="form-control" %}
+                <div class="col-lg-3 col-sm-12">
+                    <div class="input-group mb-3">
+                    <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-hashtag"></i></span>
+                        <div class="form-floating form-floating-group flex-grow-1">   
+                            {{vacaciones_filter.form.distrito|add_class:"form-control"|append_attr:"placeholder= Distrito"}}
+                            <label style="color: #121212;" for="id_id">Distrito</label>
+                        </div>
+                    </div>
                 </div>
                 {% else %}
                 {% endif %}
-                <label for="vacaciones_filter.form.baja" class="col-sm-auto col-form-label text-right">
-                    <strong>Baja:</strong></label>
-                <div class="col-auto">
-                    {% render_field vacaciones_filter.form.baja class="form-control" %}
+                <div class="col-lg-3 col-sm-12">
+                    <div class="input-group mb-3">
+                    <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-hashtag"></i></span>
+                        <div class="form-floating form-floating-group flex-grow-1">   
+                            {{vacaciones_filter.form.baja|add_class:"form-control"|append_attr:"placeholder= Status Empleado"}}
+                            <label style="color: #121212;" for="id_id">Status Empleado</label>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-auto">
                 <button class="btn btn-outline-success" type="submit" value="Buscar"><i class="fa-solid fa-magnifying-glass"></i></button>
             </div>
             </form>
+    </div>
 </div>
+
 
 <!-- Aquí empieza la generación de la tabla -->
 <div class = "row mt-2">
