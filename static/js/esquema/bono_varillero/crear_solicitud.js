@@ -3,8 +3,8 @@ document.addEventListener("DOMContentLoaded", (e) => {
     const bonoViajePEP = 0//0
     const bonoViajePrivado = 19//13
     const bonoCurso = 23//14
-    const url = 'http://127.0.0.1:8000/esquema/bonos_varillero/'
-
+    const url = listarBonosVarillerosUrl
+    
      /**Buscar el soporte para el bono seleccionado */
      async function solicitarSoporteBono(bono){
         try {

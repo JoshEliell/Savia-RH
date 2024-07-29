@@ -198,14 +198,22 @@ Crear Solicitud - Bonos Varilleros
                             
                             <tfoot>
                                 <tr>
-                                    <td><button class="btn btn-primary btn-sm" id="enviar_solicitud"><i class="fas fa-share"></i> Enviar Solicitud</button></td>   
+                                    <td></td>   
                                     <td></td>
                                     <td colspan="" class="fw-bold">Total: $<span id="total">{{total}}</span> </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td class=""> 
+                                        <button class="btn btn-primary btn-sm" id="enviar_solicitud"><i class="fas fa-share"></i> Enviar Solicitud</button>
+                                    </td>
                                 </tr>
                                
                             </tfoot>
                            
                         </table>
+
+                        
 
                        
                     </div>                    
@@ -232,6 +240,9 @@ Crear Solicitud - Bonos Varilleros
 {% endblock content %}
 
 {% block js %}
+    <script type="text/javascript">
+        var listarBonosVarillerosUrl = "{% url 'listarBonosVarilleros' %}";
+    </script>
     <script src="{% static 'js/esquema/bono_varillero/crear_solicitud.js' %}"></script>
     <script src="{% static 'js/esquema/bono_varillero/mostrar_boton.js' %}"></script>
     {% comment %} select2 {% endcomment %}    
