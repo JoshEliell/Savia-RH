@@ -67,8 +67,9 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'simple_history.middleware.HistoryRequestMiddleware',
     'django_htmx.middleware.HtmxMiddleware',
-
-
+    'user.middleware.LogUserAccessMiddleware',
+    'user.middleware.Handle404Middleware',
+    
 ]
 
 AUTHENTICATION_BACKENDS = [
@@ -100,36 +101,6 @@ WSGI_APPLICATION = 'mysite.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
-
-#DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.sqlite3',
-#        'NAME': 'newdatabase',
-#    }
-#}
-#DATABASES = {
-#   'default': {
-#        'ENGINE': 'django.db.backends.mysql',
-#       'NAME': 'vicjosh$default',
-#        'USER': 'vicjosh',
-#        'PASSWORD': 'mimi2000',
-#        'HOST': 'vicjosh.mysql.pythonanywhere-services.com',
-#        'PORT': '',  # Deja este campo vacío
-#        'OPTIONS': {
-#            'charset': 'utf8mb4',
-#        },
-#    }
-#}
-#DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.mysql',
-#        'NAME': 'demo',
-#        'USER': 'root',
-#        'PASSWORD': '12345678',
-#        'HOST': 'localhost',
-#        'PORT': '',
-#    }
-#}
 
 DATABASES = {
     'default': {
@@ -210,3 +181,28 @@ EMAIL_USE_TLS=True
 EMAIL_PORT = '2525'
 EMAIL_HOST_USER = '4cdcd76acec7dc'
 EMAIL_HOST_PASSWORD = 'fa643eca5fde05'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'middleware.log',
+            'formatter': 'standard',
+        },
+    },
+    'formatters': {
+        'standard': {
+            'format': '%(asctime)s - %(levelname)s - %(name)s: %(message)s',
+        },
+    },
+    'loggers': {
+        'user.middleware': {  # Asegúrate de usar el nombre del módulo del middleware
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}

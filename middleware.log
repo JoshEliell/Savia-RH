@@ -1,0 +1,92 @@
+2024-07-29 16:14:39,213 - INFO - user.middleware: GET /proyecto/Perfil by olmos
+2024-07-29 16:22:59,896 - INFO - user.middleware: GET /dashboard/ by olmos
+2024-07-29 16:23:05,977 - INFO - user.middleware: GET / by olmos
+2024-07-29 16:23:08,140 - INFO - user.middleware: GET /admin/ by olmos
+2024-07-29 16:23:08,703 - INFO - user.middleware: GET /favicon.ico by olmos
+2024-07-29 16:23:08,754 - WARNING - user.middleware: 404 Not Found: /favicon.ico by olmos
+2024-07-29 16:23:21,949 - INFO - user.middleware: GET /admin/proyecto/userdatos/ by olmos
+2024-07-29 16:23:22,607 - INFO - user.middleware: GET /admin/jsi18n/ by olmos
+2024-07-29 16:23:22,678 - INFO - user.middleware: GET /favicon.ico by olmos
+2024-07-29 16:23:22,684 - WARNING - user.middleware: 404 Not Found: /favicon.ico by olmos
+2024-07-29 16:23:23,995 - INFO - user.middleware: GET /admin/ by olmos
+2024-07-29 16:23:24,102 - INFO - user.middleware: GET /favicon.ico by olmos
+2024-07-29 16:23:24,107 - WARNING - user.middleware: 404 Not Found: /favicon.ico by olmos
+2024-07-29 16:23:31,513 - INFO - user.middleware: GET /admin/prenomina/incidencia/ by olmos
+2024-07-29 16:23:31,580 - INFO - user.middleware: GET /admin/jsi18n/ by olmos
+2024-07-29 16:23:31,628 - INFO - user.middleware: GET /favicon.ico by olmos
+2024-07-29 16:23:31,634 - WARNING - user.middleware: 404 Not Found: /favicon.ico by olmos
+2024-07-29 16:25:50,189 - INFO - user.middleware: GET /admin/prenomina/incidencia/add/ by olmos
+2024-07-29 16:25:50,318 - INFO - user.middleware: GET /admin/jsi18n/ by olmos
+2024-07-29 16:25:50,362 - INFO - user.middleware: GET /favicon.ico by olmos
+2024-07-29 16:25:50,362 - WARNING - user.middleware: 404 Not Found: /favicon.ico by olmos
+2024-07-29 16:26:00,558 - INFO - user.middleware: POST /admin/prenomina/incidencia/add/ by olmos
+2024-07-29 16:26:00,586 - INFO - user.middleware: GET /admin/prenomina/incidencia/ by olmos
+2024-07-29 16:26:00,719 - INFO - user.middleware: GET /admin/jsi18n/ by olmos
+2024-07-29 16:26:00,753 - INFO - user.middleware: GET /favicon.ico by olmos
+2024-07-29 16:26:00,768 - WARNING - user.middleware: 404 Not Found: /favicon.ico by olmos
+2024-07-29 16:26:07,606 - INFO - user.middleware: GET /admin/prenomina/incidencia/add/ by olmos
+2024-07-29 16:26:07,678 - INFO - user.middleware: GET /admin/jsi18n/ by olmos
+2024-07-29 16:26:07,719 - INFO - user.middleware: GET /favicon.ico by olmos
+2024-07-29 16:26:07,733 - WARNING - user.middleware: 404 Not Found: /favicon.ico by olmos
+2024-07-29 16:26:15,866 - INFO - user.middleware: POST /admin/prenomina/incidencia/add/ by olmos
+2024-07-29 16:26:15,887 - INFO - user.middleware: GET /admin/prenomina/incidencia/ by olmos
+2024-07-29 16:26:15,975 - INFO - user.middleware: GET /admin/jsi18n/ by olmos
+2024-07-29 16:26:16,008 - INFO - user.middleware: GET /favicon.ico by olmos
+2024-07-29 16:26:16,008 - WARNING - user.middleware: 404 Not Found: /favicon.ico by olmos
+2024-07-29 16:26:21,366 - INFO - user.middleware: GET /admin/prenomina/incidencia/add/ by olmos
+2024-07-29 16:26:21,433 - INFO - user.middleware: GET /admin/jsi18n/ by olmos
+2024-07-29 16:26:21,466 - INFO - user.middleware: GET /favicon.ico by olmos
+2024-07-29 16:26:21,466 - WARNING - user.middleware: 404 Not Found: /favicon.ico by olmos
+2024-07-29 16:26:31,107 - INFO - user.middleware: POST /admin/prenomina/incidencia/add/ by olmos
+2024-07-29 16:26:31,123 - INFO - user.middleware: GET /admin/prenomina/incidencia/ by olmos
+2024-07-29 16:26:31,209 - INFO - user.middleware: GET /admin/jsi18n/ by olmos
+2024-07-29 16:26:31,240 - INFO - user.middleware: GET /favicon.ico by olmos
+2024-07-29 16:26:31,240 - WARNING - user.middleware: 404 Not Found: /favicon.ico by olmos
+2024-07-29 16:45:36,278 - INFO - user.middleware: GET /dashboard/ by olmos
+2024-07-29 16:46:47,671 - INFO - user.middleware: GET /dashboard/ by olmos
+2024-07-29 16:46:49,025 - INFO - user.middleware: GET /dashboard/ by olmos
+2024-07-29 16:46:50,247 - INFO - user.middleware: GET /logout/ by olmos
+2024-07-29 16:46:51,780 - INFO - user.middleware: GET / by Anonymous
+2024-07-29 16:46:58,591 - INFO - user.middleware: POST / by Anonymous
+2024-07-29 16:46:58,827 - INFO - user.middleware: GET /dashboard/ by olmos
+2024-07-29 16:47:15,949 - INFO - user.middleware: GET /logout/ by olmos
+2024-07-29 16:47:16,914 - INFO - user.middleware: GET / by Anonymous
+2024-07-29 16:47:25,555 - INFO - user.middleware: POST / by Anonymous
+2024-07-29 16:47:28,718 - INFO - user.middleware: POST / by Anonymous
+2024-07-29 16:47:28,920 - INFO - user.middleware: GET /dashboard/ by olmos
+2024-07-29 16:47:34,778 - INFO - user.middleware: GET /proyecto/Perfil by olmos
+2024-07-29 16:48:08,276 - INFO - user.middleware: GET /dashboard/ by Anonymous
+2024-07-29 16:48:08,313 - INFO - user.middleware: GET /?next=/dashboard/ by Anonymous
+2024-07-29 16:48:15,607 - INFO - user.middleware: POST /?next=/dashboard/ by Anonymous
+2024-07-29 16:48:15,874 - INFO - user.middleware: GET /dashboard/ by olmos
+2024-07-29 16:48:30,524 - INFO - user.middleware: GET /esquema/bonos_varillero/ by olmos
+2024-07-29 16:48:36,009 - INFO - user.middleware: GET /logout/ by olmos
+2024-07-29 16:48:37,834 - INFO - user.middleware: GET / by Anonymous
+2024-07-29 16:49:03,234 - INFO - user.middleware: POST / by Anonymous
+2024-07-29 16:49:03,476 - INFO - user.middleware: GET /dashboard/ by HANIMASG
+2024-07-29 16:49:38,621 - INFO - user.middleware: GET /esquema/bonos_varillero/ by HANIMASG
+2024-07-29 16:49:39,946 - INFO - user.middleware: GET /esquema/bonos_varillero/crear_solicitud/ by HANIMASG
+2024-07-29 16:49:45,648 - INFO - user.middleware: POST /esquema/solicitar_soporte_bono/ by HANIMASG
+2024-07-29 16:50:01,540 - INFO - user.middleware: POST /esquema/solicitar_esquema_bonos/ by HANIMASG
+2024-07-29 16:50:09,669 - INFO - user.middleware: POST /esquema/bonos_varillero/crear_solicitud/ by HANIMASG
+2024-07-29 16:50:10,022 - INFO - user.middleware: POST /esquema/solicitar_soporte_bono/ by HANIMASG
+2024-07-29 16:51:29,200 - INFO - user.middleware: POST /esquema/bonos_varillero/crear_solicitud/ by HANIMASG
+2024-07-29 16:51:29,756 - INFO - user.middleware: POST /esquema/solicitar_soporte_bono/ by HANIMASG
+2024-07-29 16:51:46,809 - INFO - user.middleware: POST /esquema/bonos_varillero/crear_solicitud/ by HANIMASG
+2024-07-29 16:51:47,416 - INFO - user.middleware: POST /esquema/solicitar_soporte_bono/ by HANIMASG
+2024-07-29 16:53:26,877 - INFO - user.middleware: POST /esquema/bonos_varillero/crear_solicitud/ by HANIMASG
+2024-07-29 16:53:27,444 - INFO - user.middleware: POST /esquema/solicitar_soporte_bono/ by HANIMASG
+2024-07-29 16:53:34,420 - INFO - user.middleware: POST /esquema/remover_bono/30/ by HANIMASG
+2024-07-29 16:53:37,048 - INFO - user.middleware: POST /esquema/remover_bono/29/ by HANIMASG
+2024-07-29 16:53:39,222 - INFO - user.middleware: POST /esquema/remover_bono/28/ by HANIMASG
+2024-07-29 16:58:43,950 - INFO - user.middleware: POST /esquema/bonos_varillero/crear_solicitud/ by HANIMASG
+2024-07-29 16:58:45,114 - INFO - user.middleware: POST /esquema/solicitar_soporte_bono/ by HANIMASG
+2024-07-29 16:59:15,473 - INFO - user.middleware: POST /esquema/bonos_varillero/crear_solicitud/ by HANIMASG
+2024-07-29 16:59:16,187 - INFO - user.middleware: POST /esquema/solicitar_soporte_bono/ by HANIMASG
+2024-07-29 16:59:31,532 - INFO - user.middleware: GET / by HANIMASG
+2024-07-29 16:59:53,681 - INFO - user.middleware: POST /esquema/enviar_solicitud/ by HANIMASG
+2024-07-29 17:05:51,597 - INFO - user.middleware: POST /esquema/enviar_solicitud/ by HANIMASG
+2024-07-29 17:05:54,687 - INFO - user.middleware: POST /esquema/bonos_varillero/crear_solicitud/ by HANIMASG
+2024-07-29 17:05:55,543 - INFO - user.middleware: POST /esquema/solicitar_soporte_bono/ by HANIMASG
+2024-07-29 17:06:01,970 - INFO - user.middleware: POST /esquema/enviar_solicitud/ by HANIMASG
+2024-07-29 17:06:02,955 - INFO - user.middleware: GET /esquema/bonos_varillero/ by HANIMASG
