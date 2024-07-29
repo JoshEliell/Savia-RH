@@ -23,7 +23,7 @@ def register(request):
     else:
         form = UserForm()
     ctx = {
-        'form':form,
+        #'form':form,
         }
     return render(request, 'user/register.html',ctx)
 

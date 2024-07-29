@@ -8,13 +8,13 @@
 <nav class="navbar fixed-top navbar-dark bg-dark">
     {% if user.is_authenticated %}
         <div class="container-fluid">
-            <a class="navbar-brand" href={% url "index" %}>
+            <a class="navbar-brand" href="{% url 'index' %}">
             <img src="{% static 'images/SAVIA_Logo1.png' %}" alt="SAVIA" width="50" height="50" class="rounded-circle">
             </a>
             <ul class="nav nav-pills" >
                 <li  class="nav-item">
 
-                    <a class="nav-link text-white" aria-current="page" href={% url "index" %}>Dashboard</a>
+                    <a class="nav-link text-white" aria-current="page" href="{% url 'index' %}">Dashboard</a>
                 </li>
             </ul>
             <ul class="nav justify-content-end">
@@ -32,7 +32,10 @@
 
                 </div>
                 <li class="nav-item">
-                    <a class="btn btn-secondary" href="{% url 'user-logout' %}">Logout</a>
+                    <form id="logout-form" method="post" action="{% url 'user-logout' %}">
+                        {% csrf_token %}
+                        <button class="btn btn-secondary" type="submit">Logout</button>
+                    </form>
                 </li>
             </ul>
             <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">

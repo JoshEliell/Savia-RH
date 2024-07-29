@@ -8,13 +8,15 @@
 <div class="container">
     <div class='row mt-5'>
         <div class='col-md-6 offset-md-3'>
-            <div class= "border p-3 bg-white">
+            <div class= "card">
+                <div class ="card-header">
                 <h4>Se ha cerrado la sesión correctamente</h4>
-                <hr>
-                <div>
-                    <h6>¡Gracias por pasar tiempo de calidad en el sistema!.</h6>
                 </div>
-                <a href="{%url 'user-login'%}" class="btn btn-primary mt-3">Volver</a>
+                <div class =" card-header">
+                    <h6>¡Gracias por pasar tiempo de calidad en el sistema!.</h6>
+                    <a href="{% url 'user-login' %}" class="btn btn-primary mt-3">Volver</a>
+                </div>
+                
             </div>
         </div>
     </div>
