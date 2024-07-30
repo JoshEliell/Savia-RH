@@ -3,9 +3,9 @@ _pycache_/
 *.pyc
 **/settings.py 
 
-static/bonos
-static/perfil
-
-/static/bonos
-/static/perfil
 .env
+middleware.log
+
+/static/images/bonos
+/static/images/perfil
+/static/images/product_bash
