@@ -9,3 +9,7 @@ static/perfil
 /static/bonos
 /static/perfil
 .env
+middleware.log
+final.sql
+
+/venv
