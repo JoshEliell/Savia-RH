@@ -368,7 +368,7 @@ def Status_vista(request):
 def FormularioStatus(request):
     user_filter = UserDatos.objects.get(user=request.user)
     if user_filter.tipo.id in [4,9,10,11]: #Perfil RH
-        revisar_perfil = Perfil.objects.get(distrito=user_filter.distrito,numero_de_trabajador=user_filter.numero_de_trabajador)
+        #revisar_perfil = Perfil.objects.get(distrito=user_filter.distrito,numero_de_trabajador=user_filter.numero_de_trabajador)
         if user_filter.tipo.id in [9,10,11]:
             empleados = Perfil.objects.filter(complete=True, complete_status=False, baja=False)
         else:
@@ -782,7 +782,7 @@ def BancariosUpdate(request, pk):
 def FormularioCosto(request):
     user_filter = UserDatos.objects.get(user=request.user)
     if user_filter.tipo.id in [4,9,10,11]: #Perfil RH
-        revisar_perfil = Perfil.objects.get(distrito=user_filter.distrito,numero_de_trabajador=user_filter.numero_de_trabajador)
+        #revisar_perfil = Perfil.objects.get(distrito=user_filter.distrito,numero_de_trabajador=user_filter.numero_de_trabajador)
         perfil = Perfil.objects.filter(distrito = user_filter.distrito, baja=False)
         empleados= Status.objects.filter(~Q(fecha_ingreso=None), perfil__id__in=perfil.all(),complete = True, complete_costo = False)
         tablas = DatosISR.objects.all()
