@@ -3,8 +3,8 @@ _pycache_/
 *.pyc
 **/settings.py 
 
-static/bonos
-static/perfil
+.env
+middleware.log
 
 /static/bonos
 /static/perfil

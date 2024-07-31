@@ -951,3 +951,4 @@
 2024-07-31 17:28:46,434 - INFO - user.middleware: GET / by Anonymous
 2024-07-31 17:30:10,999 - INFO - user.middleware: GET /proyecto/VacacionesEmpleados by margarita.universal
 2024-07-31 17:34:04,530 - INFO - user.middleware: GET /proyecto/Status by margarita.universal
+2024-07-31 17:52:36,418 - INFO - user.middleware: POST /proyecto/Status by margarita.universal
