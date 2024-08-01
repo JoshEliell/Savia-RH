@@ -8,8 +8,6 @@ middleware.log
 
 /static/bonos
 /static/perfil
-.env
-middleware.log
 final.sql
 
 /venv

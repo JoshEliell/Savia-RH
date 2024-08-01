@@ -113,7 +113,13 @@ Crear Solicitud - Bonos Varilleros
                                     <input id="cantidad-km" type="number" name="km" value="" min="0" class="form-control bg-white" placeholder="Ingrese los kilómetros" aria-label="nombre" aria-describedby="basic-addon1">
                                 </div>
                             </div>
-                                
+                            <label for="" class="text-muted mb-1">Comentario</label>
+                            {% comment %} Bono {% endcomment %}
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fa-solid fa-message"></i></span>
+                                {% render_field solicitudForm.comentario class="form-control" id="Comentario"%}
+                            </div>
+                            <small class="text-danger">{{ solicitudForm.bono.errors }}</small>
                             
                         </div>
                     </div>
