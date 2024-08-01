@@ -54,6 +54,7 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 #envio de correos
 from django.core.mail import send_mail
 from django.conf import settings
+from decimal import Decimal
 
 #Pagina inicial de los esquemas de los bonos
 @login_required(login_url='user-login')
@@ -288,23 +289,45 @@ def crearSolicitudBonosVarilleros(request):
                     puesto = bonoSolicitadoForm.cleaned_data['puesto']
                     cantidad = bonoSolicitadoForm.cleaned_data['cantidad']
                     
+                    print("Este es el puesto: ", puesto)
+                    print("Este es el id del puesto: ", puesto.id)
+                    print("Esta es la cantidad del bono: ", cantidad)
+                    
                     #se agrega el bono a la solicitud
                     solicitud.bono_id = bono
                     solicitud.save()
                     solicitud.complete_bono = True
                     solicitud.save()
                     
-                    BonoSolicitado.objects.create(
-                        solicitud_id = solicitud.id,
-                        trabajador_id = trabajador.id,
-                        puesto_id = puesto.id,
-                        distrito_id = usuario.distrito.id,
-                        cantidad = cantidad,
-                    )
-                            
-                    #Actuliza la cantidad del total de la solicitud 
-                    total = BonoSolicitado.objects.filter(solicitud_id = solicitud.id).values("cantidad").aggregate(total=Sum('cantidad'))['total']                 
-                    Solicitud.objects.filter(pk=solicitud.id).values("total").update(total=total)
+                    if puesto.id == 19: # ID puesto - TODOS LOS QUE PARTICIPEN EN LA ACTIVIDAD
+                        cantidad = Decimal(cantidad)
+                        participantes = BonoSolicitado.objects.filter(solicitud_id = solicitud.id).count()
+                        participantes += 1
+                        reparto = Decimal(cantidad/participantes)
+                        
+                        BonoSolicitado.objects.create(
+                            solicitud_id = solicitud.id,
+                            trabajador_id = trabajador.id,
+                            puesto_id = puesto.id,
+                            distrito_id = usuario.distrito.id,
+                            cantidad = reparto,
+                        )
+                        
+                        BonoSolicitado.objects.filter(solicitud_id = solicitud.id).update(cantidad=reparto)
+                        Solicitud.objects.filter(pk=solicitud.id).values("total").update(total=cantidad)
+                                            
+                    else:
+                        BonoSolicitado.objects.create(
+                            solicitud_id = solicitud.id,
+                            trabajador_id = trabajador.id,
+                            puesto_id = puesto.id,
+                            distrito_id = usuario.distrito.id,
+                            cantidad = cantidad,
+                        )
+                                
+                        #Actuliza la cantidad del total de la solicitud 
+                        total = BonoSolicitado.objects.filter(solicitud_id = solicitud.id).values("cantidad").aggregate(total=Sum('cantidad'))['total']                 
+                        Solicitud.objects.filter(pk=solicitud.id).values("total").update(total=total)
                         
                     messages.success(request, "El bono se ha agregado a la solicitud correctamente")
                     
@@ -658,11 +681,30 @@ def removerBono(request,bono_id):
         if usuario.tipo.id in (4,5):
             try:
                 bono = BonoSolicitado.objects.get(pk=bono_id)
-                solicitud = Solicitud.objects.get(pk=bono.solicitud_id)
-                solicitud.total -= bono.cantidad
-                solicitud.save()
-                bono.delete()
-                return JsonResponse({'bono_id': bono_id,'total':solicitud.total} ,status=200, safe=True)
+                print(bono.puesto)
+                print(bono.puesto.id) #if
+                
+                if bono.puesto.id == 19: #ID puesto - todos los que participen en la actividad
+                    
+                    print("solicitud: ", bono.solicitud.id)
+                    participantes = BonoSolicitado.objects.filter(solicitud_id = bono.solicitud.id).count()
+                    participantes-=1
+                    print("participantes: ",participantes)
+                    solicitud = Solicitud.objects.get(pk=bono.solicitud.id)
+                    reparto = Decimal(solicitud.total/participantes) 
+                    BonoSolicitado.objects.filter(solicitud_id = bono.solicitud.id).update(cantidad=reparto)
+                    print("reparto: ", reparto)
+                    bono.delete()
+                    return JsonResponse({'bono_id': bono_id,'total':solicitud.total, 'reparto':True} ,status=200, safe=True)
+                    
+                else:    
+                    solicitud = Solicitud.objects.get(pk=bono.solicitud_id)
+                    solicitud.total -= bono.cantidad
+                    solicitud.save()
+                    bono.delete()
+                
+                return JsonResponse({'bono_id': bono_id,'total':solicitud.total, 'reparto':False} ,status=200, safe=True)
+            
             except:
                 return JsonResponse({'mensaje': 'No encontrado'}, status=404,safe=True)
         else:

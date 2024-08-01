@@ -54,6 +54,7 @@ class Solicitud(models.Model):
     complete_requerimiento = models.BooleanField(default=False)
     complete = models.BooleanField(default=False)
     fecha_autorizacion = models.DateTimeField(null=True,auto_now_add=False)
+    comentario = models.CharField(max_length=255,null=True)
     
 class BonoSolicitado(models.Model):
     solicitud = models.ForeignKey(Solicitud,on_delete=models.CASCADE,null=False) 

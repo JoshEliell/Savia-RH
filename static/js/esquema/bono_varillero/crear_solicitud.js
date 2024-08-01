@@ -208,6 +208,7 @@ document.addEventListener("DOMContentLoaded", (e) => {
             
             if (respuesta.status === 200) {
                 console.log(datos)
+                console.log()
                 //eliminar la fila
                 const renderizar = document.querySelectorAll(`[data-id="${datos.bono_id}"]`)
                 renderizar[0].remove()
