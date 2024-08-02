@@ -177,7 +177,7 @@ def crearSolicitudBonosVarilleros(request):
     
     #Todos los supervisores y RH pueden crear solicitudes
     if usuario.userdatos.tipo_id in (5,4):
-        superintendente = UserDatos.objects.filter(distrito_id=usuario.userdatos.distrito, tipo_id=6).values('numero_de_trabajador').first()
+        #superintendente = UserDatos.objects.filter(distrito_id=usuario.userdatos.distrito, tipo_id=6).values('numero_de_trabajador').first()
         #perfil_superintendente = Perfil.objects.filter(numero_de_trabajador = superintendente['numero_de_trabajador']).values('id').first() 
         #se obtiene el usuario logueado
         usuario = get_object_or_404(UserDatos,user_id = request.user.id)
@@ -921,4 +921,13 @@ def convert_excel_bonos_aprobados(bonos,catorcena,total_monto,cantidad_bonos_apr
 @login_required(login_url='user-login')
 def tabuladorBonos(request):
     
-     return render(request, 'esquema/crear_bonos/tabulador_bonos.html')
+    return render(request, 'esquema/crear_bonos/tabulador_bonos.html')
+
+
+def get_puestos(request):
+    bono_id = request.GET.get('bono_id')
+    data = []
+    if bono_id:
+        puestos_qs = Bono.objects.filter(esquema_subcategoria = bono_id).values('puesto__id','puesto__puesto','importe')
+        data = list(puestos_qs)
+    return JsonResponse(data, safe=False)

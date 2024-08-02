@@ -3,8 +3,8 @@ document.addEventListener("DOMContentLoaded", (e) => {
     const bonoViajePEP = 0//0
     const bonoViajePrivado = 19//13
     const bonoCurso = 23//14
-    const url = 'http://127.0.0.1:8000/esquema/bonos_varillero/'
-
+    const url = listarBonosVarillerosUrl
+    
      /**Buscar el soporte para el bono seleccionado */
      async function solicitarSoporteBono(bono){
         try {
@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", (e) => {
     }
 
     /**Para verificar si existe un valor en el select de bono - bono de viaje al iniciar el DOM en js despues de agregar un bono - es para bono viaje */
-    var viajeSelect = document.getElementById("bono");
+    /*var viajeSelect = document.getElementById("bono");
     if (viajeSelect.selectedIndex > 0) {
         
         selectBonoCurso = parseInt(document.getElementById('bono').value)
@@ -50,19 +50,19 @@ document.addEventListener("DOMContentLoaded", (e) => {
             document.getElementById('km').classList.add("d-none")
         }
         
-    }
+    }*/
 
     /**Para verificar si existe un valor en el select de bono al iniciar el DOM en js - despues de agregar un bono - es para el soporte*/
-    var soporteSelect = document.getElementById("bono");
+    var soporteSelect = document.getElementById("id_bono");
     if (soporteSelect.selectedIndex > 0) {
         //console.log("seleccionado")
-        valor = document.getElementById("bono").value
+        valor = soporteSelect.value
         solicitarSoporteBono(valor)
     }
 
     /**Mensajes de alerta*/
     function mensajeBonoNa(){
-        document.getElementById('cantidad').calue = ''
+        document.getElementById('cantidad').value = ''
         Swal.fire({
             title: "No aplica",
             text: "Este esquema de bono no aplica, selecciona otro",
@@ -73,7 +73,7 @@ document.addEventListener("DOMContentLoaded", (e) => {
     /**Seleccionar esquema bono */
     async function solicitarEsquemaBono(bono,puesto){
         try {
-            var response = await fetch('/esquema/solicitar_esquema_bonos/',{
+            var response = await fetch("{% url 'solicitar-esquema-bonos' %}",{
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
@@ -90,7 +90,7 @@ document.addEventListener("DOMContentLoaded", (e) => {
 
             /**Aqui debes de reemplazar/cambiar el id del bono ahorro */
            
-            selectBonoCurso = parseInt(document.getElementById('bono').value)
+            selectBonoCurso = parseInt(document.getElementById('id_bono').value)
             
             if(selectBonoCurso == bonoCurso){
                 if(cantidad == 0.00){
@@ -123,27 +123,13 @@ document.addEventListener("DOMContentLoaded", (e) => {
 
 
     //para cargar el soporte del bono
-    var bonoSoporteSelect = document.getElementById("bono")
+    var bonoSoporteSelect = document.getElementById("id_bono")
 
     bonoSoporteSelect.addEventListener("change",function(e){
         //console.log('solicitar soporte - requerimientos')
-        const bono = document.getElementById("bono").value;
+        const bono = document.getElementById("id_bono").value;
         //console.log("bono id: ",bono)
         solicitarSoporteBono(bono)
-    });
-
-    //para mostrar el campo kilometros del bono de viaje
-    var bonoViajeSelect = document.getElementById("bono")
-    bonoViajeSelect.addEventListener("change",function(e){
-        /**Aqui debes de reemplazar/cambiar los id de los bonos de viaje - PEP y PRIVADO */ 
-        selectBonoCurso = parseInt(document.getElementById('bono').value)
-        
-        if (selectBonoCurso == bonoViajePEP || selectBonoCurso == bonoViajePrivado) {
-            document.getElementById('km').classList.remove("d-none")
-        }else{
-            document.getElementById('km').classList.add("d-none")
-        }
-
     });
 
     /**funcion para calcular los km - $1 x km a partir del km 501 se paga .50 */
@@ -166,12 +152,12 @@ document.addEventListener("DOMContentLoaded", (e) => {
     
 
     //para cargar la cantidad del bono cuando se seleccione alguno puesto o bono
-    var puestoSelect = document.getElementById("puesto");
-    var bonoSelect = document.getElementById("bono");
+    var puestoSelect = document.getElementById("id_puesto");
+    var bonoSelect = document.getElementById("id_bono");
 
     puestoSelect.addEventListener("change",function (e) {
-        const bono = document.getElementById("bono").value;
-        const puesto = document.getElementById("puesto").value;
+        const bono = document.getElementById("id_bono").value;
+        const puesto = document.getElementById("id_puesto").value;
 
         if(bono.length != 0 && puesto.length != 0){
             solicitarEsquemaBono(bono,puesto)
@@ -179,8 +165,8 @@ document.addEventListener("DOMContentLoaded", (e) => {
     });
 
     bonoSelect.addEventListener("change",function (e) {
-        const bono = document.getElementById("bono").value;
-        const puesto = document.getElementById("puesto").value;
+        const bono = document.getElementById("id_bono").value;
+        const puesto = document.getElementById("id_puesto").value;
 
         if(bono.length != 0 && puesto.length != 0){
             solicitarEsquemaBono(bono,puesto)
@@ -192,7 +178,7 @@ document.addEventListener("DOMContentLoaded", (e) => {
     /**Remover bono de la solicitud*/
     async function removerBono(bonoId){
         try {
-            var respuesta= await fetch(`/esquema/remover_bono/${bonoId}/`,{
+            var respuesta= await fetch("{% url 'remover-bono' ${bonoId} %}",{
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
@@ -208,6 +194,7 @@ document.addEventListener("DOMContentLoaded", (e) => {
             
             if (respuesta.status === 200) {
                 console.log(datos)
+                console.log()
                 //eliminar la fila
                 const renderizar = document.querySelectorAll(`[data-id="${datos.bono_id}"]`)
                 renderizar[0].remove()
@@ -340,7 +327,7 @@ document.addEventListener("DOMContentLoaded", (e) => {
     /**Enviar la solicitud - autorizacion */
     async function enviarSolicitud(solicitud){
         try {
-            var response = await fetch('/esquema/enviar_solicitud/',{
+            var response = await fetch("{% url 'enviar_solicitud' %}",{
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
@@ -410,7 +397,5 @@ document.addEventListener("DOMContentLoaded", (e) => {
             enviarSolicitud(folio)
         })
     }
-    
-
 
 });

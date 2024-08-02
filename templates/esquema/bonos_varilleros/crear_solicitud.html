@@ -97,13 +97,22 @@ Crear Solicitud - Bonos Varilleros
                                 <input type="text" value="{{solicitante.distrito.distrito}}" class="form-control bg-white"
                                     placeholder="Nombre" aria-label="nombre" aria-describedby="basic-addon1" readonly>
                             </div>
-                            <label for="" class="text-muted mb-1">Bono</label>
+                            <!--<label for="" class="text-muted mb-1">Bono</label>
                             {% comment %} Bono {% endcomment %}
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-sack-dollar"></i></span>
                                 {% render_field solicitudForm.bono class="form-control" id="bono"%}
                             </div>
-                            <small class="text-danger">{{ solicitudForm.bono.errors }}</small>
+                            <small class="text-danger">{{ solicitudForm.bono.errors }}</small>-->
+
+                            <div class="col-12">
+                                <div class="input-group mb-3">
+                                <span class="input-group-text" id="basic-addon1"><i class="fas fa-sack-dollar"></i></span>
+                                    <div class="form-floating form-floating-group flex-grow-1">   
+                                        {{solicitudForm.bono}}
+                                    </div>
+                                </div>
+                            </div>
                             
                             {% comment %} se activa en el bono viaje - PEP {% endcomment %}
                             <div id="km" class="input-group my-3 d-none">
@@ -146,8 +155,8 @@ Crear Solicitud - Bonos Varilleros
                                     </div>
                                     <small class="text-danger">{{ bonoSolicitadoForm.trabajador.errors }}</small>
                                 </div>
-                                {% comment %} Empleado {% endcomment %}
-                                <div class="col-md-3">
+                            </div> 
+                                <!--<div class="col-md-3">
                                     <label for="puesto" class="form-label fw-bold">Puesto</label>
                                     <div class="input-group">
                                         <span class="input-group-text"><i
@@ -155,7 +164,17 @@ Crear Solicitud - Bonos Varilleros
                                         {% render_field bonoSolicitadoForm.puesto class="form-control" id="puesto" %}
                                     </div>
                                     <small class="text-danger">{{ bonoSolicitadoForm.puesto.errors }}</small>
+                                </div>-->
+                            <div class="row mt-2">
+                                <div class="col-12">
+                                    <div class="input-group mb-3">
+                                    <span class="input-group-text" id="basic-addon1"><i class="fas fa-helmet-safety"></i></span>
+                                        <div class="form-floating form-floating-group flex-grow-1">   
+                                            {{bonoSolicitadoForm.puesto}}
+                                        </div>
+                                    </div>
                                 </div>
+                            </div>
                                 <div class="col-md-3">
                                     <label for="cantidad" class="form-label fw-bold">Cantidad </label></label>
                                     <div class="input-group">
@@ -249,9 +268,9 @@ Crear Solicitud - Bonos Varilleros
     <script type="text/javascript">
         var listarBonosVarillerosUrl = "{% url 'listarBonosVarilleros' %}";
     </script>
-    <script src="{% static 'js/esquema/bono_varillero/crear_solicitud.js' %}"></script>
-    <script src="{% static 'js/esquema/bono_varillero/mostrar_boton.js' %}"></script>
-    {% comment %} select2 {% endcomment %}    
+    <!--<script src="{% static 'js/esquema/bono_varillero/crear_solicitud.js' %}"></script>-->
+    <!--<script src="{% static 'js/esquema/bono_varillero/mostrar_boton.js' %}"></script>
+    {% comment %} select2 {% endcomment %}    -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     {% comment %} select 2 lang es {% endcomment %}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/i18n/es.js"></script>
@@ -262,6 +281,90 @@ Crear Solicitud - Bonos Varilleros
                 language: "es",
             });
         });
+
+        $(document).ready(function() {
+            $('#id_bono').select2({
+                allowClear: true,
+                width: '100%',
+                placeholder: 'Selecciona un bono',
+                templateResult: formatRepo, // Función para renderizar los resultados
+                templateSelection: formatRepoSelection // Función para renderizar la selección
+            });
+
+            $('#id_puesto').select2({
+                allowClear: true,
+                width: '100%',
+                placeholder: 'Selecciona un puesto'
+            });
+          
+
+            // Escuchar cambios en el campo de bonos
+            $('#id_bono').on('select2:select', function(e){
+                var bonoId = e.params.data.id;
+                 // Mostrar/ocultar el campo km basado en el bono seleccionado
+                console.log(bonoId)
+                if (bonoId == 19) {
+                    document.getElementById('km').classList.remove("d-none");
+                } else {
+                    document.getElementById('km').classList.add("d-none");
+                }
+                if (bonoId) {
+                    $.ajax({
+                        url: "{% url 'ajax_load_puestos' %}",
+                        datatype: 'json',
+                        data: {
+                            'bono_id': bonoId
+                        },
+                        success: function (data) {
+                            actualizarPuestos(data);
+                        }
+                    });
+                } else {
+                    $('#id_puesto').empty().trigger('change');
+                }
+            });
+            
+
+
+            $('#id_bono').on('select2:unselect', function(e){
+                $('#id_puesto').empty().trigger('change');
+            });
+
+            function actualizarPuestos(puestos) {
+                var $puestoSelect = $('#id_puesto');
+                $puestoSelect.empty(); // Limpiar las opciones actuales
+
+                // Añadir una opción placeholder
+                $puestoSelect.append(new Option('Seleccione un puesto', '', true, true));
+
+                // Añadir nuevas opciones
+                $.each(puestos, function(index, puesto) {
+                    $puestoSelect.append(new Option(puesto.puesto__puesto, puesto.puesto__id, false, false));
+                });
+
+                // Necesitas reinicializar el select2 para reflejar los cambios
+                $puestoSelect.trigger('change');
+            }
+        });
+
+    function formatRepo (repo) {
+    if (repo.loading) {
+        return repo.text;
+    }
+
+    var $container = $("<div class='select2-result-repository clearfix'>" +
+        "<div class='form-control form-control-lg select2-result-repository__title'></div>" +
+        "</div>");
+
+    $container.find(".select2-result-repository__title").text(repo.text);
+    
+    // Aquí podrías agregar más elementos al contenedor si es necesario.
+
+    return $container;
+    }
+    function formatRepoSelection (repo) {
+        return repo.text || repo.id;
+    }
     </script>
 {% endblock js %}
     
