@@ -183,7 +183,7 @@ Verificar Solicitud - Bonos Varilleros
                                 <tr data-id="{{bono.id}}">
                                     <td>{{bono.trabajador}}</td>
                                     <td>{{bono.puesto}}</td>
-                                    <td>${{bono.cantidad}}</td>
+                                    <td class="cantidad">${{bono.cantidad}}</td>
                                     <td><button type="button" class="btn btn-danger btn-sm" title="Quitar un bono de la solicitud"><i class="fas fa-minus"></i></button></td>
                                 </tr>
                                 {% endfor %}
@@ -246,6 +246,9 @@ Verificar Solicitud - Bonos Varilleros
 {% endblock content %}
 
 {% block js %}
+    <script type="text/javascript">
+        var ruta = "{% url 'listarBonosVarilleros' %}";
+    </script>
     <script src="{% static 'js/esquema/bono_varillero/verificar_solicitud.js' %}"></script>
     <script src="{% static 'js/esquema/bono_varillero/mostrar_boton.js' %}"></script>
     {% comment %} select2 {% endcomment %}    

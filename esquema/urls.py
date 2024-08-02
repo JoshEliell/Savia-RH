@@ -15,7 +15,8 @@ urlpatterns = [
     #api
     path('solicitar_esquema_bonos/',views.solicitarEsquemaBono),
     path('remover_bono/<int:bono_id>/',views.removerBono),
-    path('remover_bonos/editar/<int:solicitud_id>/',views.removerBonosEditar),
+    path('remover_bono_verificar/<int:bono_id>/',views.removerBonoVerificar),
+    path('remover_bonos/editar/<int:solicitud_id>/',views.removerBonosEditar),#ELIMINAR
     path('remover_archivo/<int:archivo_id>/',views.removerArchivo),
     path('enviar_solicitud/',views.EnviarSolicitudEsquemaBono),
     path('solicitar_soporte_bono/',views.solicitarSoporteBono),

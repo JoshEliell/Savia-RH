@@ -204,19 +204,45 @@ document.addEventListener("DOMContentLoaded", (e) => {
             });
 
             const datos = await respuesta.json();
-            //console.log(datos)
+            console.log(datos)
             
             if (respuesta.status === 200) {
-                console.log(datos)
-                console.log()
-                //eliminar la fila
-                const renderizar = document.querySelectorAll(`[data-id="${datos.bono_id}"]`)
-                renderizar[0].remove()
-                //renderizar el total en html
-                total = document.getElementById('total').textContent = datos.total
-                //se elimina la tabla cuando re remueven los bonos y no hay
-                if (datos.total == 0)
-                    document.getElementById('tabla').remove()
+
+                /**se verifica la respuesta y depende si es un el puesto la cantidad sera divida o no */
+                if (!datos.reparto){
+                    console.log(datos)
+                    console.log(datos.reparto)
+                    console.log(typeof(datos.reparto))
+    
+                    //eliminar la file
+                    const renderizar = document.querySelectorAll(`[data-id="${datos.bono_id}"]`)
+                    renderizar[0].remove()
+                    //renderizar el total en html
+                    total = document.getElementById('total').textContent = datos.total
+                    //se elimina la tabla cuando re remueven los bonos y no hay
+                    if (datos.total == 0)
+                        document.getElementById('tabla').remove()
+                }else{
+                    console.log(datos.participantes)
+                    console.log("Datos participanes: ",datos.participantes)
+                    console.log("datos bandera: ", bandera)
+                    //se elimina la fila que contiene el bono
+                    const renderizar = document.querySelectorAll(`[data-id="${datos.bono_id}"]`)
+                    renderizar[0].remove()
+                    //se detecta la tabla y la clase cantidad para que sea sustituida esta cantidad
+                    const celdasCantidad = document.querySelectorAll('#tabla .cantidad');
+                    //cada celda se le pasa el monto 
+                    celdasCantidad.forEach(celda => {
+                        celda.textContent = '$' + datos.monto;
+                    });
+                    
+                    if (datos.bandera == 1)
+                        document.getElementById('tabla').remove()
+                }
+               
+
+
+                
 
             } else if (respuesta.status === 403) {
                 Swal.fire({
@@ -244,8 +270,10 @@ document.addEventListener("DOMContentLoaded", (e) => {
             console.log(error)
             Swal.fire({
                 title: "Error",
-                text: "No se pudo procesar la solicitud",
+                text: "No se pudo procesar la solicitud ",
                 icon: "warning",
+
+                
             })
 
         }
