@@ -6,6 +6,8 @@ _pycache_/
 .env
 middleware.log
 
-/static/images/bonos
-/static/images/perfil
-/static/images/product_bash
+/static/bonos
+/static/perfil
+final.sql
+
+/venv

@@ -14,7 +14,7 @@ def usuarioLogueado(request):
 class SolicitudForm(forms.ModelForm):
     class Meta:
         model = Solicitud
-        fields = ['bono']
+        fields = ['bono','comentario']
         
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

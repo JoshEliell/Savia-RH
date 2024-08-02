@@ -178,7 +178,7 @@ def crearSolicitudBonosVarilleros(request):
     #Todos los supervisores y RH pueden crear solicitudes
     if usuario.userdatos.tipo_id in (5,4):
         superintendente = UserDatos.objects.filter(distrito_id=usuario.userdatos.distrito, tipo_id=6).values('numero_de_trabajador').first()
-        perfil_superintendente = Perfil.objects.filter(numero_de_trabajador = superintendente['numero_de_trabajador']).values('id').first() 
+        #perfil_superintendente = Perfil.objects.filter(numero_de_trabajador = superintendente['numero_de_trabajador']).values('id').first() 
         #se obtiene el usuario logueado
         usuario = get_object_or_404(UserDatos,user_id = request.user.id)
         #se obtiene el perfil del usuario logueado
