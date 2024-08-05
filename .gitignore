@@ -8,6 +8,7 @@ middleware.log
 
 /static/bonos
 /static/perfil
+/static/product_bash
 final.sql
 
 /venv

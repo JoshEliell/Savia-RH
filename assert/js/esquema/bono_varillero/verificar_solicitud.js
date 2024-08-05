@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", (e) => {
     const bonoViajePEP = 0
     const bonoViajePrivado = 19//13
     const bonoCurso = 23//14
-    const url = 'http://127.0.0.1:8000/esquema/bonos_varillero/'
+    const url = ruta
 
     //se obtiene el bono que esta actualmente
     tipoBono = document.getElementById('bono').value
@@ -150,7 +150,8 @@ document.addEventListener("DOMContentLoaded", (e) => {
     /**Remover bono de la solicitud*/
     async function removerBono(bonoId){
         try {
-            var respuesta= await fetch(`/esquema/remover_bono/${bonoId}/`,{
+            console.log("Es en verificar el bono: ")
+            var respuesta= await fetch(`/esquema/remover_bono_verificar/${bonoId}/`,{
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
@@ -162,19 +163,35 @@ document.addEventListener("DOMContentLoaded", (e) => {
             });
 
             const datos = await respuesta.json();
-            //console.log(datos)
-            
+
             if (respuesta.status === 200) {
-                console.log(datos)
-                //eliminar la fila
-                const renderizar = document.querySelectorAll(`[data-id="${datos.bono_id}"]`)
-                renderizar[0].remove()
-                //renderizar el total en html
-                total = document.getElementById('total').textContent = datos.total
-                //se elimina la tabla cuando re remueven los bonos y no hay
-                if (datos.total == 0)
-                    document.getElementById('tabla').remove()
-                
+                if (!datos.reparto){ //esta condicion se utiliza cuando el puesto del bono es todo el personal
+                    console.log(datos)
+                    //eliminar la fila
+                    const renderizar = document.querySelectorAll(`[data-id="${datos.bono_id}"]`)
+                    renderizar[0].remove()
+                    //renderizar el total en html
+                    total = document.getElementById('total').textContent = datos.total
+                    //se elimina la tabla cuando re remueven los bonos y no hay
+                    if (datos.total == 0)
+                        document.getElementById('tabla').remove()
+                }
+                else{
+                    //se elimina la fila que contiene el bono
+                    const renderizar = document.querySelectorAll(`[data-id="${datos.bono_id}"]`)
+                    renderizar[0].remove()
+                    //se detecta la tabla y la clase cantidad para que sea sustituida esta cantidad
+                    const celdasCantidad = document.querySelectorAll('#tabla .cantidad');
+                    //cada celda se le pasa el monto 
+                    celdasCantidad.forEach(celda => {
+                        monto = parseFloat(datos.monto)
+                        celda.textContent = '$' + (monto.toFixed(2));
+                    });
+                    
+                    if (datos.bandera == 1)
+                        document.getElementById('tabla').remove()
+
+                }
 
             }else{
                 Swal.fire({
