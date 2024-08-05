@@ -2,9 +2,9 @@
 #from itertools import count
 from proyecto.models import UserDatos, Perfil, Status, Solicitud_economicos, Solicitud_vacaciones, Costo, Catorcenas
 from prenomina.models import Prenomina
-from prenomina.models import Prenomina
-from revisar.models import AutorizarPrenomina, Estado
-import datetime 
+from revisar.models import AutorizarPrenomina, Estado, AutorizarSolicitudes
+import datetime
+from django.db.models import Q 
 #from requisiciones.models import Requis
 #from user.models import Profile
 #Variables globales de usuario
@@ -15,6 +15,7 @@ def contadores_processor(request):
     #Filtro para evitar problemas al acceder los administradores sin perfil y status
     #Hace una busqueda en la database y si no lo encuentra lo guarda como ninguno y si lo encuentra lo
     #               manda a llamar en forma de get para que sea unico y no mande error
+    bonos_count = 0
     if not UserDatos.objects.filter(user=request.user.id):
         usuario = None
         usuario_fijo = None
@@ -33,7 +34,13 @@ def contadores_processor(request):
         else:
             status_fijo = Status.objects.get(perfil__numero_de_trabajador = usuario.numero_de_trabajador, perfil__distrito = usuario.distrito)
             
-                   
+        #bonos autorizaciones
+        if usuario.tipo.id in [5,4]:
+            perfil = Perfil.objects.filter(numero_de_trabajador = usuario.numero_de_trabajador,distrito_id = usuario.distrito.id).values_list('id',flat=True)
+            bonos_count = AutorizarSolicitudes.objects.filter(solicitud__solicitante_id__in= perfil, estado_id = 4).count()
+        if usuario.tipo.id in [6,7,8]:
+            bonos_count = AutorizarSolicitudes.objects.filter(tipo_perfil_id = usuario.tipo.id , estado_id = 3).count()
+            
         #prenominas - autorizaciones       
         if usuario.tipo.id in [8,9,10,11]:#GE, SU ADMIN, SU RH, SU Nomina
             ahora = datetime.date.today()
@@ -63,7 +70,7 @@ def contadores_processor(request):
     economico_menu = None
     vacaciones_count = None
     vacacion_menu = None
-        
+    
     if usuario_fijo:        
         if usuario.tipo_id == 8 : #Gerente o sudireccion
             solicitudes_economicos = Solicitud_economicos.objects.filter(complete=True, autorizar=None, perfil_gerente_id = usuario_fijo.id)
@@ -82,7 +89,6 @@ def contadores_processor(request):
             solicitudes_vacaciones = Solicitud_vacaciones.objects.filter(complete=True, autorizar_jefe=None, perfil_id = usuario_fijo.id)
             vacacion_menu = Solicitud_vacaciones.objects.filter(complete=True, perfil_id = usuario_fijo.id).exists()
             vacaciones_count = solicitudes_vacaciones.count()                      
-            
     return {
         'usuario':usuario,
         'usuario_fijo':usuario_fijo,
@@ -92,4 +98,5 @@ def contadores_processor(request):
         'vacacion_menu':  vacacion_menu , 
         'vacaciones_count':vacaciones_count,
         'prenomina_estado':prenomina_estado,
+        'bonos_count':bonos_count
     }
