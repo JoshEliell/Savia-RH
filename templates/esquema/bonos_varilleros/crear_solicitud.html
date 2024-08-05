@@ -180,7 +180,7 @@ Crear Solicitud - Bonos Varilleros
                                     <div class="input-group">
                                         <span class="input-group-text"><i
                                                 class="fa fa-dollar-sign"></i></span>
-                                        {% render_field bonoSolicitadoForm.cantidad class="form-control bg-white" value="" id="cantidad"%}
+                                        {% render_field bonoSolicitadoForm.cantidad class="form-control bg-white"%}
                                     </div>
                                     <small class="text-danger">{{ bonoSolicitadoForm.cantidad.errors }}</small>
                                 </div>
@@ -283,69 +283,77 @@ Crear Solicitud - Bonos Varilleros
         });
 
         $(document).ready(function() {
-            $('#id_bono').select2({
-                allowClear: true,
-                width: '100%',
-                placeholder: 'Selecciona un bono',
-                templateResult: formatRepo, // Función para renderizar los resultados
-                templateSelection: formatRepoSelection // Función para renderizar la selección
-            });
+    // Inicializar Select2 con la clase personalizada para ancho
+    $('#id_bono').select2({
+        allowClear: true,
+        width: '100%',
+        placeholder: 'Selecciona un bono',
+        templateResult: formatRepo, // Función para renderizar los resultados
+        templateSelection: formatRepoSelection // Función para renderizar la selección
+    }).next('.select2-container').addClass('wide-select');
 
-            $('#id_puesto').select2({
-                allowClear: true,
-                width: '100%',
-                placeholder: 'Selecciona un puesto'
-            });
-          
+    $('#id_puesto').select2({
+        allowClear: true,
+        width: '100%',
+        placeholder: 'Selecciona un puesto',
+        ajax: {
+            url: "{% url 'ajax_load_puestos' %}",
+            datatype: 'json',
+            data: function (params) {
+                return {
+                    bono_id: $('#id_bono').val()
+                };
+            },
+            processResults: function (data) {
+                return {
+                    results: $.map(data, function (item) {
+                        return {
+                            id: item.puesto__id,
+                            text: item.puesto__puesto,
+                            importe: item.importe
+                        };
+                    })
+                };
+            },
+            cache: true
+        }
+    }).next('.select2-container').addClass('wide-select');
 
-            // Escuchar cambios en el campo de bonos
-            $('#id_bono').on('select2:select', function(e){
-                var bonoId = e.params.data.id;
-                 // Mostrar/ocultar el campo km basado en el bono seleccionado
-                console.log(bonoId)
-                if (bonoId == 19) {
-                    document.getElementById('km').classList.remove("d-none");
-                } else {
-                    document.getElementById('km').classList.add("d-none");
-                }
-                if (bonoId) {
-                    $.ajax({
-                        url: "{% url 'ajax_load_puestos' %}",
-                        datatype: 'json',
-                        data: {
-                            'bono_id': bonoId
-                        },
-                        success: function (data) {
-                            actualizarPuestos(data);
-                        }
-                    });
-                } else {
-                    $('#id_puesto').empty().trigger('change');
-                }
-            });
-            
+    $('#id_bono').on('select2:select', function(e){
+        var bonoId = e.params.data.id;
 
+        // Mostrar/ocultar el campo km basado en el bono seleccionado
+        if (bonoId == 3) {
+            document.getElementById('km').classList.remove("d-none");
+        } else {
+            document.getElementById('km').classList.add("d-none");
+        }
 
-            $('#id_bono').on('select2:unselect', function(e){
-                $('#id_puesto').empty().trigger('change');
-            });
+        if (bonoId) {
+            $('#id_puesto').val(null).trigger('change');
+        } else {
+            $('#id_puesto').empty().trigger('change');
+        }
+    });
 
-            function actualizarPuestos(puestos) {
-                var $puestoSelect = $('#id_puesto');
-                $puestoSelect.empty(); // Limpiar las opciones actuales
+    $('#id_puesto').on('select2:select', function(e){
+        const selectedOption = e.params.data;
+        const importe = selectedOption.importe;
+        console.log('Importe:', importe); // Depuración
+        if (importe !== null && importe !== undefined) {
+            document.getElementById('id_cantidad').value = importe;
+        } else {
+            document.getElementById('id_cantidad').value = '';
+        }
+    });
 
-                // Añadir una opción placeholder
-                $puestoSelect.append(new Option('Seleccione un puesto', '', true, true));
+    $('#id_bono').on('select2:unselect', function(e){
+        $('#id_puesto').empty().trigger('change');
+        document.getElementById('km').classList.add("d-none");
+        document.getElementById('id_cantidad').value = '';
+    });
+});
 
-                // Añadir nuevas opciones
-                $.each(puestos, function(index, puesto) {
-                    $puestoSelect.append(new Option(puesto.puesto__puesto, puesto.puesto__id, false, false));
-                });
-
-                // Necesitas reinicializar el select2 para reflejar los cambios
-                $puestoSelect.trigger('change');
-            }
-        });
 
     function formatRepo (repo) {
     if (repo.loading) {

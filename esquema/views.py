@@ -289,10 +289,6 @@ def crearSolicitudBonosVarilleros(request):
                     puesto = bonoSolicitadoForm.cleaned_data['puesto']
                     cantidad = bonoSolicitadoForm.cleaned_data['cantidad']
                     
-                    print("Este es el puesto: ", puesto)
-                    print("Este es el id del puesto: ", puesto.id)
-                    print("Esta es la cantidad del bono: ", cantidad)
-                    
                     #se agrega el bono a la solicitud
                     solicitud.bono_id = bono
                     solicitud.save()
@@ -314,7 +310,8 @@ def crearSolicitudBonosVarilleros(request):
                         )
                         
                         BonoSolicitado.objects.filter(solicitud_id = solicitud.id).update(cantidad=reparto)
-                        Solicitud.objects.filter(pk=solicitud.id).values("total").update(total=cantidad)
+                        Solicitud.objects.filter(pk=solicitud.id).update(total=cantidad)
+                        total = cantidad
                                             
                     else:
                         BonoSolicitado.objects.create(
@@ -383,12 +380,13 @@ def verificarSolicitudBonosVarilleros(request,solicitud):
             return render(request, 'revisar/403.html')
         
         autorizacion = AutorizarSolicitudes.objects.select_related('solicitud').filter(solicitud=solicitud).last()
+        total = autorizacion.solicitud.total
         requerimientoForm = RequerimientoForm()
         solicitudForm = SolicitudForm(initial={'bono': autorizacion.solicitud.bono.id})
         bonoSolicitadoForm = BonoSolicitadoForm()
         datos_bonos_solicitud = BonoSolicitado.objects.filter(solicitud_id=solicitud)
         #empleados = Perfil.objects.filter(distrito_id=usuario.distrito.id).exclude(numero_de_trabajador=usuario.numero_de_trabajador).exclude(baja=1).order_by('nombres')
-        empleados = Perfil.objects.filter(empresa_id = 5).exclude(numero_de_trabajador = usuario.numero_de_trabajador).exclude(baja = 1).order_by('nombres')
+        empleados = Perfil.objects.filter(distrito_id = usuario.distrito.id).exclude(numero_de_trabajador = usuario.numero_de_trabajador).exclude(baja = 1).order_by('nombres')
         bonoSolicitadoForm.fields["trabajador"].queryset = empleados
         lista_archivos = Requerimiento.objects.filter(solicitud_id=solicitud).values("id", "url")
 
@@ -428,18 +426,37 @@ def verificarSolicitudBonosVarilleros(request,solicitud):
 
                     Solicitud.objects.filter(pk=solicitud).update(bono=bono)
                     
-                    BonoSolicitado.objects.create(
-                            solicitud_id=solicitud,
-                            trabajador_id=trabajador.id,
-                            puesto_id=puesto.id,
-                            distrito_id=usuario.distrito.id,
-                            cantidad=cantidad,
+                    if puesto.id == 19: # ID puesto - TODOS LOS QUE PARTICIPEN EN LA ACTIVIDAD
+                        cantidad = Decimal(cantidad)
+                        participantes = BonoSolicitado.objects.filter(solicitud_id = solicitud).count()
+                        participantes += 1
+                        reparto = Decimal(cantidad/participantes)
+                        
+                        BonoSolicitado.objects.create(
+                            solicitud_id = solicitud,
+                            trabajador_id = trabajador.id,
+                            puesto_id = puesto.id,
+                            distrito_id = usuario.distrito.id,
+                            cantidad = reparto,
                         )
-                    total = BonoSolicitado.objects.filter(solicitud_id=solicitud).values("cantidad").aggregate(total=Sum('cantidad'))['total']
-                    Solicitud.objects.filter(pk=solicitud).values("total").update(total=total)
-                    messages.success(request, "El bono se ha agregado a la solicitud correctamente")
-                    bonoSolicitadoForm = BonoSolicitadoForm()
-                    bonoSolicitadoForm.fields["trabajador"].queryset = empleados
+                        
+                        BonoSolicitado.objects.filter(solicitud_id = solicitud).update(cantidad=reparto)
+                        Solicitud.objects.filter(pk=solicitud).update(total=cantidad)
+                        total = cantidad
+                    else:
+                        BonoSolicitado.objects.create(
+                                solicitud_id=solicitud,
+                                trabajador_id=trabajador.id,
+                                puesto_id=puesto.id,
+                                distrito_id=usuario.distrito.id,
+                                cantidad=cantidad,
+                            )
+                        total = BonoSolicitado.objects.filter(solicitud_id=solicitud).values("cantidad").aggregate(total=Sum('cantidad'))['total']
+                        Solicitud.objects.filter(pk=solicitud).values("total").update(total=total)
+                        messages.success(request, "El bono se ha agregado a la solicitud correctamente")
+                        bonoSolicitadoForm = BonoSolicitadoForm()
+                        bonoSolicitadoForm.fields["trabajador"].queryset = empleados
+                        print("este es el total correcto",total)
                     
 
             elif 'btn_actualizar' in request.POST:
@@ -458,7 +475,7 @@ def verificarSolicitudBonosVarilleros(request,solicitud):
             'solicitud': solicitud,
             'solicitante': autorizacion.solicitud,
             'datos_bonos_solicitud': datos_bonos_solicitud,
-            'total': autorizacion.solicitud.total,
+            'total': total,
             'lista_archivos': lista_archivos,
             'estado': autorizacion
         }
@@ -681,29 +698,69 @@ def removerBono(request,bono_id):
         if usuario.tipo.id in (4,5):
             try:
                 bono = BonoSolicitado.objects.get(pk=bono_id)
-                print(bono.puesto)
-                print(bono.puesto.id) #if
-                
                 if bono.puesto.id == 19: #ID puesto - todos los que participen en la actividad
-                    
-                    print("solicitud: ", bono.solicitud.id)
-                    participantes = BonoSolicitado.objects.filter(solicitud_id = bono.solicitud.id).count()
-                    participantes-=1
-                    print("participantes: ",participantes)
+                    print("Bono reparto")
+                    bandera = 0 #se utiliza para ocultar la tabla del bono
+                    participantes = BonoSolicitado.objects.filter(solicitud_id = bono.solicitud.id).count()#se cuenta el numero
+                    bandera = participantes
+                    participantes-=1 #se resta porque al final se le quita uno y se debe quedar la cuenta
                     solicitud = Solicitud.objects.get(pk=bono.solicitud.id)
-                    reparto = Decimal(solicitud.total/participantes) 
+                    if participantes == 0:
+                        participantes = 1
+                    reparto = Decimal(solicitud.total/participantes) #se hace la división
                     BonoSolicitado.objects.filter(solicitud_id = bono.solicitud.id).update(cantidad=reparto)
-                    print("reparto: ", reparto)
                     bono.delete()
-                    return JsonResponse({'bono_id': bono_id,'total':solicitud.total, 'reparto':True} ,status=200, safe=True)
-                    
+                    return JsonResponse({'bono_id': bono_id,'total':solicitud.total, 'reparto':True, 'monto':reparto, 'participantes':participantes, 'bandera':bandera} ,status=200, safe=True)
+                
                 else:    
+                    print("Cualquier bono")
                     solicitud = Solicitud.objects.get(pk=bono.solicitud_id)
                     solicitud.total -= bono.cantidad
                     solicitud.save()
                     bono.delete()
                 
-                return JsonResponse({'bono_id': bono_id,'total':solicitud.total, 'reparto':False} ,status=200, safe=True)
+                    return JsonResponse({'bono_id': bono_id,'total':solicitud.total, 'reparto':False} ,status=200, safe=True)
+            
+            except:
+                return JsonResponse({'mensaje': 'No encontrado'}, status=404,safe=True)
+        else:
+            return JsonResponse({'mensaje': 'Prohibido'}, status=403,safe=True)
+
+#para remover bonos verificar     
+@login_required(login_url='user-login')
+def removerBonoVerificar(request,bono_id):
+    #hacer el complete requerimiento a 0 - contar el numero de archivos cuando es 0
+    if request.method == "POST":
+        
+        usuario = get_object_or_404(UserDatos,user_id = request.user.id)
+        
+        if usuario.tipo.id in (4,5):
+            try:
+                print("Hola verificar")
+                print("Este es el bono: ", bono_id)
+                bono = BonoSolicitado.objects.get(pk=bono_id)
+                if bono.puesto.id == 19: #ID puesto - todos los que participen en la actividad
+                    print("Bono reparto")
+                    bandera = 0 #se utiliza para ocultar la tabla del bono
+                    participantes = BonoSolicitado.objects.filter(solicitud_id = bono.solicitud.id).count()#se cuenta el numero
+                    bandera = participantes
+                    participantes-=1 #se resta porque al final se le quita uno y se debe quedar la cuenta
+                    solicitud = Solicitud.objects.get(pk=bono.solicitud.id)
+                    if participantes == 0:
+                        participantes = 1
+                    reparto = Decimal(solicitud.total/participantes) #se hace la división
+                    BonoSolicitado.objects.filter(solicitud_id = bono.solicitud.id).update(cantidad=reparto)
+                    bono.delete()
+                    return JsonResponse({'bono_id': bono_id,'total':solicitud.total, 'reparto':True, 'monto':reparto, 'participantes':participantes, 'bandera':bandera} ,status=200, safe=True)
+                
+                else:    
+                    print("Cualquier bono")
+                    solicitud = Solicitud.objects.get(pk=bono.solicitud_id)
+                    solicitud.total -= bono.cantidad
+                    solicitud.save()
+                    bono.delete()
+                
+                    return JsonResponse({'bono_id': bono_id,'total':solicitud.total, 'reparto':False} ,status=200, safe=True)
             
             except:
                 return JsonResponse({'mensaje': 'No encontrado'}, status=404,safe=True)
@@ -794,11 +851,15 @@ def solicitarEsquemaBono(request):
         usuario = get_object_or_404(UserDatos,user_id = request.user.id)
         #se obtienen los datos enviados del servidor            
         data = json.loads(request.body)
-        
-        #response_data = {'message': data}
-        #return JsonResponse(response_data,safe=False)
-            
+                    
         esquema_bono = Bono.objects.filter(esquema_subcategoria_id = data['bono'], distrito_id = usuario.distrito.id, puesto_id = data['puesto'])
+
+        for bono in esquema_bono:
+            print(bono)
+            print(bono.importe)
+            print(bono.puesto)
+    
+            
         serialized_data = serialize("json", esquema_bono)
         serialized_data = json.loads(serialized_data)
         return JsonResponse(serialized_data, safe=False, status=200)
@@ -929,5 +990,7 @@ def get_puestos(request):
     data = []
     if bono_id:
         puestos_qs = Bono.objects.filter(esquema_subcategoria = bono_id).values('puesto__id','puesto__puesto','importe')
+        for puesto in puestos_qs:
+            puesto['importe'] = str(puesto['importe'])
         data = list(puestos_qs)
     return JsonResponse(data, safe=False)

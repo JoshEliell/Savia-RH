@@ -35,6 +35,7 @@ class Bono(models.Model):
     distrito = models.ForeignKey(Distrito,on_delete=models.CASCADE,null=False)
     #cuando el importe es null se considera NA
     importe = models.DecimalField(max_digits=10,decimal_places=2,null=True, blank=True)
+    estado = models.BooleanField(default=False) #se utiliza para el estado del bono (False activo | True baja)
 
     def __str__(self):
         if self.esquema_subcategoria is None:

@@ -11,3 +11,4 @@ middleware.log
 final.sql
 
 /venv
+*.sql
