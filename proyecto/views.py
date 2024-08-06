@@ -6956,3 +6956,22 @@ def determinar_estado_general(request, ultima_autorizacion):
         return 'RH pendiente (rechazado por Gerencia)'
 
     return 'Estado no reconocido'
+
+@login_required(login_url='user-login')
+def listar_tabulador_bonos(request):
+    from esquema.models import Bono
+    
+    usuario = UserDatos.objects.get(user=request.user)
+    
+    if usuario.tipo.id in (9,10,11,12):
+        bonos = Bono.objects.filter(estado=0)
+        #bonos = Bono.objects.filter(distrito_id = usuario.distrito.id)
+    else:
+        bonos = Bono.objects.filter(distrito_id = usuario.distrito.id,estado=0)
+        #bonos = Bono.objects.filter(distrito_id = usuario.distrito.id)
+        
+    context = {
+        'bonos':bonos
+    }
+    
+    return render(request, 'proyecto/tabulador_bonos.html',context)
