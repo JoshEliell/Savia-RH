@@ -18,8 +18,3 @@
 	#orders-pending{
 		background-color: #7CD1C0;
 	}
-
-	.select2-container .select2-selection--single {
-		height: 60px;
-		font-size: 1.2em;
-	}

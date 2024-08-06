@@ -143,6 +143,6 @@ body {background-color: #9a9b9d;}
 }
 
 .select2-container .select2-selection--single {
-    height: 60px;
-    font-size: 1.2em;
+    height: 60px !important;
+    font-size: 1.2em !important;
 }
