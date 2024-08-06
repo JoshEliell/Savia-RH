@@ -294,26 +294,26 @@ def Tabla_solicitudes_prenomina(request):
                 prenomina.ultima = ultima_rechazada.tipo_perfil.nombre
             prenomina.estado_general = determinar_estado_general(ultima_autorizacion)
         if request.method =='POST' and 'Excel' in request.POST:
-            filtro = False
-            return excel_estado_prenomina(request,prenominas,filtro,user_filter)
-
+            try:
+                filtro = False
+                return excel_estado_prenomina(request,prenominas,filtro,user_filter)
+            except Exception as e:
+                messages.error(request,'No existen autorizaciones para generar la prenomina')
+                
+                
         if request.method =='POST' and 'Autorizar' in request.POST:
             if user_filter.tipo.nombre ==  "Control Tecnico":
                 prenominas_filtradas = [prenom for prenom in prenominas if prenom.estado_general == 'Controles técnicos pendiente']
-                if prenominas_filtradas:
-                    # Llamar a la función Autorizar_gerencia con las prenominas filtradas
-                    return Autorizar_general(prenominas_filtradas, user_filter,request)
+                if not prenominas_filtradas:
+                    messages.error(request,'No hay prenominas por autorizar')
                 else:
-                    # Si no hay prenominas que cumplan la condición, manejar según sea necesario
-                    messages.error(request,'Ya se han autorizado todas las prenominas pendientes')
+                    return Autorizar_general(prenominas_filtradas, user_filter,request)
             if user_filter.tipo.nombre ==  "Gerencia":
                 prenominas_filtradas = [prenom for prenom in prenominas if prenom.estado_general == 'Gerente pendiente']
-                if prenominas_filtradas:
-                    # Llamar a la función Autorizar_gerencia con las prenominas filtradas
-                    return Autorizar_general(prenominas_filtradas, user_filter,request)
+                if not prenominas_filtradas:
+                    messages.error(request,'No hay prenominas por autorizar')
                 else:
-                    # Si no hay prenominas que cumplan la condición, manejar según sea necesario
-                    messages.error(request,'Ya se han autorizado todas las prenominas pendientes')
+                     return Autorizar_general(prenominas_filtradas, user_filter,request)
 
         p = Paginator(prenominas, 50)
         page = request.GET.get('page')

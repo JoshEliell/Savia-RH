@@ -67,9 +67,8 @@ class BonoSolicitado(models.Model):
 
 def validar_size(value):
     filesize = value.size
-    if filesize >  5 * 2048 * 2048:  # 10 MB
-    #if filesize >  5 * 512 * 512:  # 2.5 MB
-        raise ValidationError('El tamaño del archivo no puede ser mayor a 2.5 MB.')    
+    if filesize >  10 * 2048 * 2048:  # 10 MB
+        raise ValidationError('El tamaño del archivo no puede ser mayor a 10 MB.')    
     
     
 #Se pueden subir imagenes o pdf al esquema bono solicitado - Es el soporte del bono es decir los archivos PDF e Imagenes
