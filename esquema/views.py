@@ -248,10 +248,9 @@ def crearSolicitudBonos(request):
         elif 'btn_agregar' in request.POST:
             bono_solicitado, created =  BonoSolicitado.objects.get_or_create(solicitud = solicitud, trabajador = solicitante, distrito = solicitante.distrito, cantidad = 0) 
             form = BonoSolicitadoForm(request.POST, instance = bono_solicitado)              
+            bono_id = request.POST.get('bonoId')
             #validación de los formularios
             if form.is_valid():
-
-               
                 bono_solicitado = form.save() #= form.save(commit=False)
                 bono = Bono.objects.get(puesto = bono_solicitado.puesto)
                 bono.seleccionado = True
