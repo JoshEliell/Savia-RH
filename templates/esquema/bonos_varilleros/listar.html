@@ -44,7 +44,7 @@
                     <div class="card-title"><h5>Solicitudes Bonos</h5></div>
                     {% comment %} Solo el supervisor y RH puede crear solicitudes de Bonos{% endcomment %}
                     {% if usuario.tipo.id == 5 or usuario.tipo.id == 4 %}
-                        <a href="{% url 'crearSolicitudBonosVarilleros' %}" class="btn btn-azul" ><i class="fas fa-plus"></i> Crear solicitud de bono</a>
+                        <a href="{% url 'crearSolicitudBonos' %}" class="btn btn-azul" ><i class="fas fa-plus"></i> Crear solicitud de bono</a>
                     {% endif %}
                 </div>
                 

@@ -44,7 +44,7 @@ class Bono(models.Model):
     
 #El bono que pasara a revisión
 class Solicitud(models.Model):
-    id = models.BigIntegerField(primary_key=True)
+    #id = models.BigIntegerField(primary_key=True)
     folio = models.BigIntegerField(null=False, unique=True)
     #supervisor quien realiza la solicitud
     solicitante = models.ForeignKey(Perfil,on_delete=models.CASCADE,null=False) 
@@ -59,8 +59,8 @@ class Solicitud(models.Model):
     
 class BonoSolicitado(models.Model):
     solicitud = models.ForeignKey(Solicitud,on_delete=models.CASCADE,null=False) 
-    trabajador = models.ForeignKey(Perfil,on_delete=models.CASCADE,null=False)
-    puesto = models.ForeignKey(Puesto,on_delete=models.CASCADE,null=False)
+    trabajador = models.ForeignKey(Perfil,on_delete=models.CASCADE,null=True)
+    puesto = models.ForeignKey(Puesto,on_delete=models.CASCADE,null=True)
     distrito = models.ForeignKey(Distrito,on_delete=models.CASCADE,null=False)
     cantidad = models.DecimalField(max_digits=10,decimal_places=2,null=False) 
     fecha = models.DateTimeField(null=False,auto_now_add=True, db_index=True)

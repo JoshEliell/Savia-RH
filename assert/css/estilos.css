@@ -61,3 +61,8 @@
         margin-top: 200px;
     }
 }
+
+.select2-container .select2-selection--single {
+    height: 60px;
+    font-size: 1.2em;
+}

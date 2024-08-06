@@ -16,11 +16,11 @@ class SolicitudForm(forms.ModelForm):
         model = Solicitud
         fields = ['bono','comentario']
         
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    #def __init__(self, *args, **kwargs):
+        #super().__init__(*args, **kwargs)
         #se filtra el bono por la subcategoria - bono varillero
         #self.fields['folio'].widget.attrs['readonly'] = 'readonly'
-        self.fields['bono'].queryset = Subcategoria.objects.filter(esquema_categoria_id=1).order_by('nombre')   
+        #self.fields['bono'].queryset = Subcategoria.objects.filter(esquema_categoria_id=1).order_by('nombre')   
     
 class BonoSolicitadoForm(forms.ModelForm):
     class Meta:

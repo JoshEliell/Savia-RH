@@ -172,196 +172,118 @@ def comprimir_imagen(imagen):
 
 #para crear solicitudes de bonos
 @login_required(login_url='user-login')
-def crearSolicitudBonosVarilleros(request):
+def crearSolicitudBonos(request):
     usuario = request.user  
     
     #Todos los supervisores y RH pueden crear solicitudes
     if usuario.userdatos.tipo_id in (5,4):
-        superintendente = UserDatos.objects.filter(distrito_id=usuario.userdatos.distrito, tipo_id=6).values('numero_de_trabajador').first()
-        #perfil_superintendente = Perfil.objects.filter(numero_de_trabajador = superintendente['numero_de_trabajador']).values('id').first() 
         #se obtiene el usuario logueado
         usuario = get_object_or_404(UserDatos,user_id = request.user.id)
         #se obtiene el perfil del usuario logueado
         solicitante = get_object_or_404(Perfil,numero_de_trabajador = usuario.numero_de_trabajador) 
-        #se cargan los formularios con los valores del post
-        solicitudForm = SolicitudForm()      
-        bonoSolicitadoForm = BonoSolicitadoForm()
-        requerimientoForm = RequerimientoForm()
-        #se hace una consulta con los empleados del distrito que pertenecen
-        empleados = Perfil.objects.filter(distrito_id = usuario.distrito.id).exclude(numero_de_trabajador = usuario.numero_de_trabajador).exclude(baja = 1).order_by('nombres')
-        #se carga el formulario en automatico definiendo filtros
-        bonoSolicitadoForm.fields["trabajador"].queryset = empleados 
-        #crea el contexto
-        contexto = {
-                'usuario':usuario,
-                'solicitante':solicitante,
-                'solicitudForm':solicitudForm,
-                'bonoSolicitadoForm':bonoSolicitadoForm,
-                'requerimientoForm':requerimientoForm,
-                'lista_archivos':None,
-        }
-        
-        #Para guardar la solicitud
-        if request.method == "POST":
-            #obtiene el folio independientemente del formulario
-            if request.POST.get('valor') is not None:
-                folio = request.POST.get('valor')
-            else:        
-                folio = request.POST.get('folio')
-                
-            solicitud, created = Solicitud.objects.get_or_create(id=folio,defaults={'complete': False, 'id':folio,'folio':folio,'solicitante_id':solicitante.id, 'total':0.00})
-                    
-            #obtiene un queryset de los archivos de la solicitud
-            lista_archivos = Requerimiento.objects.filter(solicitud_id = folio).values("id","url")
-            #obtiene los bonos que han sido agregados a la solicitud
-            datos_bonos_solicitud = BonoSolicitado.objects.filter(solicitud_id = folio)
-            
-            #se carga el valor del bono inicial 
-            valor_bono = Solicitud.objects.filter(pk=folio).values("bono_id").first()
-            if valor_bono is not None:
-                solicitudForm = SolicitudForm(initial={'bono': valor_bono["bono_id"]}) 
-                        
-            #se obtiene la cantidad total
-            buscar_solicitud = Solicitud.objects.filter(folio=folio).values_list("id","total").first()
-            if buscar_solicitud is not None:
-                total = buscar_solicitud[1]
-            else:
-                total = None  
-                
-            if 'btn_archivos' in request.POST:      
-                #Se envian los formularios con datos                   
-                requerimientoForm = RequerimientoForm(request.POST, request.FILES)  
-                archivos = request.FILES.getlist('url')
-                
-                #creacion del contexto            
-                contexto['solicitudForm'] = solicitudForm
-                contexto['bonoSolicitadoForm'] = bonoSolicitadoForm
-                contexto['requerimientoForm'] = requerimientoForm
-                contexto['lista_archivos'] = lista_archivos
-                contexto['datos_bonos_solicitud'] = datos_bonos_solicitud
-                contexto['total'] = total
-                contexto['folio'] = folio
-                
-                #validacion     
-                if requerimientoForm.is_valid():
-                    #Se recorren los archivos para ser almacenados
-                    for archivo in archivos:
-                        #Comprime imagenes
-                        if archivo.content_type != 'application/pdf' and archivo.content_type != 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' and archivo.content_type != 'application/vnd.ms-excel':
-                            documento = comprimir_imagen(archivo)
-                        #cuando es un PDF
-                        else:
-                            documento = archivo
-                        
-                        #Guarda imagen o PDF
-                        Requerimiento.objects.create(
-                            solicitud_id = folio,
-                             url = documento,
-                        )
-                        
-                        
-                    solicitud.complete_requerimiento = True
-                    solicitud.save()
-                    messages.success(request, "Los archivos se subieron correctamente")
-                    return render(request,'esquema/bonos_varilleros/crear_solicitud.html',contexto)
-                else:
-                    return render(request,'esquema/bonos_varilleros/crear_solicitud.html',contexto)
-            
-            elif 'btn_agregar' in request.POST: 
-                    
-                solicitudForm = SolicitudForm(request.POST)      
-                bonoSolicitadoForm = BonoSolicitadoForm(request.POST)  
-                bonoSolicitadoForm.fields["trabajador"].queryset = empleados 
-                
-                contexto['solicitudForm'] = solicitudForm
-                contexto['bonoSolicitadoForm'] = bonoSolicitadoForm
-                contexto['requerimientoForm'] = requerimientoForm
-                contexto['lista_archivos'] = lista_archivos
-                contexto['datos_bonos_solicitud'] = datos_bonos_solicitud
-                contexto['total'] = total
-                contexto['folio'] = folio
-                            
-                #validación de los formularios
-                if solicitudForm.is_valid() and bonoSolicitadoForm.is_valid():
-                    #obtener los datos de los formularios
-                    bono = solicitudForm.cleaned_data['bono']
-                    trabajador = bonoSolicitadoForm.cleaned_data['trabajador']
-                    puesto = bonoSolicitadoForm.cleaned_data['puesto']
-                    cantidad = bonoSolicitadoForm.cleaned_data['cantidad']
-                    
-                    #se agrega el bono a la solicitud
-                    solicitud.bono_id = bono
-                    solicitud.save()
-                    solicitud.complete_bono = True
-                    solicitud.save()
-                    
-                    if puesto.id == 19: # ID puesto - TODOS LOS QUE PARTICIPEN EN LA ACTIVIDAD
-                        cantidad = Decimal(cantidad)
-                        participantes = BonoSolicitado.objects.filter(solicitud_id = solicitud.id).count()
-                        participantes += 1
-                        reparto = Decimal(cantidad/participantes)
-                        
-                        BonoSolicitado.objects.create(
-                            solicitud_id = solicitud.id,
-                            trabajador_id = trabajador.id,
-                            puesto_id = puesto.id,
-                            distrito_id = usuario.distrito.id,
-                            cantidad = reparto,
-                        )
-                        
-                        BonoSolicitado.objects.filter(solicitud_id = solicitud.id).update(cantidad=reparto)
-                        Solicitud.objects.filter(pk=solicitud.id).update(total=cantidad)
-                        total = cantidad
-                                            
-                    else:
-                        BonoSolicitado.objects.create(
-                            solicitud_id = solicitud.id,
-                            trabajador_id = trabajador.id,
-                            puesto_id = puesto.id,
-                            distrito_id = usuario.distrito.id,
-                            cantidad = cantidad,
-                        )
-                                
-                        #Actuliza la cantidad del total de la solicitud 
-                        total = BonoSolicitado.objects.filter(solicitud_id = solicitud.id).values("cantidad").aggregate(total=Sum('cantidad'))['total']                 
-                        Solicitud.objects.filter(pk=solicitud.id).values("total").update(total=total)
-                        
-                    messages.success(request, "El bono se ha agregado a la solicitud correctamente")
-                    
-                    #Implementación del correo 
-                    
-                    
-                    
-                            
-                    #se llama el formulario vacio para que pueda agregar mas bonos
-                    bonoSolicitadoForm = BonoSolicitadoForm()
-                            
-                    contexto['bonoSolicitadoForm'] = bonoSolicitadoForm
-                    contexto['total'] = total
-                                            
-                    contexto["bonoSolicitadoForm"].fields["trabajador"].queryset = empleados
-                        
-                    return render(request,'esquema/bonos_varilleros/crear_solicitud.html',contexto)
-                #se muestran los errores de validaciones      
-                else:
-                                                    
-                    return render(request,'esquema/bonos_varilleros/crear_solicitud.html',contexto)
-                            
-        #Es metodo GET - Carga los formularios
-        else:        
-            #Genera el número de folio automaticamente
-            ultimo_registro = Solicitud.objects.values('id').last()
-            
-            if ultimo_registro is not None:
-                folio = ultimo_registro['id'] + 1 
-            else:
-                folio = 1
-                        
-            contexto['folio'] = folio
-             
-            return render(request,'esquema/bonos_varilleros/crear_solicitud.html',contexto)
+
+    #se cargan los formularios con los valores del post
+    solicitudForm = SolicitudForm()      
+    bonoSolicitadoForm = BonoSolicitadoForm()
+    requerimientoForm = RequerimientoForm()
+    #se hace una consulta con los empleados del distrito que pertenecen
+    empleados = Perfil.objects.filter(distrito_id = usuario.distrito.id).exclude(numero_de_trabajador = usuario.numero_de_trabajador).exclude(baja = 1).order_by('nombres')
+    #se carga el formulario en automatico definiendo filtros
+    bonoSolicitadoForm.fields["trabajador"].queryset = empleados 
+    ultimo_registro = Solicitud.objects.filter(complete = True).last()
+
+    if ultimo_registro:
+        folio = ultimo_registro.folio + 1 
     else:
-        return render(request, 'revisar/403.html')
+        folio = 1
+        
+    solicitud, created = Solicitud.objects.get_or_create(complete = False, defaults={'complete': False, 'folio':folio,'solicitante_id':solicitante.id, 'total':0.00})
+    #Obtiene los bonos que han sido creados en la solicitud
+    bonos_solicitados = BonoSolicitado.objects.filter(solicitud_id = solicitud.id)
+    lista_archivos = Requerimiento.objects.filter(solicitud_id = solicitud.id)
+        
+    #Trae todos los bonos por puesto
+    bonos = Bono.objects.all()
+
+    #Los prepara para el select2
+    bonos_para_select2 = [
+        {
+            'id': bono.id,
+            'text': str(bono.esquema_subcategoria.nombre),
+            'soporte': str(bono.esquema_subcategoria.soporte)
+        } for bono in bonos
+    ]
+       
+    errors = {}
+    #Para guardar la solicitud
+    if request.method == "POST":
+        #obtiene un queryset de los archivos de la solicitud
+       
+        if 'btn_archivos' in request.POST:      
+            #Se envian los formularios con datos                   
+            form = RequerimientoForm(request.POST, request.FILES)  
+            archivos = request.FILES.getlist('url')
+                
+            if form.is_valid():
+                #Se recorren los archivos para ser almacenados
+                for archivo in archivos:
+                    #Comprime imagenes
+                    if archivo.content_type != 'application/pdf' and archivo.content_type != 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' and archivo.content_type != 'application/vnd.ms-excel':
+                        documento = comprimir_imagen(archivo)
+                    #cuando es un PDF
+                    else:
+                        documento = archivo
+                    #Guarda imagen o PDF
+                        requerimiento = Requerimiento.objects.create(
+                            solicitud_id = solicitud.id,
+                            url = documento,
+                        )
+                    requerimiento.save()
+                
+                         
+                solicitud.complete_requerimiento = True
+                solicitud.save()
+                messages.success(request, "Los archivos se subieron correctamente")
+                return redirect("crearSolicitudBonos") 
+        elif 'btn_agregar' in request.POST:
+            bono_solicitado, created =  BonoSolicitado.objects.get_or_create(solicitud = solicitud, trabajador = solicitante, distrito = solicitante.distrito, cantidad = 0) 
+            form = BonoSolicitadoForm(request.POST, instance = bono_solicitado)              
+            #validación de los formularios
+            if form.is_valid():
+
+               
+                bono_solicitado = form.save() #= form.save(commit=False)
+                bono = Bono.objects.get(puesto = bono_solicitado.puesto)
+                bono.seleccionado = True
+                bono.save()
+        elif 'enviar_solicitud' in request.POST:
+            form = SolicitudForm(request.POST, instance = solicitud)
+            if form.is_valid():
+                solicitud = form.save(commit = False)
+                solicitud.complete = False
+                solicitud.save()
+                messages.success(request, "La solicitud se creó correctamente")
+                return redirect('listarBonosVarilleros')
+            else:
+                messages.error(request, "La solicitud no se creó")
+                errors = form.errors
+                   
+
+    contexto = {
+        'folio': folio,
+        'bonos': bonos_para_select2,
+        'usuario':usuario,
+        'solicitante':solicitante,
+        'solicitudForm':solicitudForm,
+        'bonoSolicitadoForm':bonoSolicitadoForm,
+        'requerimientoForm':requerimientoForm,
+        'lista_archivos': lista_archivos,
+        'bonos_solicitados': bonos_solicitados,
+        'errors':errors,
+    } 
+
+    return render(request,'esquema/bonos_varilleros/crear_solicitud.html',contexto)
+    
 
 @login_required(login_url='user-login')  
 def verificarSolicitudBonosVarilleros(request,solicitud):
@@ -714,12 +636,16 @@ def removerBono(request,bono_id):
                 
                 else:    
                     print("Cualquier bono")
-                    solicitud = Solicitud.objects.get(pk=bono.solicitud_id)
+                    solicitud = Solicitud.objects.get(id=bono.solicitud_id)
                     solicitud.total -= bono.cantidad
                     solicitud.save()
                     bono.delete()
                 
-                    return JsonResponse({'bono_id': bono_id,'total':solicitud.total, 'reparto':False} ,status=200, safe=True)
+                    return JsonResponse({
+                        'bono_id': bono_id,
+                        'total':solicitud.total, 
+                        'reparto':False
+                        } ,status=200, safe=True)
             
             except:
                 return JsonResponse({'mensaje': 'No encontrado'}, status=404,safe=True)
@@ -736,9 +662,9 @@ def removerBonoVerificar(request,bono_id):
         
         if usuario.tipo.id in (4,5):
             try:
-                print("Hola verificar")
                 print("Este es el bono: ", bono_id)
                 bono = BonoSolicitado.objects.get(pk=bono_id)
+                solicitud = Solicitud.objects.get(pk=bono.solicitud_id)
                 if bono.puesto.id == 19: #ID puesto - todos los que participen en la actividad
                     print("Bono reparto")
                     bandera = 0 #se utiliza para ocultar la tabla del bono
@@ -755,12 +681,14 @@ def removerBonoVerificar(request,bono_id):
                 
                 else:    
                     print("Cualquier bono")
-                    solicitud = Solicitud.objects.get(pk=bono.solicitud_id)
                     solicitud.total -= bono.cantidad
                     solicitud.save()
                     bono.delete()
                 
-                    return JsonResponse({'bono_id': bono_id,'total':solicitud.total, 'reparto':False} ,status=200, safe=True)
+                    return JsonResponse({
+                        'bono_id': bono_id,
+                        'total':solicitud.total, 
+                        'reparto':False} ,status=200, safe=True)
             
             except:
                 return JsonResponse({'mensaje': 'No encontrado'}, status=404,safe=True)
@@ -982,4 +910,15 @@ def convert_excel_bonos_aprobados(bonos,catorcena,total_monto,cantidad_bonos_apr
 @login_required(login_url='user-login')
 def tabuladorBonos(request):
     
-     return render(request, 'esquema/crear_bonos/tabulador_bonos.html')
+    return render(request, 'esquema/crear_bonos/tabulador_bonos.html')
+
+
+def get_puestos(request):
+    bono_id = request.GET.get('bono_id')
+    data = []
+    if bono_id:
+        puestos_qs = Bono.objects.filter(esquema_subcategoria = bono_id, seleccionado = False).values('puesto__id','puesto__puesto','importe')
+        for puesto in puestos_qs:
+            puesto['importe'] = str(puesto['importe'])
+        data = list(puestos_qs)
+    return JsonResponse(data, safe=False)

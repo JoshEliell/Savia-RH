@@ -3,10 +3,10 @@ document.addEventListener("DOMContentLoaded", (e) => {
     const bonoViajePEP = 0//0
     const bonoViajePrivado = 19//13
     const bonoCurso = 23//14
-    const url = 'http://127.0.0.1:8000/esquema/bonos_varillero/'
-
+    const url = listarBonosVarillerosUrl
+    
      /**Buscar el soporte para el bono seleccionado */
-     async function solicitarSoporteBono(bono){
+     /*async function solicitarSoporteBono(bono){
         try {
             var response = await fetch('/esquema/solicitar_soporte_bono/',{
                 method: 'POST',
@@ -36,10 +36,10 @@ document.addEventListener("DOMContentLoaded", (e) => {
             })
 
         }
-    }
+    }*/
 
     /**Para verificar si existe un valor en el select de bono - bono de viaje al iniciar el DOM en js despues de agregar un bono - es para bono viaje */
-    var viajeSelect = document.getElementById("bono");
+    /*var viajeSelect = document.getElementById("bono");
     if (viajeSelect.selectedIndex > 0) {
         
         selectBonoCurso = parseInt(document.getElementById('bono').value)
@@ -50,30 +50,21 @@ document.addEventListener("DOMContentLoaded", (e) => {
             document.getElementById('km').classList.add("d-none")
         }
         
-    }
+    }*/
 
     /**Para verificar si existe un valor en el select de bono al iniciar el DOM en js - despues de agregar un bono - es para el soporte*/
-    var soporteSelect = document.getElementById("bono");
+    /*var soporteSelect = document.getElementById("id_bono");
     if (soporteSelect.selectedIndex > 0) {
         //console.log("seleccionado")
-        valor = document.getElementById("bono").value
+        valor = soporteSelect.value
         solicitarSoporteBono(valor)
-    }
+    }*/
 
-    /**Mensajes de alerta*/
-    function mensajeBonoNa(){
-        document.getElementById('cantidad').calue = ''
-        Swal.fire({
-            title: "No aplica",
-            text: "Este esquema de bono no aplica, selecciona otro",
-            icon: "warning",
-        })
-    }
 
     /**Seleccionar esquema bono */
-    async function solicitarEsquemaBono(bono,puesto){
+    /*async function solicitarEsquemaBono(bono,puesto){
         try {
-            var response = await fetch('/esquema/solicitar_esquema_bonos/',{
+            var response = await fetch("{% url 'solicitar-esquema-bonos' %}",{
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
@@ -88,9 +79,9 @@ document.addEventListener("DOMContentLoaded", (e) => {
             var datos = await response.json();
             cantidad = datos[0].fields.importe
 
-            /**Aqui debes de reemplazar/cambiar el id del bono ahorro */
+            //Aqui debes de reemplazar/cambiar el id del bono ahorro 
            
-            selectBonoCurso = parseInt(document.getElementById('bono').value)
+            selectBonoCurso = parseInt(document.getElementById('id_bono').value)
             
             if(selectBonoCurso == bonoCurso){
                 if(cantidad == 0.00){
@@ -117,34 +108,18 @@ document.addEventListener("DOMContentLoaded", (e) => {
             })
 
         }
-    }
+    }*/
 
    
-
-
     //para cargar el soporte del bono
-    var bonoSoporteSelect = document.getElementById("bono")
+    /*var bonoSoporteSelect = document.getElementById("id_bono")
 
     bonoSoporteSelect.addEventListener("change",function(e){
         //console.log('solicitar soporte - requerimientos')
-        const bono = document.getElementById("bono").value;
+        const bono = document.getElementById("id_bono").value;
         //console.log("bono id: ",bono)
         solicitarSoporteBono(bono)
-    });
-
-    //para mostrar el campo kilometros del bono de viaje
-    var bonoViajeSelect = document.getElementById("bono")
-    bonoViajeSelect.addEventListener("change",function(e){
-        /**Aqui debes de reemplazar/cambiar los id de los bonos de viaje - PEP y PRIVADO */ 
-        selectBonoCurso = parseInt(document.getElementById('bono').value)
-        
-        if (selectBonoCurso == bonoViajePEP || selectBonoCurso == bonoViajePrivado) {
-            document.getElementById('km').classList.remove("d-none")
-        }else{
-            document.getElementById('km').classList.add("d-none")
-        }
-
-    });
+    });*/
 
     /**funcion para calcular los km - $1 x km a partir del km 501 se paga .50 */
     //para detectar cuando se pulsan los km ingresados
@@ -166,12 +141,12 @@ document.addEventListener("DOMContentLoaded", (e) => {
     
 
     //para cargar la cantidad del bono cuando se seleccione alguno puesto o bono
-    var puestoSelect = document.getElementById("puesto");
-    var bonoSelect = document.getElementById("bono");
+    /*var puestoSelect = document.getElementById("id_puesto");
+    var bonoSelect = document.getElementById("id_bono");
 
     puestoSelect.addEventListener("change",function (e) {
-        const bono = document.getElementById("bono").value;
-        const puesto = document.getElementById("puesto").value;
+        const bono = document.getElementById("id_bono").value;
+        const puesto = document.getElementById("id_puesto").value;
 
         if(bono.length != 0 && puesto.length != 0){
             solicitarEsquemaBono(bono,puesto)
@@ -179,20 +154,22 @@ document.addEventListener("DOMContentLoaded", (e) => {
     });
 
     bonoSelect.addEventListener("change",function (e) {
-        const bono = document.getElementById("bono").value;
-        const puesto = document.getElementById("puesto").value;
+        const bono = document.getElementById("id_bono").value;
+        const puesto = document.getElementById("id_puesto").value;
 
         if(bono.length != 0 && puesto.length != 0){
             solicitarEsquemaBono(bono,puesto)
 
         }
 
-    });
+    });*/
 
-    /**Remover bono de la solicitud*/
+    /**Remover bono de la solicitud- good*/
     async function removerBono(bonoId){
+        const url = `/esquema/remover_bono/${bonoId}/`
+        console.log(url)
         try {
-            var respuesta= await fetch(`/esquema/remover_bono/${bonoId}/`,{
+            var respuesta= await fetch(url,{
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
@@ -204,18 +181,45 @@ document.addEventListener("DOMContentLoaded", (e) => {
             });
 
             const datos = await respuesta.json();
-            //console.log(datos)
+            console.log(datos)
             
             if (respuesta.status === 200) {
-                console.log(datos)
-                //eliminar la fila
-                const renderizar = document.querySelectorAll(`[data-id="${datos.bono_id}"]`)
-                renderizar[0].remove()
-                //renderizar el total en html
-                total = document.getElementById('total').textContent = datos.total
-                //se elimina la tabla cuando re remueven los bonos y no hay
-                if (datos.total == 0)
-                    document.getElementById('tabla').remove()
+
+                /**se verifica la respuesta y depende si es un el puesto la cantidad sera divida o no */
+                if (!datos.reparto){
+                    console.log(datos)
+                    console.log(datos.reparto)
+                    console.log(typeof(datos.reparto))
+    
+                    //eliminar la file
+                    const renderizar = document.querySelectorAll(`[data-id="${datos.bono_id}"]`)
+                    renderizar[0].remove()
+                    //renderizar el total en html
+                    total = document.getElementById('total').textContent = datos.total
+                    //se elimina la tabla cuando re remueven los bonos y no hay
+                    if (datos.total == 0)
+                        document.getElementById('tabla').remove()
+                }else{
+                    console.log(datos.participantes)
+                    console.log("Datos participanes: ",datos.participantes)
+                    console.log("datos bandera: ", bandera)
+                    //se elimina la fila que contiene el bono
+                    const renderizar = document.querySelectorAll(`[data-id="${datos.bono_id}"]`)
+                    renderizar[0].remove()
+                    //se detecta la tabla y la clase cantidad para que sea sustituida esta cantidad
+                    const celdasCantidad = document.querySelectorAll('#tabla .cantidad');
+                    //cada celda se le pasa el monto 
+                    celdasCantidad.forEach(celda => {
+                        celda.textContent = '$' + datos.monto;
+                    });
+                    
+                    if (datos.bandera == 1)
+                        document.getElementById('tabla').remove()
+                }
+               
+
+
+                
 
             } else if (respuesta.status === 403) {
                 Swal.fire({
@@ -243,8 +247,10 @@ document.addEventListener("DOMContentLoaded", (e) => {
             console.log(error)
             Swal.fire({
                 title: "Error",
-                text: "No se pudo procesar la solicitud",
+                text: "No se pudo procesar la solicitud ",
                 icon: "warning",
+
+                
             })
 
         }
@@ -288,7 +294,7 @@ document.addEventListener("DOMContentLoaded", (e) => {
     }
 
 
-    /**Para eliminar un archivo */
+    /**Para eliminar un archivo -good */
     async function removerArchivo(archivo){
         try {
             var response = await fetch(`/esquema/remover_archivo/${archivo}/`,{
@@ -338,9 +344,9 @@ document.addEventListener("DOMContentLoaded", (e) => {
     }
 
     /**Enviar la solicitud - autorizacion */
-    async function enviarSolicitud(solicitud){
+    /*async function enviarSolicitud(solicitud){
         try {
-            var response = await fetch('/esquema/enviar_solicitud/',{
+            var response = await fetch("{% url 'enviar_solicitud' %}",{
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
@@ -409,8 +415,6 @@ document.addEventListener("DOMContentLoaded", (e) => {
             var folio = document.getElementsByName('folio')[0].value;
             enviarSolicitud(folio)
         })
-    }
-    
-
+    }*/
 
 });
