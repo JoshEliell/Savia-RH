@@ -183,7 +183,7 @@ def crearSolicitudBonos(request):
         solicitante = get_object_or_404(Perfil,numero_de_trabajador = usuario.numero_de_trabajador) 
 
     #se cargan los formularios con los valores del post
-    solicitudForm = SolicitudForm()      
+    #solicitudForm = SolicitudForm()      
     bonoSolicitadoForm = BonoSolicitadoForm()
     requerimientoForm = RequerimientoForm()
     #se hace una consulta con los empleados del distrito que pertenecen
@@ -202,8 +202,8 @@ def crearSolicitudBonos(request):
     bonos_solicitados = BonoSolicitado.objects.filter(solicitud_id = solicitud.id)
     lista_archivos = Requerimiento.objects.filter(solicitud_id = solicitud.id)
         
-    #Trae todos los bonos por puesto
-    bonos = Bono.objects.all()
+    #Trae todos los bonos por puesto por distrito, estado 1 = baja | 0 = activo
+    bonos = Bono.objects.filter(distrito_id = usuario.distrito.id, estado = 0)
 
     #Los prepara para el select2
     bonos_para_select2 = [
@@ -246,15 +246,54 @@ def crearSolicitudBonos(request):
                 messages.success(request, "Los archivos se subieron correctamente")
                 return redirect("crearSolicitudBonos") 
         elif 'btn_agregar' in request.POST:
-            bono_solicitado, created =  BonoSolicitado.objects.get_or_create(solicitud = solicitud, trabajador = solicitante, distrito = solicitante.distrito, cantidad = 0) 
-            form = BonoSolicitadoForm(request.POST, instance = bono_solicitado)              
+            bono_solicitado, created =  BonoSolicitado.objects.get_or_create(solicitud = solicitud, trabajador = solicitante, distrito = solicitante.distrito, cantidad = 0)             
+            
+            #obtener el id de la subcategoria (bono) y agregarlo a la solicitud
             bono_id = request.POST.get('bonoId')
+            if bono_id is None or bono_id.strip() == '':
+                bono_id = solicitud.bono_id
+                            
+            form = BonoSolicitadoForm(request.POST, instance = bono_solicitado)  
             #validación de los formularios
             if form.is_valid():
-                bono_solicitado = form.save() #= form.save(commit=False)
-                bono = Bono.objects.get(puesto = bono_solicitado.puesto)
-                bono.seleccionado = True
-                bono.save()
+                #se obtienen los datos del formulario BonoSolicitado pero aun no se guardan
+                bono_solicitado = form.save(commit = False)
+                #se actualiza el bono en la solicitud
+                solicitud.bono_id = bono_id
+                solicitud.save()
+                
+                if bono_solicitado.puesto.id == 7:
+                    bono_solicitado.save()
+                    # id puesto - todos los que participen en la actividad - dividir la cantidad del bono entre el total de los participantes
+                    participantes = BonoSolicitado.objects.filter(solicitud_id = solicitud.id).count()
+                    #División
+                    reparto = Decimal(bono_solicitado.cantidad/participantes)
+                    solicitud.total = bono_solicitado.cantidad
+                    solicitud.save()
+                    BonoSolicitado.objects.filter(solicitud_id = solicitud.id).update(cantidad=reparto)
+                elif bono_id in (1,2):
+                    # id bono - BONO EVIC EXTRACCIÓN PEP, BONO EVIC INTRODUCCIÓN PEP - no se pueden repetir los puestos
+                    puesto_repetido = BonoSolicitado.objects.filter(solicitud_id = solicitud.id, puesto_id = bono_solicitado.puesto.id).exists()
+                    if puesto_repetido:
+                        print("No guardar en BD puesto repetudido")
+                        return redirect(request.path) 
+                    else:
+                        bono_solicitado.save()
+                        total = BonoSolicitado.objects.filter(solicitud_id = solicitud.id).aggregate(total=Sum('cantidad'))['total'] 
+                        solicitud.total = total
+                        solicitud.save()
+                        
+                                       
+                else:
+                    #Se realiza una suma a los bonos
+                    bono_solicitado.save()
+                    total = BonoSolicitado.objects.filter(solicitud_id = solicitud.id).aggregate(total=Sum('cantidad'))['total'] 
+                    solicitud.total = total
+                    solicitud.save()
+                #bono.seleccionado = True
+                #bono.save()
+                
+                
         elif 'enviar_solicitud' in request.POST:
             form = SolicitudForm(request.POST, instance = solicitud)
             if form.is_valid():
@@ -267,7 +306,8 @@ def crearSolicitudBonos(request):
                 messages.error(request, "La solicitud no se creó")
                 errors = form.errors
                    
-
+    solicitudForm =  SolicitudForm(instance = solicitud)
+   
     contexto = {
         'folio': folio,
         'bonos': bonos_para_select2,
@@ -279,6 +319,7 @@ def crearSolicitudBonos(request):
         'lista_archivos': lista_archivos,
         'bonos_solicitados': bonos_solicitados,
         'errors':errors,
+        'solicitud':solicitud
     } 
 
     return render(request,'esquema/bonos_varilleros/crear_solicitud.html',contexto)
@@ -619,6 +660,21 @@ def removerBono(request,bono_id):
         if usuario.tipo.id in (4,5):
             try:
                 bono = BonoSolicitado.objects.get(pk=bono_id)
+                
+                if bono.puesto == 7: # id puesto - todos los que participen en la actividad
+                    print("dividir")
+                else:
+                    #obtengo el id de la solicitud
+                    solicitud_id = bono.solicitud_id
+                    #se elimina el registro del bonosolicitud
+                    bono.delete()
+                    #se realiza la suma con los que queda en la BD
+                    total = BonoSolicitado.objects.filter(solicitud_id = solicitud_id).aggregate(total=Sum('cantidad'))['total'] or 0
+                    #se actualza la solicitud el total
+                    Solicitud.objects.filter(pk = solicitud_id).update(total = total)  
+                    return JsonResponse({'bono_id': bono_id,'total':total} ,status=200, safe=True)              
+                
+                """
                 if bono.puesto.id == 19: #ID puesto - todos los que participen en la actividad
                     print("Bono reparto")
                     bandera = 0 #se utiliza para ocultar la tabla del bono
@@ -645,6 +701,7 @@ def removerBono(request,bono_id):
                         'total':solicitud.total, 
                         'reparto':False
                         } ,status=200, safe=True)
+                """
             
             except:
                 return JsonResponse({'mensaje': 'No encontrado'}, status=404,safe=True)
@@ -916,7 +973,8 @@ def get_puestos(request):
     bono_id = request.GET.get('bono_id')
     data = []
     if bono_id:
-        puestos_qs = Bono.objects.filter(esquema_subcategoria = bono_id, seleccionado = False).values('puesto__id','puesto__puesto','importe')
+        #puestos_qs = Bono.objects.filter(esquema_subcategoria = bono_id, seleccionado = False).values('puesto__id','puesto__puesto','importe')
+        puestos_qs = Bono.objects.filter(esquema_subcategoria = bono_id).values('puesto__id','puesto__puesto','importe')
         for puesto in puestos_qs:
             puesto['importe'] = str(puesto['importe'])
         data = list(puestos_qs)

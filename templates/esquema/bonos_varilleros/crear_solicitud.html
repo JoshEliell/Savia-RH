@@ -19,7 +19,7 @@ Crear Solicitud - Bonos Varilleros
 <h6>&nbsp;</h6>
 <h6>&nbsp;</h6>
 <h6>&nbsp;</h6>
-<div class="container-fluid margen-alto">
+<div class="container-fluid">
         {% comment %}Un mensaje de alerta{% endcomment %}
         {% if messages %}
             {% for message in messages %}
@@ -239,7 +239,7 @@ Crear Solicitud - Bonos Varilleros
                                 <tr>
                                     <td></td>   
                                     <td></td>
-                                    <td colspan="" class="fw-bold">Total: $<span id="total">{{total}}</span> </td>
+                                    <td colspan="" class="fw-bold">Total: $<span id="total">{{solicitud.total}}</span> </td>
                                     <td></td>
                                 </tr>
                                 <tr>

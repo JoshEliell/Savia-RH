@@ -184,8 +184,21 @@ document.addEventListener("DOMContentLoaded", (e) => {
             console.log(datos)
             
             if (respuesta.status === 200) {
+                //console.log(datos)
+                //eliminar la fila
+                const renderizar = document.querySelectorAll(`[data-id="${datos.bono_id}"]`)
+                renderizar[0].remove()
+                //renderizar el total en html
+                total = document.getElementById('total').textContent = datos.total
+                //se elimina la tabla cuando re remueven los bonos y no hay
+                //if (datos.total == 0)
+                //    document.getElementById('tabla').remove()
+                
+
+
 
                 /**se verifica la respuesta y depende si es un el puesto la cantidad sera divida o no */
+                /** 
                 if (!datos.reparto){
                     console.log(datos)
                     console.log(datos.reparto)
@@ -216,6 +229,7 @@ document.addEventListener("DOMContentLoaded", (e) => {
                     if (datos.bandera == 1)
                         document.getElementById('tabla').remove()
                 }
+                */
                
 
 
