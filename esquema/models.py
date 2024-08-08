@@ -28,7 +28,7 @@ class Subcategoria(models.Model):
     def __str__(self):
         return self.nombre
     
-#Este es el esquema que contiene los bonos definidos
+#Este es el esquema que contiene los bonos definidos - TABULADOR DE BONOS
 class Bono(models.Model):
     esquema_subcategoria = models.ForeignKey(Subcategoria,on_delete=models.CASCADE,null=False)
     puesto = models.ForeignKey(Puesto,on_delete=models.CASCADE,null=False)
@@ -60,8 +60,7 @@ class Solicitud(models.Model):
 class BonoSolicitado(models.Model):
     solicitud = models.ForeignKey(Solicitud,on_delete=models.CASCADE,null=False) 
     trabajador = models.ForeignKey(Perfil,on_delete=models.CASCADE,null=True)
-    puesto = models.ForeignKey(Puesto,on_delete=models.CASCADE,null=True)
-    distrito = models.ForeignKey(Distrito,on_delete=models.CASCADE,null=False)
+    bono = models.ForeignKey(Bono,on_delete=models.CASCADE,null=True)
     cantidad = models.DecimalField(max_digits=10,decimal_places=2,null=False) 
     fecha = models.DateTimeField(null=False,auto_now_add=True, db_index=True)
 

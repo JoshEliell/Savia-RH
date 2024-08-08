@@ -17,7 +17,7 @@ import logging
 from proyecto.models import Distrito,Perfil,Puesto,UserDatos,Catorcenas,DatosBancarios
 from .models import Categoria,Subcategoria,Bono,Solicitud,BonoSolicitado,Requerimiento
 from revisar.models import AutorizarSolicitudes
-from .forms import SolicitudForm, BonoSolicitadoForm, RequerimientoForm,AutorizarSolicitudesUpdateForm,AutorizarSolicitudesGerenteUpdateForm
+from .forms import SolicitudForm,BonoSolicitadoForm,RequerimientoForm,AutorizarSolicitudesUpdateForm,AutorizarSolicitudesGerenteUpdateForm,BonoSolicitadoPuestoForm
 from django.db import connection
 from django.core.paginator import Paginator
 from .filters import SolicitudFilter,AutorizarSolicitudesFilter,BonoSolicitadoFilter
@@ -185,9 +185,10 @@ def crearSolicitudBonos(request):
     #se cargan los formularios con los valores del post
     #solicitudForm = SolicitudForm()      
     bonoSolicitadoForm = BonoSolicitadoForm()
+    bonoSolicitadoPuestoForm = BonoSolicitadoPuestoForm()
     requerimientoForm = RequerimientoForm()
     #se hace una consulta con los empleados del distrito que pertenecen
-    empleados = Perfil.objects.filter(distrito_id = usuario.distrito.id).exclude(numero_de_trabajador = usuario.numero_de_trabajador).exclude(baja = 1).order_by('nombres')
+    empleados = Perfil.objects.filter(distrito_id = usuario.distrito.id).exclude(baja = 1).order_by('nombres')
     #se carga el formulario en automatico definiendo filtros
     bonoSolicitadoForm.fields["trabajador"].queryset = empleados 
     ultimo_registro = Solicitud.objects.filter(complete = True).last()
@@ -246,12 +247,16 @@ def crearSolicitudBonos(request):
                 messages.success(request, "Los archivos se subieron correctamente")
                 return redirect("crearSolicitudBonos") 
         elif 'btn_agregar' in request.POST:
-            bono_solicitado, created =  BonoSolicitado.objects.get_or_create(solicitud = solicitud, trabajador = solicitante, distrito = solicitante.distrito, cantidad = 0)             
-            
             #obtener el id de la subcategoria (bono) y agregarlo a la solicitud
             bono_id = request.POST.get('bonoId')
             if bono_id is None or bono_id.strip() == '':
                 bono_id = solicitud.bono_id
+                 
+            esquema_bono = request.POST.get('esquemaBono')
+
+            
+            bono_solicitado, created = BonoSolicitado.objects.get_or_create(solicitud_id=solicitud.id,bono_id = esquema_bono,cantidad = 0)
+            print("bono ", bono_solicitado.bono.esquema_subcategoria.id) 
                             
             form = BonoSolicitadoForm(request.POST, instance = bono_solicitado)  
             #validación de los formularios
@@ -259,9 +264,15 @@ def crearSolicitudBonos(request):
                 #se obtienen los datos del formulario BonoSolicitado pero aun no se guardan
                 bono_solicitado = form.save(commit = False)
                 #se actualiza el bono en la solicitud
-                solicitud.bono_id = bono_id
+                solicitud.bono_id = bono_id   
+                bono_solicitado.bono.id = esquema_bono
+                bono_solicitado.save()
+                total = BonoSolicitado.objects.filter(solicitud_id = solicitud.id).aggregate(total=Sum('cantidad'))['total'] 
+                solicitud.total = total
                 solicitud.save()
                 
+                
+                """
                 if bono_solicitado.puesto.id == 7:
                     bono_solicitado.save()
                     # id puesto - todos los que participen en la actividad - dividir la cantidad del bono entre el total de los participantes
@@ -292,6 +303,7 @@ def crearSolicitudBonos(request):
                     solicitud.save()
                 #bono.seleccionado = True
                 #bono.save()
+                """
                 
                 
         elif 'enviar_solicitud' in request.POST:
@@ -319,7 +331,8 @@ def crearSolicitudBonos(request):
         'lista_archivos': lista_archivos,
         'bonos_solicitados': bonos_solicitados,
         'errors':errors,
-        'solicitud':solicitud
+        'solicitud':solicitud,
+        'bonoSolicitadoPuestoForm':bonoSolicitadoPuestoForm
     } 
 
     return render(request,'esquema/bonos_varilleros/crear_solicitud.html',contexto)
@@ -974,7 +987,7 @@ def get_puestos(request):
     data = []
     if bono_id:
         #puestos_qs = Bono.objects.filter(esquema_subcategoria = bono_id, seleccionado = False).values('puesto__id','puesto__puesto','importe')
-        puestos_qs = Bono.objects.filter(esquema_subcategoria = bono_id).values('puesto__id','puesto__puesto','importe')
+        puestos_qs = Bono.objects.filter(esquema_subcategoria = bono_id).values('id','puesto__id','puesto__puesto','importe')
         for puesto in puestos_qs:
             puesto['importe'] = str(puesto['importe'])
         data = list(puestos_qs)

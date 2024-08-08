@@ -171,8 +171,13 @@ Crear Solicitud - Bonos Varilleros
                                     <label for="empleado" class="form-label fw-bold">Empleado</label>
                                     {% comment %} Empleado {% endcomment %}
                                     <input type="hidden" id="bonoId" name="bonoId" value="">
+                                    <input type="hidden" id="esquemaBono" name="esquemaBono" value="">
+
+                                    
+
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                        
                                         {% render_field bonoSolicitadoForm.trabajador class="form-control select2-bootstrap" id="empleado" %}
                                     </div>
                                     <small class="text-danger">{{ bonoSolicitadoForm.trabajador.errors }}</small>
@@ -192,7 +197,8 @@ Crear Solicitud - Bonos Varilleros
                                     <div class="input-group mb-3">
                                     <span class="input-group-text" id="basic-addon1"><i class="fas fa-helmet-safety"></i></span>
                                         <div class="form-floating form-floating-group flex-grow-1">   
-                                            {{bonoSolicitadoForm.puesto}}
+                                            
+                                            {{bonoSolicitadoPuestoForm}}
                                         </div>
                                     </div>
                                 </div>
@@ -228,7 +234,7 @@ Crear Solicitud - Bonos Varilleros
                                 {% for bono in bonos_solicitados  %}
                                 <tr data-id="{{bono.id}}">
                                     <td>{{bono.trabajador}}</td>
-                                    <td>{{bono.puesto}}</td>
+                                    <td>{{bono.bono.puesto}}</td>
                                     <td class="cantidad">${{bono.cantidad}}</td>
                                     <td><button id="removerBono" type="button" class="btn btn-danger btn-sm" title="Quitarlo de la solicitud"><i class="fas fa-minus"></i></button></td>
                                 </tr>
@@ -316,9 +322,11 @@ Crear Solicitud - Bonos Varilleros
                 };
             },
             processResults: function (data) {
+                console.log("respuesta del servidor: ", data)
                 return {
                     results: $.map(data, function (item) {
                         return {
+                            esquema_bono: item.id,
                             id: item.puesto__id,
                             text: item.puesto__puesto,
                             importe: item.importe
@@ -360,13 +368,27 @@ Crear Solicitud - Bonos Varilleros
 
     $('#id_puesto').on('select2:select', function(e){
         const selectedOption = e.params.data;
+        
         const importe = selectedOption.importe;
+        const esquema_bono = selectedOption.esquema_bono
         console.log('Importe:', importe); // Depuración
+        console.log('Tabulador Bono:', esquema_bono);
+
         if (importe !== null && importe !== undefined) {
             document.getElementById('id_cantidad').value = importe;
         } else {
             document.getElementById('id_cantidad').value = '';
         }
+
+        if (esquema_bono !== null && esquema_bono !== undefined) {
+            document.getElementById('esquemaBono').value = esquema_bono;
+        } else {
+            document.getElementById('esquemaBono').value = '';
+        }
+
+
+
+
     });
 
     $('#id_bono').on('select2:unselect', function(e){
