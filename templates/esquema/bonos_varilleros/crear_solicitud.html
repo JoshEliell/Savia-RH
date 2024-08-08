@@ -112,13 +112,7 @@ Crear Solicitud - Bonos Varilleros
                                 <input type="text" value="{{solicitante.distrito.distrito}}" class="form-control bg-white"
                                     placeholder="Nombre" aria-label="nombre" aria-describedby="basic-addon1" readonly>
                             </div>
-                            <!--<label for="" class="text-muted mb-1">Bono</label>
-                            {% comment %} Bono {% endcomment %}
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-sack-dollar"></i></span>
-                                {% render_field solicitudForm.bono class="form-control" id="bono"%}
-                            </div>
-                            <small class="text-danger">{{ solicitudForm.bono.errors }}</small>-->
+                           
 
                             <div class="col-12">
                                 <div class="input-group mb-3">
@@ -134,7 +128,7 @@ Crear Solicitud - Bonos Varilleros
                                 <label for="" class="text-muted mb-1">kilómetros</label>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="fas fa-road"></i></span>
-                                    <input id="cantidad-km" type="number" name="km" value="" min="0" class="form-control bg-white" placeholder="Ingrese los kilómetros" aria-label="nombre" aria-describedby="basic-addon1">
+                                    <input id="kilometros" type="number" name="km" value="" min="0" class="form-control bg-white" placeholder="Ingrese los kilómetros" aria-label="nombre" aria-describedby="basic-addon1">
                                 </div>
                             </div>
                             <label for="" class="text-muted mb-1">Comentario</label>
@@ -143,14 +137,14 @@ Crear Solicitud - Bonos Varilleros
                                 <span class="input-group-text"><i class="fa-solid fa-message"></i></span>
                                 {% render_field solicitudForm.comentario class="form-control" id="Comentario"%}
                             </div>
-                            <small class="text-danger">{{ solicitudForm.bono.errors }}</small>
+                            <small class="text-danger">{{ solicitudForm.comentario.errors }}</small>
                             <hr>
                             <td class=""> 
                                 <button type="submit" class="btn btn-primary btn-sm" name="enviar_solicitud" id="enviar_solicitud"><i class="fas fa-share"></i> Enviar Solicitud</button>
                             </td>
                         </div>
                     </div>
-                    </form>
+                    
                 </div>
 
                 
@@ -164,15 +158,16 @@ Crear Solicitud - Bonos Varilleros
                         
                         </div>
                         <div class="card-body">
-                            <form action="{% url 'crearSolicitudBonos' %}" method="POST">
-                            {% csrf_token %}
+                            
+                          
                             <div class="row">
                                 <div class="col-md-5">
                                     <label for="empleado" class="form-label fw-bold">Empleado</label>
-                                    {% comment %} Empleado {% endcomment %}
-                                    <input type="hidden" id="bonoId" name="bonoId" value="">
                                     <input type="hidden" id="esquemaBono" name="esquemaBono" value="">
-
+                                    {% comment %} Empleado 
+                                    <input type="hidden" id="bonoId" name="bonoId" value="">
+                                    
+                                    {% endcomment %}
                                     
 
                                     <div class="input-group">
@@ -212,7 +207,7 @@ Crear Solicitud - Bonos Varilleros
                                     </div>
                                     <small class="text-danger">{{ bonoSolicitadoForm.cantidad.errors }}</small>
                                 </div>
-                                
+                                {{bonoSolicitadoForm.bono}} 
                                 <div class="col-md-1" style="margin-top: 30px;">
                                     <button id="btnAgregar" name="btn_agregar" type="submit" class="btn btn-success" title="Agregar Bono"><i class="fas fa-plus"></i></button>
                                 </div>
@@ -280,25 +275,22 @@ Crear Solicitud - Bonos Varilleros
     <script type="text/javascript">
         var listarBonosVarillerosUrl = "{% url 'listarBonosVarilleros' %}";
     </script>
-    <script src="{% static 'js/esquema/bono_varillero/crear_solicitud.js' %}"></script>
-    <!--<script src="{% static 'js/esquema/bono_varillero/mostrar_boton.js' %}"></script>
-    {% comment %} select2 {% endcomment %}    -->
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    {% comment %} select 2 lang es {% endcomment %}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/i18n/es.js"></script>
+   
+    <!--<script src="{% static 'js/esquema/bono_varillero/mostrar_boton.js' %}"></script>-->
+   
     <script>
+    $(document).ready(function() {
+    /**Debes reemplazar o cambiar los valores de los bonos asignados por el ID que se encuentran en la subcategoria del bono */
+    const bonoViajePEP = 19
 
-    
-        $(document).ready(function() {           
-            $('.select2-bootstrap').select2({
-                theme: 'bootstrap4',
-                language: "es",
-            });
-        });
+    $('.select2-bootstrap').select2({
+        theme: 'bootstrap4',
+        language: "es",
+    });
 
     var bonos = {{ bonos| safe }};
+    //console.log(bonos)
 
-    $(document).ready(function() {
     // Inicializar Select2 con la clase personalizada para ancho
     $('#id_bono').select2({
         allowClear: true,
@@ -341,16 +333,15 @@ Crear Solicitud - Bonos Varilleros
     $('#id_bono').on('select2:select', function(e){
         var bonoId = e.params.data.id;
         var soporte = e.params.data.soporte;
-        console.log(soporte)
         // Mostrar/ocultar el campo km basado en el bono seleccionado
-        if (bonoId == 3) {
+        if (bonoId == bonoViajePEP) {
             document.getElementById('km').classList.remove("d-none");
         } else {
             document.getElementById('km').classList.add("d-none");
         }
 
-         // Actualizar el campo oculto con el valor de bonoId
-        document.getElementById('bonoId').value = bonoId;
+        // Actualizar el campo oculto con el valor de bonoId
+        //document.getElementById('bonoId').value = bonoId;
 
         if (bonoId) {
             $('#id_puesto').val(null).trigger('change');
@@ -365,6 +356,26 @@ Crear Solicitud - Bonos Varilleros
         }
 
     });
+    /* se verifica si esta prepargado un bono */
+    var selectedValue = $('#id_bono').val();
+    console.log("Este valor cambia: ", selectedValue)
+    if (selectedValue == bonoViajePEP){
+        document.getElementById('km').classList.remove("d-none");
+    }
+
+    /*Se activa cuando escriban los kilometros*/
+    $('#kilometros').on('input', function(e) {
+        var km = parseFloat($(this).val());//se obtiene el valor de los kilometros
+        console.log("km recorridos: ", km);
+        if (km >= 501) {
+            var restar = km - 500;
+            var calcular = restar * 0.50;
+            var totalFinal = 500 + calcular;
+            $('#id_cantidad').val(totalFinal.toFixed(2)); // Redondear el resultado a dos decimales
+        } else {
+            $('#id_cantidad').val(km);
+        }
+    });   
 
     $('#id_puesto').on('select2:select', function(e){
         const selectedOption = e.params.data;
@@ -386,17 +397,14 @@ Crear Solicitud - Bonos Varilleros
             document.getElementById('esquemaBono').value = '';
         }
 
-
-
-
     });
 
     $('#id_bono').on('select2:unselect', function(e){
         $('#id_puesto').empty().trigger('change');
         document.getElementById('km').classList.add("d-none");
         document.getElementById('id_cantidad').value = '';
+        });
     });
-});
 
 
     function formatRepo (repo) {
@@ -417,6 +425,125 @@ Crear Solicitud - Bonos Varilleros
     function formatRepoSelection (repo) {
         return repo.text || repo.id;
     }
+
+    /*************************************************************************************************************************************************/
+
+    /**Remover bono de la solicitud*/
+    async function removerBono(bonoId){
+        const url = `/esquema/remover_bono/${bonoId}/`
+        console.log(url)
+        try {
+            var respuesta= await fetch(url,{
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+                },
+                body:JSON.stringify({
+                    'bonoId':bonoId,
+                }),
+            });
+            
+            const datos = await respuesta.json();
+            
+            if (respuesta.status === 200) {
+                if (datos.bandera){// bandera = true
+                    //elimina fila del bono
+                    const renderizar = document.querySelectorAll(`[data-id="${datos.bono_id}"]`)
+                    renderizar[0].remove()
+                    //la columna cantidad se actualizan todos por igual
+                    const celdasCantidad = document.querySelectorAll('#tabla .cantidad');
+                    celdasCantidad.forEach(celda => {
+                        celda.textContent = '$' + Number(datos.reparto).toFixed(2);//combierte el dato a decimal y ajusta que se muestren dos decimas
+                    });
+                    //renderizar el total en html
+                    total = document.getElementById('total').textContent = datos.total
+                }
+                else{
+                    //eliminar la fila
+                    const renderizar = document.querySelectorAll(`[data-id="${datos.bono_id}"]`)
+                    renderizar[0].remove()
+                    //renderizar el total en html
+                    total = document.getElementById('total').textContent = datos.total
+                }
+                
+            } else if (respuesta.status === 403) {
+                Swal.fire({
+                    title: "Acceso Denegado",
+                    text: "No tienes permiso para realizar esta acción.",
+                    icon: "error",
+                });
+
+            } else if (respuesta.status === 404) {
+                Swal.fire({
+                    title: "Error",
+                    text: "No existe este bono en nuestros registros.",
+                    icon: "warning",
+                });
+            }else{
+                Swal.fire({
+                    title: "Error",
+                    text: "Intentelo más tarde",
+                    icon: "warning",
+                })
+            }
+
+        } catch (error) {
+            //Manejo de errores
+            console.log(error)
+            Swal.fire({
+                title: "Error",
+                text: "No se pudo procesar la solicitud ",
+                icon: "warning",
+
+                
+            })
+
+        }
+    }
+
+    /*presionar el boton eleminar */
+    tabla = document.getElementById("tabla")
+    if (tabla) {
+        addEventListener("click", async function(e){
+            //hacer click en el boton eliminar
+            if(e.target.classList.contains("btn-danger") || e.target.classList.contains("fa-minus")){
+                
+                //verficar la clase que contiene para obtener el id del bono
+                if (e.target.classList.contains("btn-danger")){
+                    elemento = e.target.parentNode.parentNode
+                    bonoId = elemento.getAttribute('data-id');
+                }else{
+                    elemento = e.target.parentNode.parentNode.parentNode
+                    bonoId = elemento.getAttribute('data-id');
+                }
+                //mensaje de confirmacion para eliminar
+                if (bonoId > 0){
+                    Swal.fire({
+                    title: "¿Desea quitar este bono?",
+                    text: "No se puede deshacer esta acción",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#3085d6",
+                    cancelButtonColor: "#696969",
+                    confirmButtonText: "Aceptar",
+                    cancelButtonText: "Cancelar"
+                  }).then((result) => {
+                    if (result.isConfirmed) {
+                        removerBono(bonoId)
+                    }
+                });
+                }
+
+            }
+        });
+    }
     </script>
+
+    {% comment %} select2 {% endcomment %}
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    {% comment %} select 2 lang es {% endcomment %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/i18n/es.js"></script>
+
 {% endblock js %}
     

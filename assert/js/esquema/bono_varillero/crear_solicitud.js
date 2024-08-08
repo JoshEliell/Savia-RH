@@ -1,9 +1,11 @@
 document.addEventListener("DOMContentLoaded", (e) => {
     /**Debes reemplazar o cambiar los valores de los bonos asignados por el ID que se encuentran en la subcategoria del bono */
-    const bonoViajePEP = 0//0
-    const bonoViajePrivado = 19//13
-    const bonoCurso = 23//14
+    const bonoViajePEP = 19//0
+    const bonoViajePrivado = 0//13
+    const bonoCursoPep = 0//14
     const url = listarBonosVarillerosUrl
+
+    //bonoCursoPEP
     
      /**Buscar el soporte para el bono seleccionado */
      /*async function solicitarSoporteBono(bono){
@@ -125,10 +127,11 @@ document.addEventListener("DOMContentLoaded", (e) => {
     //para detectar cuando se pulsan los km ingresados
     var ingresarKM = document.getElementById('cantidad-km');
     var cantidadInput = document.getElementById('cantidad');
-    
+
     ingresarKM.addEventListener("input", function(e) {
+        console.log("pulsando")
         var totalKM = parseFloat(ingresarKM.value);
-    
+
         if (totalKM >= 501) {
             var restar = totalKM - 500;
             var calcular = restar * 0.50;
@@ -138,7 +141,6 @@ document.addEventListener("DOMContentLoaded", (e) => {
             cantidadInput.value = totalKM;
         }
     });
-    
 
     //para cargar la cantidad del bono cuando se seleccione alguno puesto o bono
     /*var puestoSelect = document.getElementById("id_puesto");
@@ -164,6 +166,16 @@ document.addEventListener("DOMContentLoaded", (e) => {
 
     });*/
 
+    /**Habilitar / deshabilitar el campo bono de viaje */
+    if (bonoId == 19) {
+        document.getElementById('km').classList.remove("d-none");
+    } else {
+        document.getElementById('km').classList.add("d-none");
+    }
+
+
+
+
     /**Remover bono de la solicitud- good*/
     async function removerBono(bonoId){
         const url = `/esquema/remover_bono/${bonoId}/`
@@ -179,48 +191,30 @@ document.addEventListener("DOMContentLoaded", (e) => {
                     'bonoId':bonoId,
                 }),
             });
-
+            
             const datos = await respuesta.json();
-            console.log(datos)
             
             if (respuesta.status === 200) {
-
-                /**se verifica la respuesta y depende si es un el puesto la cantidad sera divida o no */
-                if (!datos.reparto){
-                    console.log(datos)
-                    console.log(datos.reparto)
-                    console.log(typeof(datos.reparto))
-    
-                    //eliminar la file
+                if (datos.bandera){// bandera = true
+                    //elimina fila del bono
+                    const renderizar = document.querySelectorAll(`[data-id="${datos.bono_id}"]`)
+                    renderizar[0].remove()
+                    //la columna cantidad se actualizan todos por igual
+                    const celdasCantidad = document.querySelectorAll('#tabla .cantidad');
+                    celdasCantidad.forEach(celda => {
+                        celda.textContent = '$' + Number(datos.reparto).toFixed(2);//combierte el dato a decimal y ajusta que se muestren dos decimas
+                    });
+                    //renderizar el total en html
+                    total = document.getElementById('total').textContent = datos.total
+                }
+                else{
+                    //eliminar la fila
                     const renderizar = document.querySelectorAll(`[data-id="${datos.bono_id}"]`)
                     renderizar[0].remove()
                     //renderizar el total en html
                     total = document.getElementById('total').textContent = datos.total
-                    //se elimina la tabla cuando re remueven los bonos y no hay
-                    if (datos.total == 0)
-                        document.getElementById('tabla').remove()
-                }else{
-                    console.log(datos.participantes)
-                    console.log("Datos participanes: ",datos.participantes)
-                    console.log("datos bandera: ", bandera)
-                    //se elimina la fila que contiene el bono
-                    const renderizar = document.querySelectorAll(`[data-id="${datos.bono_id}"]`)
-                    renderizar[0].remove()
-                    //se detecta la tabla y la clase cantidad para que sea sustituida esta cantidad
-                    const celdasCantidad = document.querySelectorAll('#tabla .cantidad');
-                    //cada celda se le pasa el monto 
-                    celdasCantidad.forEach(celda => {
-                        celda.textContent = '$' + datos.monto;
-                    });
-                    
-                    if (datos.bandera == 1)
-                        document.getElementById('tabla').remove()
                 }
-               
-
-
                 
-
             } else if (respuesta.status === 403) {
                 Swal.fire({
                     title: "Acceso Denegado",
@@ -270,6 +264,8 @@ document.addEventListener("DOMContentLoaded", (e) => {
                     elemento = e.target.parentNode.parentNode.parentNode
                     bonoId = elemento.getAttribute('data-id');
                 }
+
+                console.log("bono eliminar: ", bonoId)
 
                 //mensaje de confirmacion para eliminar
                 if (bonoId > 0){
