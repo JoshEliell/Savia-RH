@@ -54,7 +54,7 @@ Crear Solicitud - Bonos Varilleros
                 <div class="col-12 col-md-4">
                         <div class="card mb-3 shadow">
                             <div class="card-header d-flex justify-content-between">
-                                <h5>Soporte de Bono</h5>
+                                <h5>Adjuntar Soporte</h5>
                                 {% if lista_archivos|length != 0 %}
                                 <div class="btn-group mt-1">
                                     <button id="subirArchivos" class="btn btn-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -73,7 +73,7 @@ Crear Solicitud - Bonos Varilleros
                                 {% csrf_token %}
                                 <div class="btn-group" role="group" aria-label="Basic example">
                                     {% render_field requerimientoForm.url class="form-control form-control-sm" id="url" accept=".png,.jpg,.jpeg,.pdf,.xls,.xlsx" %}
-                                    <input type="hidden" name="valor" value="{{folio}}">
+                                    <input type="hidden" name="folio" value="{{folio}}" id="folio">
                                     <button id="subirArchivos" name="btn_archivos" type="submit" class="btn btn-primary btn-sm w-25 subirArchivos" title="Subir Archivos" ><i class="fas fa-arrow-up-from-bracket"></i> <span class="">Subir</span></button>
                                 </div><br>
                                 <small class="text-danger" id="url-error">{{ requerimientoForm.url.errors }}</small> 
@@ -138,10 +138,7 @@ Crear Solicitud - Bonos Varilleros
                                 {% render_field solicitudForm.comentario class="form-control" id="Comentario"%}
                             </div>
                             <small class="text-danger">{{ solicitudForm.comentario.errors }}</small>
-                            <hr>
-                            <td class=""> 
-                                <button type="submit" class="btn btn-primary btn-sm" name="enviar_solicitud" id="enviar_solicitud"><i class="fas fa-share"></i> Enviar Solicitud</button>
-                            </td>
+                           
                         </div>
                     </div>
                     
@@ -238,21 +235,21 @@ Crear Solicitud - Bonos Varilleros
                             </tbody>
                             <tfoot>
                                 <tr>
-                                    <td></td>   
+                                    <td>
+                                        <form action="{% url 'crearSolicitudBonos' %}" method="POST">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-primary btn-sm" name="enviar_solicitud" id="enviar_solicitud"><i class="fas fa-share"></i> Enviar Solicitud</button>
+                                        </form>
+                                    </td>   
                                     <td></td>
                                     <td colspan="" class="fw-bold">Total: $<span id="total">{{solicitud.total}}</span> </td>
                                     <td></td>
-                                </tr>
-                                <tr>
-                                 
-                                </tr>
-                               
+                                </tr>                       
                             </tfoot>
                            
                         </table>  
                     </div>                    
 
-                    
                     {% comment %} Soporte de Bono {% endcomment %}
                         
                     <div class="col-12 mt-1">
@@ -281,14 +278,15 @@ Crear Solicitud - Bonos Varilleros
     <script>
     $(document).ready(function() {
     /**Debes reemplazar o cambiar los valores de los bonos asignados por el ID que se encuentran en la subcategoria del bono */
-    const bonoViajePEP = 19
+    const bonoViajePep = 19
+    const bonoCursoPep = 23
 
     $('.select2-bootstrap').select2({
         theme: 'bootstrap4',
         language: "es",
     });
 
-    var bonos = {{ bonos| safe }};
+    var bonos = {{ bonos|safe }}
     //console.log(bonos)
 
     // Inicializar Select2 con la clase personalizada para ancho
@@ -310,10 +308,12 @@ Crear Solicitud - Bonos Varilleros
             datatype: 'json',
             data: function (params) {
                 return {
-                    bono_id: $('#id_bono').val()
+                    bono_id: $('#id_bono').val(),
+                    folio: $('#folio').val()
                 };
             },
             processResults: function (data) {
+                folio: $('#folio').val()
                 console.log("respuesta del servidor: ", data)
                 return {
                     results: $.map(data, function (item) {
@@ -326,19 +326,43 @@ Crear Solicitud - Bonos Varilleros
                     })
                 };
             },
+            error: function (jqXHR, textStatus, errorThrown) {
+                //alert("Error de solicitud: " + textStatus + " - " + errorThrown);
+                //console.log("Detalles del error:", jqXHR.responseText);
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: "La solicitud no se ha podido procesar",
+                  });
+                
+            },
             cache: true
         }
     }).next('.select2-container').addClass('wide-select');
 
+    //Carga el bono con usus propiedades cuando es seleccionado
     $('#id_bono').on('select2:select', function(e){
+        document.getElementById('id_cantidad').value = ''
+        //console.log("desde el data",e.params.data)
         var bonoId = e.params.data.id;
         var soporte = e.params.data.soporte;
+        //console.log("soporte es: ", soporte)
         // Mostrar/ocultar el campo km basado en el bono seleccionado
-        if (bonoId == bonoViajePEP) {
+        if (bonoId == bonoViajePep) {
+            document.getElementById('kilometros').value = ''
             document.getElementById('km').classList.remove("d-none");
         } else {
             document.getElementById('km').classList.add("d-none");
         }
+
+        //Activar/Desactivar el campo cantidad del bono cursoPep
+        if (bonoId == bonoCursoPep) {
+            document.getElementById('id_cantidad').removeAttribute('readonly');
+        } else {
+            //console.log("no quitar")
+            document.getElementById('id_cantidad').setAttribute('readonly', true);
+        }
+
 
         // Actualizar el campo oculto con el valor de bonoId
         //document.getElementById('bonoId').value = bonoId;
@@ -354,14 +378,27 @@ Crear Solicitud - Bonos Varilleros
         } else {
             document.getElementById('soporte').textContent = '';
         }
-
     });
-    /* se verifica si esta prepargado un bono */
+
+    /* se verifica si esta prepargado un bono - cuando se carga la pagina*/
     var selectedValue = $('#id_bono').val();
-    console.log("Este valor cambia: ", selectedValue)
-    if (selectedValue == bonoViajePEP){
+    
+    if (selectedValue == bonoViajePep){
         document.getElementById('km').classList.remove("d-none");
     }
+    
+    if (selectedValue == bonoCursoPep) {
+        document.getElementById('id_cantidad').removeAttribute('readonly');
+    } else {
+        //console.log("no quitar")
+        document.getElementById('id_cantidad').setAttribute('readonly', true);
+    }
+
+    var selectedOption = $('#id_bono').select2('data');
+    document.getElementById('soporte').textContent = selectedOption[0].soporte;
+
+
+
 
     /*Se activa cuando escriban los kilometros*/
     $('#kilometros').on('input', function(e) {
@@ -538,6 +575,130 @@ Crear Solicitud - Bonos Varilleros
             }
         });
     }
+
+     /**Remover bono de la solicitud- good*/
+    async function removerBono(bonoId){
+        const url = `/esquema/remover_bono/${bonoId}/`
+        console.log(url)
+        try {
+            var respuesta= await fetch(url,{
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+                },
+                body:JSON.stringify({
+                    'bonoId':bonoId,
+                }),
+            });
+            
+            const datos = await respuesta.json();
+            
+            if (respuesta.status === 200) {
+                if (datos.bandera){// bandera = true
+                    //elimina fila del bono
+                    const renderizar = document.querySelectorAll(`[data-id="${datos.bono_id}"]`)
+                    renderizar[0].remove()
+                    //la columna cantidad se actualizan todos por igual
+                    const celdasCantidad = document.querySelectorAll('#tabla .cantidad');
+                    celdasCantidad.forEach(celda => {
+                        celda.textContent = '$' + Number(datos.reparto).toFixed(2);//combierte el dato a decimal y ajusta que se muestren dos decimas
+                    });
+                    //renderizar el total en html
+                    total = document.getElementById('total').textContent = datos.total
+                }
+                else{
+                    //eliminar la fila
+                    const renderizar = document.querySelectorAll(`[data-id="${datos.bono_id}"]`)
+                    renderizar[0].remove()
+                    //renderizar el total en html
+                    total = document.getElementById('total').textContent = datos.total
+                }
+                
+            } else if (respuesta.status === 403) {
+                Swal.fire({
+                    title: "Acceso Denegado",
+                    text: "No tienes permiso para realizar esta acción.",
+                    icon: "error",
+                });
+
+            } else if (respuesta.status === 404) {
+                Swal.fire({
+                    title: "Error",
+                    text: "No existe este bono en nuestros registros.",
+                    icon: "warning",
+                });
+            }else{
+                Swal.fire({
+                    title: "Error",
+                    text: "Intentelo más tarde",
+                    icon: "warning",
+                })
+            }
+
+        } catch (error) {
+            //Manejo de errores
+            console.log(error)
+            Swal.fire({
+                title: "Error",
+                text: "No se pudo procesar la solicitud ",
+                icon: "warning",
+
+                
+            })
+
+        }
+    }
+
+     /**Para eliminar un archivo */
+     async function removerArchivo(archivo){
+        try {
+            var response = await fetch(`/esquema/remover_archivo/${archivo}/`,{
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+                },
+                body:JSON.stringify({
+                    'archivo_id':archivo,
+                }),
+            });
+            const datos = await response.json();
+            if (response.status === 200){
+                console.log(datos)
+                var renderizar = document.querySelectorAll(`[data-archivo="${datos.archivo_id}"]`)
+                renderizar[0].remove()
+            }else{
+                Swal.fire({
+                    title: "Error",
+                    text: "No se encontro el recurso solicitado",
+                    icon: "warning",
+                })
+            }
+        } catch (error) {
+            console.log(error)
+            Swal.fire({
+                title: "Error",
+                text: "No se pudo procesar la solicitud",
+                icon: "warning",
+            })
+        }
+    }
+
+    /*Presional el boton para eliminar el archivo*/
+    files = document.getElementById("archivos")
+
+    if (files) {
+        addEventListener("click", async function(e){
+            if(e.target.classList.contains('small')){
+                archivo_id = e.target.getAttribute("data-archivo")
+                console.log("el ID del archivo es: ",archivo_id)
+                removerArchivo(archivo_id)    
+            }
+        });
+    }
+
+
     </script>
 
     {% comment %} select2 {% endcomment %}

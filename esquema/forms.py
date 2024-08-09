@@ -15,14 +15,23 @@ class SolicitudForm(forms.ModelForm):
     class Meta:
         model = Solicitud
         fields = ['bono','comentario']
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Hacer que el campo 'comentario' no sea requerido
+        self.fields['comentario'].required = False
         
 class BonoSolicitadoForm(forms.ModelForm):
     class Meta:
         model = BonoSolicitado
         fields = ['trabajador','cantidad']
+    
+    def __init__(self, *args, **kwargs):
+        super(BonoSolicitadoForm, self).__init__(*args, **kwargs)
+        self.fields['cantidad'].widget.attrs['readonly'] = True
+        self.fields['cantidad'].required = True
         
 class BonoSolicitadoPuestoForm(forms.Form):
-    puesto = forms.ModelChoiceField(queryset=Puesto.objects.none(), required=False)        
+    puesto = forms.ModelChoiceField(queryset=Puesto.objects.none(), required=True)        
 
 
         
