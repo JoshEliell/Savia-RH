@@ -56,9 +56,13 @@ from django.core.mail import send_mail
 from django.conf import settings
 from decimal import Decimal
 # PyMuPDF - comprimir pdfs
-from io import BytesIO
-import fitz
+import fitz  # PyMuPDF
+from django.http import HttpResponse
+from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
+from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
+import io
 
 
 #Pagina inicial de los esquemas de los bonos
@@ -178,24 +182,75 @@ def comprimir_imagen(imagen):
     return img_comprimida
 
 def comprimir_pdf(pdf):
-    # Cargar el PDF desde el archivo subido
-    pdf_document = fitz.open(stream=pdf.read(), filetype="pdf")
+    # Open the PDF using PyMuPDF
+    pdf_document = fitz.open(stream=pdf.read(), filetype='pdf')
     
-    # Crear un objeto BytesIO para guardar el PDF comprimido
-    output = BytesIO()
+    # Create an in-memory buffer for the compressed PDF
+    output_buffer = io.BytesIO()
     
-    # Guardar el PDF comprimido en el objeto BytesIO
-    pdf_document.save(output, deflate=True)
-    output.seek(0)
+    # Define compression settings (for images)
+    for page_num in range(len(pdf_document)):
+        page = pdf_document.load_page(page_num)
+        images = page.get_images(full=True)
+        
+        # Dictionary to store the new image data
+        new_images = {}
+        
+        for img_index, img in enumerate(images):
+            xref = img[0]
+            base_image = pdf_document.extract_image(xref)
+            image_bytes = base_image['image']
+            
+            # Convert image bytes to a Pillow Image object
+            with Image.open(io.BytesIO(image_bytes)) as image:
+                # Convert to RGB (in case it's RGBA or another mode)
+                image = image.convert("RGB")
+                
+                image = image.resize((image.width // 2, image.height // 2), Image.LANCZOS)  # Use Image.LANCZOS for quality reduction
+                
+                # Create a new in-memory buffer for the compressed image
+                img_buffer = io.BytesIO()
+                
+                # Save the image with reduced quality using Pillow
+                image.save(img_buffer, format='JPEG', quality=80)  # Adjust quality as needed
+                
+                # Store the new image data
+                new_images[xref] = img_buffer.getvalue()
+        
+        # Remove old images and insert new ones
+        for xref, new_img_data in new_images.items():
+            # Remove the image
+            page.delete_image(xref)
+            # Insert the new image
+            page.insert_image(page.rect, stream=new_img_data)
     
-    pdf_name = "archivo_comprimido.pdf"
-    archivo_comprimido_file = ContentFile(output.read(), pdf_name)
+    # Save the compressed PDF to the buffer
+    pdf_document.save(output_buffer)
+    pdf_document.close()
     
-    return archivo_comprimido_file
+    # Rewind the buffer to the beginning
+    output_buffer.seek(0)
     
-    response = HttpResponse(output, content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="archivo_comprimido.pdf"'
-    return response
+    # Obtener la fecha y hora actual
+    now = datetime.now()
+    # Formatear la fecha como una cadena (por ejemplo, "2024-08-09_15-30-45")
+    fecha_formateada = now.strftime("%Y-%m-%d_%H-%M-%S")
+    # Crear el nombre del archivo usando la fecha
+    nombre_archivo = f"file_{fecha_formateada}.pdf"
+
+    # Create an InMemoryUploadedFile object
+    compressed_pdf_file = InMemoryUploadedFile(
+        output_buffer,
+        None,
+        nombre_archivo,
+        'application/pdf',
+        output_buffer.getbuffer().nbytes,
+        None
+    )
+    
+    # Return the buffer with the compressed PDF
+    return compressed_pdf_file
+    
     
 #para crear solicitudes de bonos
 @login_required(login_url='user-login')
@@ -203,158 +258,162 @@ def crearSolicitudBonos(request):
     usuario = request.user  
     
     #Todos los supervisores y RH pueden crear solicitudes
-    #if usuario.userdatos.tipo_id in (5,4):
+    if usuario.userdatos.tipo_id in (5,4):
         #print("se ejecuta el usuario: ",usuario.userdatos.distrito.id)
         #se obtiene el usuario logueado
         #usuario = get_object_or_404(UserDatos,user_id = request.user.id)
         #se obtiene el perfil del usuario logueado
         #solicitante = get_object_or_404(Perfil,numero_de_trabajador = usuario.numero_de_trabajador) 
 
-    #se cargan los formularios con los valores del post
-    #solicitudForm = SolicitudForm()      
-    bonoSolicitadoForm = BonoSolicitadoForm()
-    bonoSolicitadoPuestoForm = BonoSolicitadoPuestoForm()
-    requerimientoForm = RequerimientoForm()
-    #se hace una consulta con los empleados del distrito que pertenecen
-    empleados = Perfil.objects.filter(distrito_id = usuario.userdatos.distrito.id).exclude(baja = 1).order_by('nombres')
-    solicitante = Perfil.objects.get(numero_de_trabajador = usuario.userdatos.numero_de_trabajador, distrito_id = usuario.userdatos.distrito.id)
-    #se carga el formulario en automatico definiendo filtros
-    bonoSolicitadoForm.fields["trabajador"].queryset = empleados 
-    ultimo_registro = Solicitud.objects.filter(complete = True).values_list('folio', flat=True).last()
-    
-    if ultimo_registro:
-        folio = ultimo_registro + 1 
-    else:
-        folio = 1
+        #se cargan los formularios con los valores del post
+        #solicitudForm = SolicitudForm()      
+        bonoSolicitadoForm = BonoSolicitadoForm()
+        bonoSolicitadoPuestoForm = BonoSolicitadoPuestoForm()
+        requerimientoForm = RequerimientoForm()
+        #se hace una consulta con los empleados del distrito que pertenecen
+        empleados = Perfil.objects.filter(distrito_id = usuario.userdatos.distrito.id).exclude(baja = 1).order_by('nombres')
+        solicitante = Perfil.objects.get(numero_de_trabajador = usuario.userdatos.numero_de_trabajador, distrito_id = usuario.userdatos.distrito.id)
+        #se carga el formulario en automatico definiendo filtros
+        bonoSolicitadoForm.fields["trabajador"].queryset = empleados 
+        ultimo_registro = Solicitud.objects.filter(complete = True).values_list('folio', flat=True).last()
         
-    solicitud, created = Solicitud.objects.get_or_create(complete = False, defaults={'complete': False, 'folio':folio,'solicitante_id':solicitante.id, 'total':0.00})
-    #Obtiene los bonos que han sido creados en la solicitud
-    bonos_solicitados = BonoSolicitado.objects.filter(solicitud_id = solicitud.id)
-    lista_archivos = Requerimiento.objects.filter(solicitud_id = solicitud.id)
-    
-    bonos = Subcategoria.objects.all()
-    
-    bonos_para_select2 = [
-        {
-            'id': bono.id,
-            'text': str(bono.nombre),
-            'soporte': str(bono.soporte)
-        } for bono in bonos
-    ]
+        if ultimo_registro:
+            folio = ultimo_registro + 1 
+        else:
+            folio = 1
+            
+        solicitud, created = Solicitud.objects.get_or_create(complete = False, defaults={'complete': False, 'folio':folio,'solicitante_id':solicitante.id, 'total':0.00})
+        #Obtiene los bonos que han sido creados en la solicitud
+        bonos_solicitados = BonoSolicitado.objects.filter(solicitud_id = solicitud.id)
+        lista_archivos = Requerimiento.objects.filter(solicitud_id = solicitud.id)
+        
+        bonos = Subcategoria.objects.all()
+        
+        bonos_para_select2 = [
+            {
+                'id': bono.id,
+                'text': str(bono.nombre),
+                'soporte': str(bono.soporte)
+            } for bono in bonos
+        ]
 
-    #Los prepara para el select2
-    #bonos_para_select2 = [
-    #    {
-    #        'id': bono.id,
-    #        'text': str(bono.esquema_subcategoria.nombre),
-    #        'soporte': str(bono.esquema_subcategoria.soporte)
-    #    } for bono in bonos
-    #]
-       
-    errors = {}
-    #Para guardar la solicitud
-    if request.method == "POST":
-        #obtiene un queryset de los archivos de la solicitud
-       
-        if 'btn_archivos' in request.POST:      
-            #Se envian los formularios con datos                   
-            form = RequerimientoForm(request.POST, request.FILES)  
-            archivos = request.FILES.getlist('url')
-                
-            if form.is_valid():
-                #Se recorren los archivos para ser almacenados
-                for archivo in archivos:
-                    #Comprime imagenes
-                    if archivo.content_type != 'application/pdf' and archivo.content_type != 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' and archivo.content_type != 'application/vnd.ms-excel':
-                        documento = comprimir_imagen(archivo)
-                    #Comprime pdfs
-                    elif archivo.content_type == 'application/pdf':
-                        print("Ajustar el archivo pdf")
-                        documento = comprimir_pdf(archivo)
-                    else:
-                        documento = archivo
-                    #Guarda imagen o PDF
-                    requerimiento = Requerimiento.objects.create(
-                        solicitud_id = solicitud.id,
-                        url = documento,
-                    )
+        #Los prepara para el select2
+        #bonos_para_select2 = [
+        #    {
+        #        'id': bono.id,
+        #        'text': str(bono.esquema_subcategoria.nombre),
+        #        'soporte': str(bono.esquema_subcategoria.soporte)
+        #    } for bono in bonos
+        #]
+        
+        errors = {}
+        #Para guardar la solicitud
+        if request.method == "POST":
+            #obtiene un queryset de los archivos de la solicitud
+        
+            if 'btn_archivos' in request.POST:      
+                #Se envian los formularios con datos                   
+                form = RequerimientoForm(request.POST, request.FILES)  
+                archivos = request.FILES.getlist('url')
                     
-                    requerimiento.save()
-                
-                         
-                solicitud.complete_requerimiento = True
-                solicitud.save()
-                messages.success(request, "El soporte se adjunto correctamente")
-                return redirect("crearSolicitudBonos") 
-            
-        elif 'btn_agregar' in request.POST:
-            form_solicitud = SolicitudForm(request.POST, instance = solicitud)
-            if form_solicitud.is_valid():
-                esquema_bono = request.POST.get('esquemaBono')
-                bono_solicitado, created = BonoSolicitado.objects.get_or_create(solicitud_id=solicitud.id,bono_id = esquema_bono,cantidad = 0)
-                form_bonosolicitado = BonoSolicitadoForm(request.POST,instance=bono_solicitado)
-                if form_bonosolicitado.is_valid():
-                    puesto = int(request.POST.get('puesto'))
-                    if puesto == 7: #
-                        bono_solicitado.save()
-                        # id puesto - todos los que participen en la actividad - dividir la cantidad del bono entre el total de los participantes
-                        participantes = BonoSolicitado.objects.filter(solicitud_id = solicitud.id).count()
-                        #División
-                        reparto = Decimal(bono_solicitado.cantidad/participantes)
-                        solicitud.total = bono_solicitado.cantidad
-                        solicitud.save()
-                        BonoSolicitado.objects.filter(solicitud_id = solicitud.id).update(cantidad=reparto)
-                    else:
-                        bono_solicitado.bono.id = esquema_bono
-                        bono_solicitado.save()
-                        total = BonoSolicitado.objects.filter(solicitud_id = solicitud.id).aggregate(total=Sum('cantidad'))['total'] 
-                        solicitud.total = total
-                        solicitud.save()
+                if form.is_valid():
+                    #Se recorren los archivos para ser almacenados
+                    for archivo in archivos:
+                        #Comprime imagenes
+                        if archivo.content_type != 'application/pdf' and archivo.content_type != 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' and archivo.content_type != 'application/vnd.ms-excel':
+                            documento = comprimir_imagen(archivo)
+                        #Comprime pdfs
+                        elif archivo.content_type == 'application/pdf':
+                            print("Ajustar el archivo pdf")
+                            documento = comprimir_pdf(archivo)
+                        else:
+                            documento = archivo
+                        #Guarda imagen o PDF
+                        requerimiento = Requerimiento.objects.create(
+                            solicitud_id = solicitud.id,
+                            url = documento,
+                        )
                         
-        elif 'enviar_solicitud' in request.POST:
-            #validacion para subir los soportes
-            if solicitud.complete_requerimiento == 0:
-                messages.error(request, 'Falta adjuntar soportes')
-                return redirect(request.META.get('HTTP_REFERER'))
-            
-            #Se envia la solicitud al superintendente
-            superintendente = UserDatos.objects.filter(distrito_id=usuario.userdatos.distrito.id, tipo_id=6).values_list('numero_de_trabajador',flat=True).first()
-            perfil_superintendente = Perfil.objects.filter(numero_de_trabajador = superintendente).values_list('id',flat=True).first()
-            
-            #se crea la autorizacion
-            AutorizarSolicitudes.objects.create(
-                solicitud_id = solicitud.id,
-                perfil_id =  perfil_superintendente,
-                tipo_perfil_id = 6, # superintendente
-                estado_id = 3, # pendiente
-            )
-            
-            #Se guarda la solicitud en complete
-            solicitud.complete = 1
-            solicitud.save()
-            
-            messages.success(request, "La solicitud se envio al superintendente")
-            return redirect('listarBonosVarilleros')
-               
-    solicitudForm =  SolicitudForm(instance = solicitud)
-   
-    contexto = {
-        'folio': folio,
-        'bonos': bonos_para_select2,
-        'usuario':usuario,
-        'solicitante':solicitante,
-        'solicitudForm':solicitudForm,
-        'bonoSolicitadoForm':bonoSolicitadoForm,
-        'requerimientoForm':requerimientoForm,
-        'bonoSolicitadoPuestoForm':bonoSolicitadoPuestoForm,
-        'lista_archivos': lista_archivos,
-        'bonos_solicitados': bonos_solicitados,
-        'errors':errors,
-        'solicitud':solicitud,
-       
-    } 
+                        requerimiento.save()
+                    
+                            
+                    solicitud.complete_requerimiento = True
+                    solicitud.save()
+                    messages.success(request, "El soporte se adjunto correctamente")
+                    return redirect("crearSolicitudBonos") 
+                
+            elif 'btn_agregar' in request.POST:
+                form_solicitud = SolicitudForm(request.POST, instance = solicitud)
+                if form_solicitud.is_valid():
+                    esquema_bono = request.POST.get('esquemaBono')
+                    bono_solicitado, created = BonoSolicitado.objects.get_or_create(solicitud_id=solicitud.id,bono_id = esquema_bono,cantidad = 0)
+                    form_bonosolicitado = BonoSolicitadoForm(request.POST,instance=bono_solicitado)
+                    if form_bonosolicitado.is_valid():
+                        puesto = int(request.POST.get('puesto'))
+                        if puesto == 7: #
+                            bono_solicitado.save()
+                            # id puesto - todos los que participen en la actividad - dividir la cantidad del bono entre el total de los participantes
+                            participantes = BonoSolicitado.objects.filter(solicitud_id = solicitud.id).count()
+                            #División
+                            reparto = Decimal(bono_solicitado.cantidad/participantes)
+                            solicitud.total = bono_solicitado.cantidad
+                            solicitud.save()
+                            BonoSolicitado.objects.filter(solicitud_id = solicitud.id).update(cantidad=reparto)
+                        else:
+                            bono_solicitado.bono.id = esquema_bono
+                            bono_solicitado.save()
+                            total = BonoSolicitado.objects.filter(solicitud_id = solicitud.id).aggregate(total=Sum('cantidad'))['total'] 
+                            solicitud.total = total
+                            solicitud.save()
+                            
+            elif 'enviar_solicitud' in request.POST:
+                #validacion para subir los soportes
+                if solicitud.complete_requerimiento == 0:
+                    messages.error(request, 'Falta adjuntar soportes')
+                    return redirect(request.META.get('HTTP_REFERER'))
+                
+                #Se envia la solicitud al superintendente
+                superintendente = UserDatos.objects.filter(distrito_id=usuario.userdatos.distrito.id, tipo_id=6).values_list('numero_de_trabajador',flat=True).first()
+                perfil_superintendente = Perfil.objects.filter(numero_de_trabajador = superintendente).values_list('id',flat=True).first()
+                
+                #se crea la autorizacion
+                AutorizarSolicitudes.objects.create(
+                    solicitud_id = solicitud.id,
+                    perfil_id =  perfil_superintendente,
+                    tipo_perfil_id = 6, # superintendente
+                    estado_id = 3, # pendiente
+                )
+                
+                #Se guarda la solicitud en complete
+                solicitud.complete = 1
+                solicitud.save()
+                
+                messages.success(request, "La solicitud se envio al superintendente")
+                return redirect('listarBonosVarilleros')
+                
+        solicitudForm =  SolicitudForm(instance = solicitud)
+    
+        contexto = {
+            'folio': folio,
+            'bonos': bonos_para_select2,
+            'usuario':usuario,
+            'solicitante':solicitante,
+            'solicitudForm':solicitudForm,
+            'bonoSolicitadoForm':bonoSolicitadoForm,
+            'requerimientoForm':requerimientoForm,
+            'bonoSolicitadoPuestoForm':bonoSolicitadoPuestoForm,
+            'lista_archivos': lista_archivos,
+            'bonos_solicitados': bonos_solicitados,
+            'errors':errors,
+            'solicitud':solicitud,
+        
+        } 
 
-    return render(request,'esquema/bonos_varilleros/crear_solicitud.html',contexto)
+        return render(request,'esquema/bonos_varilleros/crear_solicitud.html',contexto)
+    
+    else:
+        return render(request, 'revisar/403.html')
+        
     
 
 @login_required(login_url='user-login')  
@@ -469,30 +528,6 @@ def verificarSolicitudBonosVarilleros(request,solicitud):
                 autorizacion.estado_id = 3# Estado pendiente
                 autorizacion.save()
                 messages.success(request, "La solicitud se envio con nuevos cambios al superintendente")
-                return redirect('listarBonosVarilleros')
-                exit()
-                #validacion para subir los soportes
-                if solicitud.complete_requerimiento == 0:
-                    messages.error(request, 'Falta adjuntar soportes')
-                    return redirect(request.META.get('HTTP_REFERER'))
-                
-                #Se envia la solicitud al superintendente
-                superintendente = UserDatos.objects.filter(distrito_id=usuario.userdatos.distrito.id, tipo_id=6).values_list('numero_de_trabajador',flat=True).first()
-                perfil_superintendente = Perfil.objects.filter(numero_de_trabajador = superintendente).values_list('id',flat=True).first()
-                
-                #se crea la autorizacion
-                AutorizarSolicitudes.objects.create(
-                    solicitud_id = solicitud.id,
-                    perfil_id =  perfil_superintendente,
-                    tipo_perfil_id = 6, # superintendente
-                    estado_id = 3, # pendiente
-                )
-                
-                #Se guarda la solicitud en complete
-                solicitud.complete = 1
-                solicitud.save()
-                
-                messages.success(request, "La solicitud se envio al superintendente")
                 return redirect('listarBonosVarilleros')
                 
         solicitudForm = SolicitudForm(instance = solicitud)

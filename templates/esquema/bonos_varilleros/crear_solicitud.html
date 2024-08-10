@@ -118,7 +118,7 @@ Crear Solicitud - Bonos Varilleros
                                 <div class="input-group mb-3">
                                 <span class="input-group-text" id="basic-addon1"><i class="fas fa-sack-dollar"></i></span>
                                     <div class="form-floating form-floating-group flex-grow-1">   
-                                        {{solicitudForm.bono}}
+                                        {{solicitudForm.bono|add_class:"form-control select2-bootstrap"}}
                                     </div>
                                 </div>
                             </div>
@@ -188,10 +188,9 @@ Crear Solicitud - Bonos Varilleros
                                 <div class="col-12">
                                     <div class="input-group mb-3">
                                     <span class="input-group-text" id="basic-addon1"><i class="fas fa-helmet-safety"></i></span>
-                                        <div class="form-floating form-floating-group flex-grow-1">   
-                                            
-                                            {{bonoSolicitadoPuestoForm}}
-                                        </div>
+                                       
+                                            {{bonoSolicitadoPuestoForm.puesto|add_class:"form-control select2-bootstrap"}}
+                                        
                                     </div>
                                 </div>
                             </div>
@@ -269,17 +268,11 @@ Crear Solicitud - Bonos Varilleros
 {% endblock content %}
 
 {% block js %}
-    <script type="text/javascript">
-        var listarBonosVarillerosUrl = "{% url 'listarBonosVarilleros' %}";
-    </script>
-
     {% comment %} select2 {% endcomment %}
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     {% comment %} select 2 lang es {% endcomment %}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/i18n/es.js"></script>
-   
     <!--<script src="{% static 'js/esquema/bono_varillero/mostrar_boton.js' %}"></script>-->
-   
     <script>
     $(document).ready(function() {
     /**Debes reemplazar o cambiar los valores de los bonos asignados por el ID que se encuentran en la subcategoria del bono */
@@ -293,13 +286,13 @@ Crear Solicitud - Bonos Varilleros
 
     var bonos = {{ bonos|safe }}
     //console.log(bonos)
-
     // Inicializar Select2 con la clase personalizada para ancho
     $('#id_bono').select2({
         allowClear: true,
         width: '100%',
         placeholder: 'Selecciona un bono',
         data: bonos,
+        language:"es",
         templateResult: formatRepo, // Función para renderizar los resultados
         templateSelection: formatRepoSelection // Función para renderizar la selección
     });
@@ -308,6 +301,7 @@ Crear Solicitud - Bonos Varilleros
         allowClear: true,
         width: '100%',
         placeholder: 'Selecciona un puesto',
+        language:"es",
         ajax: {
             url: "{% url 'ajax_load_puestos' %}",
             datatype: 'json',
@@ -343,7 +337,7 @@ Crear Solicitud - Bonos Varilleros
             },
             cache: true
         }
-    }).next('.select2-container').addClass('wide-select');
+    })
 
     //Carga el bono con usus propiedades cuando es seleccionado
     $('#id_bono').on('select2:select', function(e){
