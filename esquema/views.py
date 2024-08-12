@@ -88,8 +88,6 @@ def listarBonosVarilleros(request):
         #se obtiene el perfil del usuario logueado
         solicitante = get_object_or_404(Perfil,numero_de_trabajador = usuario.numero_de_trabajador, distrito = usuario.distrito)
         
-        
-        
         subconsulta_ultima_fecha = AutorizarSolicitudes.objects.values('solicitud_id').annotate(
                 ultima_fecha=Max('created_at')
             ).filter(solicitud_id=OuterRef('solicitud_id')).values('ultima_fecha')[:1]
@@ -106,12 +104,9 @@ def listarBonosVarilleros(request):
             autorizaciones = AutorizarSolicitudes.objects.filter(
                 created_at=Subquery(subconsulta_ultima_fecha)
             ).select_related('solicitud', 'perfil').filter(
-                #RECUERDA QUE VA EL COMPLETE
-                solicitud__solicitante_id__distrito_id=solicitante.distrito_id
+                solicitud__solicitante_id__distrito_id=solicitante.distrito_id, solicitud__complete = 1
                 #solicitud__solicitante_id__distrito_id=solicitante.distrito_id,tipo_perfil_id = usuario.tipo.id ,solicitud__complete = 1
             ).order_by("-created_at")
-            
-            print(autorizaciones)
         else:
             #obtiene la ultima autorizacion independientemente en el flujo que se encuentre            
             autorizaciones = AutorizarSolicitudes.objects.filter(
@@ -206,6 +201,7 @@ def comprimir_pdf(pdf):
                 # Convert to RGB (in case it's RGBA or another mode)
                 image = image.convert("RGB")
                 
+                #Redimensionar la imagen
                 image = image.resize((image.width // 2, image.height // 2), Image.LANCZOS)  # Use Image.LANCZOS for quality reduction
                 
                 # Create a new in-memory buffer for the compressed image
@@ -255,10 +251,11 @@ def comprimir_pdf(pdf):
 #para crear solicitudes de bonos
 @login_required(login_url='user-login')
 def crearSolicitudBonos(request):
-    usuario = request.user  
+    #usuario = request.user  
+    usuario = get_object_or_404(UserDatos,user_id = request.user.id)
     
     #Todos los supervisores y RH pueden crear solicitudes
-    if usuario.userdatos.tipo_id in (5,4):
+    if usuario.tipo_id in (5,4):
         #print("se ejecuta el usuario: ",usuario.userdatos.distrito.id)
         #se obtiene el usuario logueado
         #usuario = get_object_or_404(UserDatos,user_id = request.user.id)
@@ -271,8 +268,8 @@ def crearSolicitudBonos(request):
         bonoSolicitadoPuestoForm = BonoSolicitadoPuestoForm()
         requerimientoForm = RequerimientoForm()
         #se hace una consulta con los empleados del distrito que pertenecen
-        empleados = Perfil.objects.filter(distrito_id = usuario.userdatos.distrito.id).exclude(baja = 1).order_by('nombres')
-        solicitante = Perfil.objects.get(numero_de_trabajador = usuario.userdatos.numero_de_trabajador, distrito_id = usuario.userdatos.distrito.id)
+        empleados = Perfil.objects.filter(distrito_id = usuario.distrito.id).exclude(baja = 1).order_by('nombres')
+        solicitante = Perfil.objects.get(numero_de_trabajador = usuario.numero_de_trabajador, distrito_id = usuario.distrito.id)
         #se carga el formulario en automatico definiendo filtros
         bonoSolicitadoForm.fields["trabajador"].queryset = empleados 
         ultimo_registro = Solicitud.objects.filter(complete = True).values_list('folio', flat=True).last()
@@ -296,18 +293,10 @@ def crearSolicitudBonos(request):
                 'soporte': str(bono.soporte)
             } for bono in bonos
         ]
-
-        #Los prepara para el select2
-        #bonos_para_select2 = [
-        #    {
-        #        'id': bono.id,
-        #        'text': str(bono.esquema_subcategoria.nombre),
-        #        'soporte': str(bono.esquema_subcategoria.soporte)
-        #    } for bono in bonos
-        #]
         
         errors = {}
         #Para guardar la solicitud
+        
         if request.method == "POST":
             #obtiene un queryset de los archivos de la solicitud
         
@@ -324,19 +313,17 @@ def crearSolicitudBonos(request):
                             documento = comprimir_imagen(archivo)
                         #Comprime pdfs
                         elif archivo.content_type == 'application/pdf':
-                            print("Ajustar el archivo pdf")
                             documento = comprimir_pdf(archivo)
                         else:
                             documento = archivo
-                        #Guarda imagen o PDF
+                        #Guarda el archivo
                         requerimiento = Requerimiento.objects.create(
                             solicitud_id = solicitud.id,
                             url = documento,
                         )
                         
                         requerimiento.save()
-                    
-                            
+                        
                     solicitud.complete_requerimiento = True
                     solicitud.save()
                     messages.success(request, "El soporte se adjunto correctamente")
@@ -350,7 +337,7 @@ def crearSolicitudBonos(request):
                     form_bonosolicitado = BonoSolicitadoForm(request.POST,instance=bono_solicitado)
                     if form_bonosolicitado.is_valid():
                         puesto = int(request.POST.get('puesto'))
-                        if puesto == 7: #
+                        if puesto == 7: # Puesto ID - Todos los que participen en la actividad
                             bono_solicitado.save()
                             # id puesto - todos los que participen en la actividad - dividir la cantidad del bono entre el total de los participantes
                             participantes = BonoSolicitado.objects.filter(solicitud_id = solicitud.id).count()
@@ -373,7 +360,7 @@ def crearSolicitudBonos(request):
                     return redirect(request.META.get('HTTP_REFERER'))
                 
                 #Se envia la solicitud al superintendente
-                superintendente = UserDatos.objects.filter(distrito_id=usuario.userdatos.distrito.id, tipo_id=6).values_list('numero_de_trabajador',flat=True).first()
+                superintendente = UserDatos.objects.filter(distrito_id=usuario.distrito.id, tipo_id=6).values_list('numero_de_trabajador',flat=True).first()
                 perfil_superintendente = Perfil.objects.filter(numero_de_trabajador = superintendente).values_list('id',flat=True).first()
                 
                 #se crea la autorizacion
@@ -418,18 +405,17 @@ def crearSolicitudBonos(request):
 
 @login_required(login_url='user-login')  
 def verificarSolicitudBonosVarilleros(request,solicitud):
-    usuario = request.user
+    #usuario = request.user
+    usuario = get_object_or_404(UserDatos,user_id = request.user.id)
     #solamente RH y supervisores
-    if usuario.userdatos.tipo.id in (4,5):
+    if usuario.tipo.id in (4,5):
         
-        perfil = Perfil.objects.filter(numero_de_trabajador=usuario.userdatos.numero_de_trabajador,distrito_id = usuario.userdatos.distrito.id).values_list('id',flat=True)
+        perfil = Perfil.objects.filter(numero_de_trabajador=usuario.numero_de_trabajador,distrito_id = usuario.distrito.id).values_list('id',flat=True)
         permiso = Solicitud.objects.filter(solicitante_id=perfil[0], pk=solicitud).values_list('id',flat=True)
         
         #checa el perfil correspondiente para cambiar la solicitud - policy
         if not permiso:
-            print("llego aqui")
             return render(request, 'revisar/403.html')
-        
         
         #obtener las instancias para poblar los formularios
         solicitud = Solicitud.objects.get(pk=solicitud)
@@ -441,8 +427,8 @@ def verificarSolicitudBonosVarilleros(request,solicitud):
         requerimientoForm = RequerimientoForm()
         
         #se hace una consulta con los empleados del distrito que pertenecen
-        empleados = Perfil.objects.filter(distrito_id = usuario.userdatos.distrito.id).exclude(baja = 1).order_by('nombres')
-        solicitante = Perfil.objects.get(numero_de_trabajador = usuario.userdatos.numero_de_trabajador, distrito_id = usuario.userdatos.distrito.id)
+        empleados = Perfil.objects.filter(distrito_id = usuario.distrito.id).exclude(baja = 1).order_by('nombres')
+        solicitante = Perfil.objects.get(numero_de_trabajador = usuario.numero_de_trabajador, distrito_id = usuario.distrito.id)
         #se carga el formulario en automatico definiendo filtros
         bonoSolicitadoForm.fields["trabajador"].queryset = empleados 
         
@@ -1000,7 +986,7 @@ def convert_excel_bonos_aprobados(bonos,catorcena,total_monto,cantidad_bonos_apr
     
     
     #se crea el encabezado de la tabla en excel 
-    columns = ['Folio','Fecha emisión','Fecha aprobación','Nombre','No. de cuenta','No. de tarjeta','Banco','Distrito','Bono','Puesto','Cantidad']
+    columns = ['Folio','Fecha emisión','Fecha aprobación','# Trabajador','Nombre','No. de cuenta','No. de tarjeta','Banco','Distrito','Bono','Puesto','Cantidad']
     
     #se añade el ancho de cada columna
     for col_num in range(len(columns)):
@@ -1035,6 +1021,7 @@ def convert_excel_bonos_aprobados(bonos,catorcena,total_monto,cantidad_bonos_apr
             bono.solicitud.folio,
             bono.fecha.strftime('%Y-%m-%d %H:%M'),
             bono.solicitud.fecha_autorizacion.strftime('%Y-%m-%d %H:%M'),
+            str(bono.trabajador.numero_de_trabajador),
             str(bono.trabajador),
             bono.trabajador.status.datosbancarios.no_de_cuenta,
             bono.trabajador.status.datosbancarios.numero_de_tarjeta,

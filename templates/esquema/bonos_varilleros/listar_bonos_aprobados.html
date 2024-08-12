@@ -198,6 +198,7 @@
                         <th>Folio</th>
                         <th>Fecha emisión</th>
                         <th>Fecha aprobación</th>
+                        <th># trabajador</th> 
                         <th>Nombre</th>
                         <th>No. Cuenta</th>
                         <th>No. Tarjeta</th>
@@ -216,11 +217,12 @@
                         <td>{{bono.solicitud.folio}}</td>
                         <td>{{bono.solicitud.fecha|date:"d/m/Y H:i"}}</td>
                         <td>{{bono.solicitud.fecha_autorizacion|date:"d/m/Y H:i"}}</td>
+                        <td>{{bono.trabajador.numero_de_trabajador}}</td>
                         <td>{{bono.trabajador}}</td>
                         <td>{{bono.trabajador.status.datosbancarios.no_de_cuenta}}</td>
                         <td>{{bono.trabajador.status.datosbancarios.numero_de_tarjeta}}</td>
                         <td>{{bono.trabajador.status.datosbancarios.banco}}</td>
-                        <td>{{bono.distrito}}</td>
+                        <td>{{bono.bono.distrito}}</td>
                         <td>{{bono.solicitud.bono}}</td>
                         <td>{{bono.puesto}}</td>
                         

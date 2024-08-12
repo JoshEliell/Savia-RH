@@ -113,13 +113,13 @@ Cambios Solicitud - Bonos Varilleros
                                 <input type="text" value="{{solicitante.distrito.distrito}}" class="form-control bg-white"
                                     placeholder="Nombre" aria-label="nombre" aria-describedby="basic-addon1" readonly>
                             </div>
-                           
-
+                            
                             <div class="col-12">
+                                <label for="" class="text-muted mb-1">Bono</label>
                                 <div class="input-group mb-3">
                                 <span class="input-group-text" id="basic-addon1"><i class="fas fa-sack-dollar"></i></span>
                                     <div class="form-floating form-floating-group flex-grow-1">   
-                                        {{solicitudForm.bono}}
+                                        {{solicitudForm.bono|add_class:"form-control select2-bootstrap"}}
                                     </div>
                                 </div>
                             </div>
@@ -159,45 +159,32 @@ Cambios Solicitud - Bonos Varilleros
                             
                           
                             <div class="row">
-                                <div class="col-md-5">
-                                    <label for="empleado" class="form-label fw-bold">Empleado</label>
-                                    <input type="hidden" id="esquemaBono" name="esquemaBono" value="">
-                                    {% comment %} Empleado 
-                                    <input type="hidden" id="bonoId" name="bonoId" value="">
-                                    
-                                    {% endcomment %}
-                                    
-
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="fas fa-user"></i></span>
-                                        
-                                        {% render_field bonoSolicitadoForm.trabajador class="form-control select2-bootstrap" id="empleado" %}
-                                    </div>
-                                    <small class="text-danger">{{ bonoSolicitadoForm.trabajador.errors }}</small>
-                                </div>
-                            </div> 
-                                <!--<div class="col-md-3">
-                                    <label for="puesto" class="form-label fw-bold">Puesto</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i
-                                                class="fas fa-helmet-safety"></i></span>
-                                        {% render_field bonoSolicitadoForm.puesto class="form-control" id="puesto" %}
-                                    </div>
-                                    <small class="text-danger">{{ bonoSolicitadoForm.puesto.errors }}</small>
-                                </div>-->
-                            <div class="row mt-2">
                                 <div class="col-12">
-                                    <div class="input-group mb-3">
-                                    <span class="input-group-text" id="basic-addon1"><i class="fas fa-helmet-safety"></i></span>
-                                        <div class="form-floating form-floating-group flex-grow-1">   
-                                            
-                                            {{bonoSolicitadoPuestoForm}}
+                                    <div class="col-12">
+                                        <label for="" class="text-muted mb-1">Empleado</label>
+                                        <div class="input-group mb-3">
+                                        <span class="input-group-text" id="basic-addon1"><i class="fas fa-user"></i></span>
+                                            <div class="form-floating form-floating-group flex-grow-1">   
+                                                <input type="hidden" id="esquemaBono" name="esquemaBono" value="">
+                                                {% render_field bonoSolicitadoForm.trabajador class="form-control select2-bootstrap" id="empleado" %}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
+                            </div> 
+
+                            <div class="col-12">
+                                <label for="" class="text-muted mb-1">Puesto</label>
+                                <div class="input-group mb-3">
+                                <span class="input-group-text" id="basic-addon1"><i class="fas fa-helmet-safety"></i></span>
+                                    <div class="form-floating form-floating-group flex-grow-1">   
+                                        {{bonoSolicitadoPuestoForm.puesto|add_class:"select2-bootstrap form-control"}}
+                                    </div>
+                                </div>
                             </div>
+
                                 <div class="col-md-3">
-                                    <label for="cantidad" class="form-label fw-bold">Cantidad </label></label>
+                                    <label for="" class="text-muted mb-1">Cantidad</label>
                                     <div class="input-group">
                                         <span class="input-group-text"><i
                                                 class="fa fa-dollar-sign"></i></span>
@@ -319,6 +306,8 @@ Cambios Solicitud - Bonos Varilleros
         allowClear: true,
         width: '100%',
         placeholder: 'Selecciona un puesto',
+        templateResult: formatRepo,
+        templateSelection: formatRepoSelection,
         ajax: {
             url: "{% url 'ajax_load_puestos' %}",
             datatype: 'json',
@@ -355,6 +344,15 @@ Cambios Solicitud - Bonos Varilleros
             cache: true
         }
     }).next('.select2-container').addClass('wide-select');
+
+    $('#empleado').select2({
+        allowClear: true,
+        width: '100%',
+        placeholder: 'Selecciona un empleado',
+        language:"es",
+        templateResult: formatOption,
+        templateSelection: formatOptionSelection,
+    })
 
     //Carga el bono con usus propiedades cuando es seleccionado
     $('#id_bono').on('select2:select', function(e){
@@ -459,6 +457,26 @@ Cambios Solicitud - Bonos Varilleros
         });
     });
 
+
+     //para realizar busquedas sin ajax
+     function formatOption(option) {
+        if (!option.id) {
+            return option.text;  // Muestra el texto simple si no hay un valor (por ejemplo, la opción de placeholder)
+        }
+
+        // Crear un contenedor personalizado para la opción
+        var $container = $("<div class='select2-result-repository clearfix'>" +
+            "<div class='form-control form-control-lg select2-result-repository__title'></div>" +
+            "</div>");
+
+        $container.find(".select2-result-repository__title").text(option.text);
+
+        return $container;
+    }
+
+    function formatOptionSelection(option) {
+        return option.text || option.id;  // Muestra el texto o el ID en la selección
+    }
 
     function formatRepo (repo) {
     if (repo.loading) {
