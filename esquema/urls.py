@@ -1,5 +1,7 @@
 from django.urls import path
 from . import views
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     #Bono Varillero - solicitudes
@@ -13,12 +15,8 @@ urlpatterns = [
     #Modulo crear bonos
     #path('bonos_varillero/tabulador_bonos',views.tabuladorBonos, name="tabuladorBonos"),
     #api
-    path('solicitar_esquema_bonos/',views.solicitarEsquemaBono, name ="solicitar-esquema-bono"),
     path('remover_bono/<int:bono_id>/',views.removerBono, name="remover-bono"),
-    path('remover_bonos/editar/<int:solicitud_id>/',views.removerBonosEditar),
     path('remover_archivo/<int:archivo_id>/',views.removerArchivo),
-    path('enviar_solicitud/',views.EnviarSolicitudEsquemaBono, name="enviar-solicitud"),
-    path('solicitar_soporte_bono/',views.solicitarSoporteBono),
     path('ajax/load-puestos/', views.get_puestos, name='ajax_load_puestos'),
     
-]
+]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

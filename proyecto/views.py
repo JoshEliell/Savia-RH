@@ -1545,137 +1545,145 @@ def VacacionesUpdate(request, pk):
     user_filter = UserDatos.objects.get(user=request.user)
     descanso = Vacaciones.objects.get(id=pk)
     if user_filter.tipo.id in [4,9,10,11] and user_filter.distrito == descanso.status.perfil.distrito: #Perfil RH
+        print("Entramos al flujo de las solicitudes vacaciones")
+        rh = Status.objects.get(perfil__numero_de_trabajador = user_filter.numero_de_trabajador, perfil__distrito = user_filter.distrito)
+        status = Status.objects.get(id=descanso.status.id)
         currentFieldCount = 10
-        registros = descanso.history.filter(~Q(dias_disfrutados = None))
-
+        datos = Vacaciones.objects.filter(status=status).order_by(Cast('periodo', output_field=IntegerField())) #Identifico las vacaciones del usuario de la mas antigua a la mas actual
+        pendiente=0
+        now = date.today()
+        periodo = str(now.year)
+        for dato in datos:
+            pendiente += dato.total_pendiente #Para sacar el total de días pendientes
+        currentFieldCount = 10
+        solicitud, created = Solicitud_vacaciones.objects.get_or_create(complete=False)
+        form = SolicitudVacacionesForm()
         if request.method == 'POST' and 'btnSend' in request.POST:
-            form = VacacionesUpdateForm(request.POST, instance=descanso)
-            descanso = form.save(commit=False)
+            form = SolicitudVacacionesUpdateForm(request.POST, instance=solicitud)
+            #form.save(commit=False)
 
-
-            tabla_festivos = TablaFestivos.objects.all()
-            delta = timedelta(days=1)
-            day_count = (descanso.fecha_fin - descanso.fecha_inicio + delta ).days
-            cuenta = day_count #Dias entre las dos fechas
-            inhabil = descanso.dia_inhabil.numero
-            for fecha in (descanso.fecha_inicio + timedelta(n) for n in range(day_count)):
-                if fecha.isoweekday() == inhabil:
-                    cuenta -= 1 #Se le restan a la cuenta los días inhabiles para sacar los dias reales
-                else:
-                    for dia in tabla_festivos:
-                        if fecha == dia.dia_festivo:
-                            cuenta -= 1 # Se le restan tambien los días festivos para sacar los días reales que va a tomar (Cantida de días)
-            dias_vacacion = cuenta #Para escribir en el comentario los días
-            if cuenta > 0: #Aqui salgo bien con los 2 dias--------
-                #Aqui se buscan las vacaciones anteriores y se van modificando los datos para poder llevar la toma de dias pendientes de años anteriores
-                if Vacaciones.objects.filter(status=descanso.status.id).last().total_pendiente > 0 or Vacaciones.objects.filter(status=descanso.status.id).first().total_pendiente > 0:
-                    datos = Vacaciones.objects.filter(status=descanso.status.id, total_pendiente__gt=0,).order_by(Cast('periodo', output_field=IntegerField()))#Trae todas las vacaciones del mas antiguo al actual 2019-2022
-                    if datos.exclude(id=datos.last().id) != None:
-                        datos = datos.exclude(id=datos.last().id)
-                        for dato in datos: #Se pasa por los datos del mas antiguo al mas actual de los que se tenia
-                            if cuenta <= dato.total_pendiente and cuenta > 0:
-                                if dato.dias_disfrutados == None:
-                                    dato.dias_disfrutados = 0
-                                dato.total_pendiente -= cuenta
-                                dato.dias_disfrutados += cuenta
-                                cuenta = 0
-                                break
-                            elif cuenta > dato.total_pendiente and cuenta > 0:
-                                if dato.dias_disfrutados == None:
-                                    dato.dias_disfrutados = 0
-                                dato.dias_disfrutados += dato.total_pendiente
-                                cuenta -=dato.total_pendiente
-                                dato.total_pendiente = 0
-                    descanso.dias_disfrutados += cuenta #Días que disfrutara son los que vienen de la cuenta
-                    descanso.fecha_planta_anterior = descanso.status.fecha_planta_anterior
-                    descanso.fecha_planta = descanso.status.fecha_planta
-
-                    if descanso.dias_disfrutados > descanso.dias_de_vacaciones:
-                        messages.error(request, f'(Dias disfrutados) La cantidad total capturada debe ser menor o igual a {descanso.total_pendiente}, cantidad actual: {cuenta}')
+            #Se quita a la cantidad de días de vacaciones el día inhabil y los días festivos para sacar la cuenta de días que tomara
+            if form.is_valid():
+                tabla_festivos = TablaFestivos.objects.all()
+                delta = timedelta(days=1)
+                day_count = (solicitud.fecha_fin - solicitud.fecha_inicio + delta ).days
+                cuenta = day_count
+                #inhabil = solicitud.dia_inhabil.numero
+                inhabil = form.cleaned_data['dia_inhabil']
+                for fecha in (solicitud.fecha_inicio + timedelta(n) for n in range(day_count)):
+                    if fecha.isoweekday() == inhabil.id:
+                        cuenta -= 1
                     else:
-                        periodofecha = descanso.created_at.year
-                        descanso.periodo = periodofecha
-                        descanso.total_pendiente = descanso.dias_de_vacaciones - descanso.dias_disfrutados
-                        if form.is_valid():
-                            solicitud, created = Solicitud_vacaciones.objects.get_or_create(complete=False)
-                            num_campos = int(request.POST.get('num_campos', 0))
+                        for dia in tabla_festivos:
+                            if fecha == dia.dia_festivo:
+                                cuenta -= 1  #Días que va a tomar con esta solicitud
+                        dias_vacacion = cuenta
+                if cuenta <= pendiente:
+                    if solicitud.fecha_fin >= solicitud.fecha_inicio:
+                        verificar = Solicitud_vacaciones.objects.filter(status=status,periodo=periodo).last()
+                        if verificar is None:
+                            valido = True
+                        elif verificar.autorizar is not None:
+                            valido = True
+                        else:
+                            messages.error(request, 'Tiene una solicitud generada sin revisar')
+                    else:
+                        messages.error(request,'La fecha de inicio no puede ser posterior a la final')
+                else:
+                    messages.error(request,f'Tiene {pendiente} días pendientes, y esta solicitando {cuenta} días de vacaciones')
+            if valido and form.is_valid():
+                num_campos = int(request.POST.get('num_campos', 0))
 
-                            for i in range(1, num_campos + 1):
-                                asunto = request.POST.get(f'asunto{i}')
-                                estado = request.POST.get(f'estado{i}')
+                for i in range(1, num_campos + 1):
+                    asunto = request.POST.get(f'asunto{i}')
+                    estado = request.POST.get(f'estado{i}')
 
-                                # Crear un nuevo grupo de Trabajos_encomendados para cada conjunto de 10 campos
-                                if (i - 1) % 10 == 0:
-                                    if i > 1:
-                                        trabajos_grupo.complete = True
-                                        trabajos_grupo.save()
-
-                                    trabajos_grupo = Trabajos_encomendados()
-                                    trabajos_grupo.save()
-                                    solicitud.asunto.add(trabajos_grupo)
-
-                                setattr(trabajos_grupo, f'asunto{(i - 1) % 10 + 1}', asunto)
-                                setattr(trabajos_grupo, f'estado{(i - 1) % 10 + 1}', estado)
-                                trabajos_grupo.save()
-
-                            # Marcar el último grupo como completo
+                    # Crear un nuevo grupo de Trabajos_encomendados para cada conjunto de 10 campos
+                    if (i - 1) % 10 == 0:
+                        if i > 1:
                             trabajos_grupo.complete = True
                             trabajos_grupo.save()
 
-                            temas, created = Temas_comentario_solicitud_vacaciones.objects.get_or_create(complete=False,)
-                            for i in range(1, 10):
-                                comentario = request.POST.get(f'comentario{i}')
-                                setattr(temas, f'comentario{i}', comentario)
-                            temas.complete=True
-                            temas.save()
+                        trabajos_grupo = Trabajos_encomendados()
+                        trabajos_grupo.save()
+                        solicitud.asunto.add(trabajos_grupo)
 
-                            solicitud.status = descanso.status
-                            solicitud.periodo = descanso.periodo
-                            solicitud.fecha_inicio = descanso.fecha_inicio
-                            solicitud.fecha_fin = descanso.fecha_fin
-                            solicitud.dia_inhabil = descanso.dia_inhabil
-                            solicitud.recibe_nombre = request.POST.get('recibe')
-                            solicitud.recibe_area = request.POST.get('area')
-                            solicitud.recibe_puesto = request.POST.get('puesto')
-                            solicitud.recibe_sector = request.POST.get('sector')
-                            solicitud.informacion_adicional = request.POST.get('adicional')
-                            solicitud.temas = temas
-                            solicitud.anexos = request.POST.get('anexos')
-                            solicitud.autorizar = True
-                            solicitud.comentario_rh = descanso.comentario
-                            solicitud.complete=True
-                            solicitud.save()
-                            for dato in datos:
-                                historial = dato.history.first()  # Obtener la primera versión histórica del objeto
-                                if historial and historial.total_pendiente != dato.total_pendiente:
-                                    # El campo 'total_pendiente' ha cambiado
-                                    dato._meta.get_field('created_at').auto_now = False
-                                    dato.comentario ="Solicitado periodo: " + str(descanso.periodo)
-                                    dato.fecha_inicio = descanso.fecha_inicio
-                                    dato.fecha_fin =  descanso.fecha_fin
-                                    dato.save()
-                                    dato._meta.get_field('created_at').auto_now = True
-                            if cuenta > 0:
-                                messages.success(request, f'Cambios guardados con éxito los días de vacaciones de {descanso.status.perfil.nombres} {descanso.status.perfil.apellidos}')
-                            else:
-                                messages.success(request, f'Datos capturados con éxito empleado {descanso.status.perfil.nombres} {descanso.status.perfil.apellidos} y descontados a sus días pendientes')
-                            descanso.comentario +=" " + "Dias tomados:" + str(dias_vacacion)
-                            form.save()
-                            #Parte para la prenomina
-                            prenomina_dia_tomado = Vacaciones_dias_tomados.objects.create(prenomina=descanso,fecha_inicio=descanso.fecha_inicio,fecha_fin=descanso.fecha_fin,
-                                                                    dia_inhabil=descanso.dia_inhabil,comentario=descanso.comentario,editado=descanso.editado)
-                            return redirect('Tabla_vacaciones_empleados')
+                    setattr(trabajos_grupo, f'asunto{(i - 1) % 10 + 1}', asunto)
+                    setattr(trabajos_grupo, f'estado{(i - 1) % 10 + 1}', estado)
+                    trabajos_grupo.save()
+
+                # Marcar el último grupo como completo
+                trabajos_grupo.complete = True
+                trabajos_grupo.save()
+
+                solicitud.recibe_nombre = request.POST.get('recibe')
+                solicitud.recibe_area = request.POST.get('area')
+                solicitud.recibe_puesto = request.POST.get('puesto')
+                solicitud.recibe_sector = request.POST.get('sector')
+                solicitud.informacion_adicional = request.POST.get('adicional')
+                solicitud.anexos = request.POST.get('anexos')
+                solicitud.comentario_rh = request.POST.get('comentario')
+                #trabajos_encomendados, created = Trabajos_encomendados.objects.get_or_create(complete=False,)
+                temas, created = Temas_comentario_solicitud_vacaciones.objects.get_or_create(complete=False,)
+                for i in range(1, 10):
+                    comentario = request.POST.get(f'comentario{i}')
+                    setattr(temas, f'comentario{i}', comentario)
+                temas.save()
+                #trabajos_encomendados.complete=True
+                #trabajos_encomendados.save()
+                temas.complete=True
+                temas.save()
+                now = date.today()
+                solicitud.periodo = str(now.year)
+                solicitud.status = status
+                solicitud.autorizar = True
+                solicitud.perfil = rh.perfil
+                solicitud.temas = temas
+                solicitud.complete=True
+                solicitud.autorizar_jefe = True
+                form.save()
+                vacacion = Vacaciones.objects.filter(complete=True,status=solicitud.status).filter(~Q(total_pendiente=0)).last()
+                if vacacion.dias_disfrutados == None and vacacion.dias_de_vacaciones == None:
+                    vacacion.dias_de_vacaciones = vacacion.total_pendiente
+                    vacacion.dias_disfrutados = cuenta
+                    vacacion.total_pendiente = vacacion.dias_de_vacaciones - vacacion.dias_disfrutados
                 else:
-                    messages.error(request, 'Ya a tomado todos sus días de vacaciones')
-            else:
-                messages.error(request, 'La cantidad de días que disfrutara debe ser mayor a 0')
-        else:
-            form = VacacionesUpdateForm()
+                    vacacion.dias_disfrutados += cuenta
+                    vacacion.total_pendiente = vacacion.dias_de_vacaciones - vacacion.dias_disfrutados
+                vacacion.dia_inhabil = solicitud.dia_inhabil
+                vacacion.fecha_fin = solicitud.fecha_fin
+                vacacion.fecha_inicio = solicitud.fecha_inicio
+                vacacion.comentario = solicitud.comentario_rh
+                #Guardamos las vacaciones anteriores
+                for dato in datos:
+                    historial = dato.history.first()  # Obtener la primera versión histórica del objeto
+                    if historial and historial.total_pendiente != dato.total_pendiente:
+                        # El campo 'total_pendiente' ha cambiado
+                        dato._meta.get_field('created_at').auto_now = False
+                        dato.comentario ="Tomado periodo:" + str(solicitud.periodo)
+                        dato.fecha_inicio = solicitud.fecha_inicio
+                        dato.fecha_fin =  solicitud.fecha_fin
+                        dato.save()
+                        dato._meta.get_field('created_at').auto_now = True
+                # Guardamos los cambios en la base de datos
+                vacacion.comentario +=" "+"Dias tomados:" + str(dias_vacacion)
+                nombre = Perfil.objects.get(numero_de_trabajador = user_filter.numero_de_trabajador, distrito = user_filter.distrito)
+                vacacion.editado = str("A:"+nombre.nombres+" "+nombre.apellidos)
+                vacacion.save()
+                status.save()
+
+                #Parte para la prenomina
+                prenomina_dia_tomado = Vacaciones_dias_tomados.objects.create(prenomina=vacacion,fecha_inicio=vacacion.fecha_inicio,fecha_fin=vacacion.fecha_fin,
+                                        dia_inhabil=vacacion.dia_inhabil,comentario=vacacion.comentario,editado=vacacion.editado)
+                messages.success(request, 'Solicitud autorizada y días de vacaciones agregados')
+                return redirect('Tabla_vacaciones_empleados')
         context = {
             'form':form,
             'descanso':descanso,
-            'registros':registros,
             'currentFieldCount': currentFieldCount,
+            'status':status,
+            'datos':datos,
+            'pendiente':pendiente,
             }
         return render(request, 'proyecto/Vacaciones_update.html',context)
     else:
@@ -1913,7 +1921,7 @@ def FormularioEconomicos(request):
 @login_required(login_url='user-login')
 def EconomicosUpdate(request, pk):
     user_filter = UserDatos.objects.get(user=request.user)
-    economico = Economicos.objects.filter(complete=True,status=status).last()
+    economico = Economicos.objects.filter(complete=True,status__id=pk).last()
     if user_filter.tipo.id in [4,9,10,11] and user_filter.distrito == economico.status.perfil.distrito: #Perfil RH
         status = Status.objects.get(id=pk)
         form = EconomicosForm()
@@ -4755,7 +4763,8 @@ def solicitud_vacacion_verificar(request, pk):
                         solicitud.autorizar = 1
                         solicitud.save()
                         #coment = request.POST.get('comentario')
-
+                        
+                        print("status solicitud: ", solicitud.status)
                         vacacion = Vacaciones.objects.get(complete=True, status=solicitud.status, periodo=solicitud.periodo)
                         vacacion.dias_disfrutados += cuenta
                         vacacion.total_pendiente = vacacion.dias_de_vacaciones - vacacion.dias_disfrutados
@@ -5196,7 +5205,7 @@ def SolicitudEconomicos(request):
 
     #solicitud, created = Solicitud_economicos.objects.get_or_create(complete=False)
     form = SolicitudEconomicosForm()
-    empleados = Perfil.objects.filter(distrito_id = usuario.distrito_id, empresa_id = 5, baja = False)
+    empleados = Perfil.objects.filter(distrito_id = usuario.distrito_id, baja = False).order_by('nombres')
     form.fields['perfil'].queryset = empleados
     
     now = date.today()
@@ -6144,7 +6153,7 @@ def upload_batch_vacaciones_anteriores(request):
             if Perfil.objects.filter(numero_de_trabajador=row[0], distrito__distrito=row[1]):
                 status = Status.objects.get(perfil__numero_de_trabajador=row[0], perfil__distrito__distrito=row[1])
                 dia = Dia_vacacion.objects.get(nombre='Domingo')
-                if row[2] != 0:
+                if int(row[2]) > 0:
                     vacacion = Vacaciones(status=status, periodo='2020', dias_de_vacaciones=None, dia_inhabil=dia,
                                           fecha_inicio=None, fecha_fin=None, dias_disfrutados=None,
                                           total_pendiente=row[2], comentario=str('Vacaciones años previos'),
@@ -6155,7 +6164,7 @@ def upload_batch_vacaciones_anteriores(request):
                     vacacion.save()
                     vacacion._meta.get_field('created_at').auto_now = True
 
-                if row[3] != 0:
+                if int(row[3]) > 0:
                     vacacion1 = Vacaciones(status=status, periodo='2021', dias_de_vacaciones=None, dia_inhabil=dia,
                                            fecha_inicio=None, fecha_fin=None, dias_disfrutados=None,
                                            total_pendiente=row[3], comentario=str('Vacaciones años previos'),
@@ -6166,7 +6175,7 @@ def upload_batch_vacaciones_anteriores(request):
                     vacacion1.save()
                     vacacion1._meta.get_field('created_at').auto_now = True
 
-                if row[4] != 0:
+                if int(row[4]) > 0:
                     vacacion2 = Vacaciones(status=status, periodo='2022', dias_de_vacaciones=None, dia_inhabil=dia,
                                            fecha_inicio=None, fecha_fin=None, dias_disfrutados=None,
                                            total_pendiente=row[4], comentario=str('Vacaciones años previos'),
@@ -6177,7 +6186,7 @@ def upload_batch_vacaciones_anteriores(request):
                     vacacion2.save()
                     vacacion2._meta.get_field('created_at').auto_now = True
 
-                if row[5] != 0:
+                if int(row[5]) > 0:
                     vacacion3 = Vacaciones(status=status, periodo='2023', dias_de_vacaciones=None, dia_inhabil=dia,
                                            fecha_inicio=None, fecha_fin=None, dias_disfrutados=None,
                                            total_pendiente=row[5], comentario=str('Vacaciones años previos'),
@@ -6189,7 +6198,7 @@ def upload_batch_vacaciones_anteriores(request):
                     vacacion3._meta.get_field('created_at').auto_now = True
 
                 
-                if row[6] != 0:
+                if int(row[6]) > 0:
                     vacacion4 = Vacaciones(status=status, periodo='2024', dias_de_vacaciones=None, dia_inhabil=dia,
                                            fecha_inicio=None, fecha_fin=None, dias_disfrutados=None,
                                            total_pendiente=row[6], comentario=str('Vacaciones años previos'),

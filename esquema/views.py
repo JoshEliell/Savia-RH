@@ -255,15 +255,7 @@ def crearSolicitudBonos(request):
     usuario = get_object_or_404(UserDatos,user_id = request.user.id)
     
     #Todos los supervisores y RH pueden crear solicitudes
-    if usuario.tipo_id in (5,4):
-        #print("se ejecuta el usuario: ",usuario.userdatos.distrito.id)
-        #se obtiene el usuario logueado
-        #usuario = get_object_or_404(UserDatos,user_id = request.user.id)
-        #se obtiene el perfil del usuario logueado
-        #solicitante = get_object_or_404(Perfil,numero_de_trabajador = usuario.numero_de_trabajador) 
-
-        #se cargan los formularios con los valores del post
-        #solicitudForm = SolicitudForm()      
+    if usuario.tipo_id in (5,4): 
         bonoSolicitadoForm = BonoSolicitadoForm()
         bonoSolicitadoPuestoForm = BonoSolicitadoPuestoForm()
         requerimientoForm = RequerimientoForm()
@@ -631,7 +623,7 @@ def listarBonosVarillerosAprobados(request):
            
         ).order_by("-created_at").values('solicitud_id')
     
-    elif usuario.tipo.id in (12,8):
+    elif usuario.tipo.id in (4,12,8):
         #obtiene todos los bonos aprobados de un solo distrito al que pertenece
         autorizaciones = AutorizarSolicitudes.objects.filter(
             solicitud__complete = 1,
@@ -837,23 +829,6 @@ def removerBonoVerificar(request,bono_id):
         else:
             return JsonResponse({'mensaje': 'Prohibido'}, status=403,safe=True)
         
-#para eliminar los bonos al editar una solicitud
-@login_required(login_url='user-login')
-def removerBonosEditar(request, solicitud_id):
-    if request.method == 'POST':
-        
-        usuario = get_object_or_404(UserDatos,user_id = request.user.id)
-        
-        if usuario.tipo.id in (4,5):
-            try:
-                get_object_or_404(Solicitud,pk=solicitud_id)
-                BonoSolicitado.objects.filter(solicitud_id = solicitud_id).delete()
-                return JsonResponse({'mensaje':'eliminados'},status=200,safe=True)
-                
-            except:
-                return JsonResponse({'mensaje':'error del servidor'},status=500,safe=True)    
-        else:
-            return JsonResponse({'mensaje': 'Prohibido'}, status=403,safe=True)
         
 #para remover archivos agregados
 @login_required(login_url='user-login')
@@ -876,77 +851,7 @@ def removerArchivo(request,archivo_id):
             
         else:
             return JsonResponse({'mensaje': 'Prohibido'}, status=403,safe=True)        
-
-@login_required(login_url='user-login')
-def EnviarSolicitudEsquemaBono(request):
-    usuario = get_object_or_404(UserDatos,user_id = request.user.id)
-    if usuario.tipo.id in (4,5):
-        try:
-            #se obtiene la solicitud desde el request 
-            data = json.loads(request.body)
-            #se busca la solicitud en la BD
-            solicitud = Solicitud.objects.get(pk=data['solicitud'])
-            #se verifica que la solicitud este complete para crear la autorizacion
-            if solicitud.complete_bono == True and solicitud.complete_requerimiento == True:
-                solicitud.complete = True
-                solicitud.save()    
-                
-                usuario = request.user  
-                superintendente = UserDatos.objects.filter(distrito_id=usuario.userdatos.distrito.id, tipo_id=6).values('numero_de_trabajador').first()
-                perfil_superintendente = Perfil.objects.filter(numero_de_trabajador = superintendente['numero_de_trabajador']).values('id').first() 
-                
-                #se crea la autorizacion
-                AutorizarSolicitudes.objects.create(
-                    solicitud_id = solicitud.id,
-                    perfil_id =  perfil_superintendente['id'],
-                    tipo_perfil_id = 6, # superintendente
-                    estado_id = 3, # pendiente
-                )
-                
-                return JsonResponse({'mensaje':1},status=200,safe=False)
-            else:
-                #falta subir los requerimientos
-                return JsonResponse({"mensaje":0},status=422,safe=False)
-            
-        except:
-            return JsonResponse({'mensaje':'no encontrado'},status=404,safe=False) 
-    else:
-            return JsonResponse({'mensaje': 'Prohibido'}, status=403,safe=True)
-    
-#solicita la cantidad de un bono en especifico de la tabla de esquema de bonos definidos
-@login_required(login_url='user-login')
-def solicitarEsquemaBono(request):
-    if request.method == "POST":
-        #se obtiene el usuario logueado
-        usuario = get_object_or_404(UserDatos,user_id = request.user.id)
-        #se obtienen los datos enviados del servidor            
-        data = json.loads(request.body)
-                    
-        esquema_bono = Bono.objects.filter(esquema_subcategoria_id = data['bono'], distrito_id = usuario.distrito.id, puesto_id = data['puesto'])
-
-        for bono in esquema_bono:
-            print(bono)
-            print(bono.importe)
-            print(bono.puesto)
-    
-            
-        serialized_data = serialize("json", esquema_bono)
-        serialized_data = json.loads(serialized_data)
-        return JsonResponse(serialized_data, safe=False, status=200)
-
-        #datos = {'mensaje': 'comunicacion con el back'}
-        #return JsonResponse(datos)
-
-@login_required(login_url='user-login')
-def solicitarSoporteBono(request):
-     if request.method == "POST":
-        #se obtienen los datos enviados del servidor            
-        data = json.loads(request.body)
-        subcategoria = Subcategoria.objects.get(pk=data['bono'])
-        return JsonResponse({'soporte':subcategoria.soporte},status=200,safe=False)
-         
-         
-         
+        
 #GENERACION DE REPORTES EN EXCEL
 def convert_excel_bonos_aprobados(bonos,catorcena,total_monto,cantidad_bonos_aprobados):
     response= HttpResponse(content_type = "application/ms-excel")

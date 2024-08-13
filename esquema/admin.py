@@ -10,7 +10,7 @@ admin.site.register(BonoSolicitado)
 
 class BonoAdmin(admin.ModelAdmin):
     ordering = ['esquema_subcategoria']
-    list_display = ['id','esquema_subcategoria','puesto','distrito','importe']
+    list_display = ['id','esquema_subcategoria','puesto','distrito','estado','importe']
     search_fields = ['esquema_subcategoria__nombre','puesto','distrito__distrito','importe']
     list_filter = ['esquema_subcategoria','distrito']
     
