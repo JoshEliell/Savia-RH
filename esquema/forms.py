@@ -1,7 +1,7 @@
 from django import forms
 from django.shortcuts import render,get_object_or_404
 from proyecto.models import Perfil,UserDatos
-from .models import Solicitud,BonoSolicitado,Subcategoria,Puesto,Requerimiento
+from .models import Solicitud,BonoSolicitado,Subcategoria,Puesto,Requerimiento,Bono
 from revisar.models import AutorizarSolicitudes,Estado
 from datetime import datetime
 
@@ -15,13 +15,28 @@ class SolicitudForm(forms.ModelForm):
     class Meta:
         model = Solicitud
         fields = ['bono','comentario']
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Hacer que el campo 'comentario' no sea requerido
+        self.fields['comentario'].required = False
         
-    #def __init__(self, *args, **kwargs):
-        #super().__init__(*args, **kwargs)
-        #se filtra el bono por la subcategoria - bono varillero
-        #self.fields['folio'].widget.attrs['readonly'] = 'readonly'
-        #self.fields['bono'].queryset = Subcategoria.objects.filter(esquema_categoria_id=1).order_by('nombre')   
+class BonoSolicitadoForm(forms.ModelForm):
+    class Meta:
+        model = BonoSolicitado
+        fields = ['trabajador','cantidad']
     
+    def __init__(self, *args, **kwargs):
+        super(BonoSolicitadoForm, self).__init__(*args, **kwargs)
+        self.fields['cantidad'].widget.attrs['readonly'] = True
+        self.fields['cantidad'].required = True
+        
+class BonoSolicitadoPuestoForm(forms.Form):
+    puesto = forms.ModelChoiceField(queryset=Puesto.objects.none(), required=True)        
+
+
+        
+                
+"""  
 class BonoSolicitadoForm(forms.ModelForm):
     class Meta:
         model = BonoSolicitado
@@ -34,7 +49,8 @@ class BonoSolicitadoForm(forms.ModelForm):
         #para que la cantidad no sea editable
         self.fields['cantidad'].widget.attrs['readonly'] = 'readonly'
         #self.fields['cantidad'].widget.attrs['required'] = 'required'
-  
+"""
+ 
 class RequerimientoForm(forms.ModelForm):    
     class Meta:
         model = Requerimiento

@@ -54,6 +54,7 @@ urlpatterns = [
     path('Solicitudes_vacaciones_formato/<int:pk>/', views.PdfFormatoVacaciones, name='Solicitudes_vacaciones_formato'), #genera el pdf
     path('Solicitud_vacacion_autorizar/<int:pk>/', views.solicitud_vacacion_verificar, name='solicitud-vacacion-update'),
     path('upload_Vacaciones_anteriores', views.upload_batch_vacaciones_anteriores, name='Upload_vacaciones_anteriores'),
+    #path('Vacaciones/update/<int:pk>/', views.VacacionesUpdate, name='Vacaciones_update'),
 
     path('Formulario_DatosBancarios', views.FormularioDatosBancarios, name='Formulario_datosbancarios'),
     path('Tabla_DatosBancarios', views.Tabla_Datosbancarios, name='Tabla_datosbancarios'),
@@ -85,6 +86,7 @@ urlpatterns = [
     path('Solicitudes_economicos', views.Tabla_solicitud_economicos, name='Solicitudes_economicos'),
     path('Solicitudes_economicos_formato/<int:pk>/', views.PdfFormatoEconomicos, name='Solicitudes_economicos_formato'), #genera el pdf
     path('Solicitud_economico_autorizar/<int:pk>/', views.solicitud_economico_verificar, name='solicitud-economico-update'),
+    path('Economicos/update/<int:pk>/', views.EconomicosUpdate, name='Economicos_update'),
 
     path('Solicitudes_revisadas/Empleado', views.Solicitudes_revisar_empleado, name='Solicitudes_vista_empleado'), #Vista empleado generar pdf
     path('antiguedad/<int:pk>/', views.Antiguedad, name='antiguedad'),
@@ -93,6 +95,9 @@ urlpatterns = [
     path('costo-anterior',views.costo_anterior,name="costo_anterior"),
     path('costo/revisar-anterior/<int:pk>/', views.costo_revisar_anterior, name='costo_revisar_anterior'),
     path('Tabla_prenominas', views.TablaPrenominas, name='Tabla_prenominas'),
+    
+    path('listar_tabulador_bonos', views.listar_tabulador_bonos, name='listar_tabulador_bonos'),
+    
     
     
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

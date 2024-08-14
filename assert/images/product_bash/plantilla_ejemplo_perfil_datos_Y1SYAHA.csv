@@ -1,0 +1,100 @@
+numero_trabajador,empresa,distrito,nombres,apellidos,fecha_nacimiento,correo_electronico,proyecto,subproyecto,,,,,,,
+71,SPP,Matriz,MARGARITA,RUIZ CRUZ,24/01/70,ruiz2401@yahoo.com.mx,Sub. Administrativa,Sub. Administrativa,,Empresa,Distrito,Proyecto,,Proyecto al que pertenece el subproyecto,Subproyecto
+683,VORDCAB,Matriz,MONSERRAT,CORDERO LOPEZ,20/10/89,auditoria2_xalapa@hotmail.com,Sub. Administrativa,Sub. Administrativa,,HONORARIOS,Altamira,LATINA,,Sub. Administrativa,NR
+625,VORDCAB,Matriz,JOSE FIDEL,MENESES GUTIERREZ,11/04/95,,Sub. Administrativa,Sub. Administrativa,,FANG,Matriz,SECTOR,,DIAVAZ,Agua Fria
+78,SPP,Matriz,HERIBERTO,TREJO RAMOS,16/03/83,,Sub. Administrativa,Sub. Administrativa,,FAXTON,Planta Veracruz,DIAVAZ,,ACREF,Cuadrilla de instalaci¢n
+,,,,,,,,,,Sin Empresa,Poza Rica,ACREF,,ACREF,Castillo Jiliapa
+,,,,,,,,,,SPP,Veracruz,BHJ,,ACREF,Tanques de almacenamiento
+,,,,,,,,,,VORDCAB,Villahermosa,NR,,ACREF,Agua Fria
+,,,,,,,,,,VORDTEC,,Motos,,Petrolera,Inspecci¢n de varillas ABM
+,,,,,,,,,,,,Petrolera,,LATINA,Perforadora Latina
+,,,,,,,,,,,,Sub. Ventas,,SECTOR,SECTOR 3
+,,,,,,,,,,,,SPP,,SECTOR,SECTOR 8
+,,,,,,,,,,,,Fijos,,SECTOR,SECTOR 6
+,,,,,,,,,,,,Direcci¢n General,,SECTOR,SECTOR 5
+,,,,,,,,,,,,Sub. Ingenier¡a,,SECTOR,SECTOR 10
+,,,,,,,,,,,,Sub. Operaciones,,ACREF,SEG D
+,,,,,,,,,,,,Sub. Finanzas y ventas,,DIAVAZ,Operaci¢n y Mantto. Miquetla
+,,,,,,,,,,,,Sub. Administrativa,,DIAVAZ,UBM
+,,,,,,,,,,,,,,ACREF,Indirectos Operativos
+,,,,,,,,,,,,,,BHJ,Servicio integral Bombeo Hidr ulico
+,,,,,,,,,,,,,,ACREF,Indirectos administrativos
+,,,,,,,,,,,,,,ACREF,Manufactura
+,,,,,,,,,,,,,,ACREF,SEG C
+,,,,,,,,,,,,,,ACREF,SEG A
+,,,,,,,,,,,,,,ACREF,GABINETE
+,,,,,,,,,,,,,,BHJ,NR
+,,,,,,,,,,,,,,NR,NR
+,,,,,,,,,,,,,,Motos,Administraci¢n operativa
+,,,,,,,,,,,,,,Motos,Armado y Maquinados
+,,,,,,,,,,,,,,Motos,Mantenimiento general
+,,,,,,,,,,,,,,Sub. Administrativa,Paramedico
+,,,,,,,,,,,,,,Sub. Administrativa,Psicologa
+,,,,,,,,,,,,,,Sub. Administrativa,Controles t‚cnicos
+,,,,,,,,,,,,,,Direcci¢n General,Gerente
+,,,,,,,,,,,,,,Sub. Administrativa,Sub. Operaciones
+,,,,,,,,,,,,,,Sub. Administrativa,Asistente
+,,,,,,,,,,,,,,Petrolera,Gerencia
+,,,,,,,,,,,,,,Petrolera,Mantto Gral
+,,,,,,,,,,,,,,Petrolera,Manufactura
+,,,,,,,,,,,,,,Petrolera,Sandblas y Pintura
+,,,,,,,,,,,,,,Petrolera,Armado y Maquinados
+,,,,,,,,,,,,,,Petrolera,Admon Operativa
+,,,,,,,,,,,,,,Petrolera,Paileria y Soldadura
+,,,,,,,,,,,,,,Sub. Operaciones,Auxiliar
+,,,,,,,,,,,,,,Sub. Administrativa,Estimaciones
+,,,,,,,,,,,,,,Direcci¢n General,NR
+,,,,,,,,,,,,,,Direcci¢n General,Gerencia
+,,,,,,,,,,,,,,Sub. Operaciones,T‚cnico Operador de Tracto Camion
+,,,,,,,,,,,,,,Sub. Administrativa,Supervisor Administrativo
+,,,,,,,,,,,,,,Sub. Ventas,Estimaciones
+,,,,,,,,,,,,,,Sub. Operaciones,T‚cnico
+,,,,,,,,,,,,,,Sub. Operaciones,Tecnico Operador Llave H
+,,,,,,,,,,,,,,Sub. Administrativa,Auxiliar
+,,,,,,,,,,,,,,Sub. Operaciones,Superintendente Operativo
+,,,,,,,,,,,,,,Sub. Administrativa,Tesorer¡a
+,,,,,,,,,,,,,,Sub. Administrativa,Almacen
+,,,,,,,,,,,,,,Sub. Operaciones,ITR
+,,,,,,,,,,,,,,Sub. Ingenier¡a,Sub. Ingenier¡a
+,,,,,,,,,,,,,,Sub. Administrativa,Sub. Administrativa
+,,,,,,,,,,,,,,Sub. Operaciones,Subdirector
+,,,,,,,,,,,,,,Sub. Ingenier¡a,Subdirector
+,,,,,,,,,,,,,,Direcci¢n General,Direcci¢n general
+,,,,,,,,,,,,,,Sub. Ventas,Subdirector
+,,,,,,,,,,,,,,Sub. Ventas,Ventas
+,,,,,,,,,,,,,,Sub. Ventas,Contratos y licitaciones
+,,,,,,,,,,,,,,Direcci¢n General,RP
+,,,,,,,,,,,,,,Sub. Administrativa,Intendencia
+,,,,,,,,,,,,,,Sub. Administrativa,FAXTON
+,,,,,,,,,,,,,,SPP,Direcci¢n general
+,,,,,,,,,,,,,,SPP,Sub. Ingenier¡a
+,,,,,,,,,,,,,,SPP,Sub. Operaciones
+,,,,,,,,,,,,,,SPP,Sub. Finanzas y ventas
+,,,,,,,,,,,,,,SPP,Sub. Administrativa
+,,,,,,,,,,,,,,Fijos,Seguridad privada
+,,,,,,,,,,,,,,Fijos,RP
+,,,,,,,,,,,,,,Fijos,Intendencia
+,,,,,,,,,,,,,,Fijos,"Luz, tel‚fono y agua"
+,,,,,,,,,,,,,,Fijos,Gastos Mtto Oficina
+,,,,,,,,,,,,,,Direcci¢n General,DG Motos
+,,,,,,,,,,,,,,Direcci¢n General,Publicidad redes
+,,,,,,,,,,,,,,Direcci¢n General,Seguridad
+,,,,,,,,,,,,,,Direcci¢n General,SEOV
+,,,,,,,,,,,,,,Direcci¢n General,Controles t‚cnicos
+,,,,,,,,,,,,,,Direcci¢n General,ESTAFF DG
+,,,,,,,,,,,,,,Sub. Ingenier¡a,Telemetr¡a
+,,,,,,,,,,,,,,Sub. Ingenier¡a,Indirecto IDT
+,,,,,,,,,,,,,,Sub. Ingenier¡a,SUBIDT
+,,,,,,,,,,,,,,Sub. Operaciones,Sub. Operaciones
+,,,,,,,,,,,,,,Sub. Finanzas y ventas,Sub. Finanzas y ventas
+,,,,,,,,,,,,,,Sub. Finanzas y ventas,Contratos y licitaciones
+,,,,,,,,,,,,,,Sub. Finanzas y ventas,Ventas
+,,,,,,,,,,,,,,Sub. Finanzas y ventas,Tesorer¡a
+,,,,,,,,,,,,,,Sub. Finanzas y ventas,Jur¡dico
+,,,,,,,,,,,,,,Sub. Administrativa,Subdirector
+,,,,,,,,,,,,,,Sub. Administrativa,Evaluaci¢n proveedores
+,,,,,,,,,,,,,,Sub. Administrativa,Sistemas
+,,,,,,,,,,,,,,Sub. Administrativa,Activos
+,,,,,,,,,,,,,,Sub. Administrativa,Compras
+,,,,,,,,,,,,,,Sub. Administrativa,RH
+,,,,,,,,,,,,,,Sub. Administrativa,Contabilidad
