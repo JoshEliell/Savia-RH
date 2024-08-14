@@ -75,7 +75,7 @@
                         </div>
                     </div>
                     </form>
-                    <form method=POST class="mt-2">
+                    <form id="form_autorizar_rapido" method=POST class="mt-2">
                     {% csrf_token %}
                     <ul class="nav nav-pills">
                         <li class="nav-item mx-2">
@@ -93,7 +93,7 @@
                         <!-- Utiliza la clase 'ml-auto' en el elemento li para alinear a la derecha -->
                         <li class="nav-item mx-4 ml-auto">
                             <!-- Cambia la clase 'btn-outline-success' a 'btn-primary' para tener el color azul -->
-                            <button type="submit" name="Autorizar" class="btn btn-primary">
+                            <button id="autorizar_rapido" type="submit" name="Autorizar" class="btn btn-primary">
                                 <i class="fa-solid fa-file-circle-check"></i>
                             </button>
                         </li>
@@ -180,6 +180,21 @@
     </ul>
 </nav>
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script>
+    //Prevenir doble click en los formularios
+    document.addEventListener("DOMContentLoaded", (event) => {
+        
+        document.getElementById('form_autorizar_rapido').addEventListener('submit', function(event) {
+            var submit = document.getElementById('autorizar_rapido')
+            setTimeout(function(){
+                event.preventDefault();
+                document.getElementById('autorizar_rapido').disabled = true;
+            }, 50);
+            this.submit();
+        })
+    });
+</script>
+
 
 {% endblock %}
 

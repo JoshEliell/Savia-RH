@@ -2,6 +2,7 @@ from django.utils.deprecation import MiddlewareMixin
 import logging
 from django.http import HttpResponseNotFound
 from django.template.loader import render_to_string
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
@@ -10,6 +11,7 @@ class LogUserAccessMiddleware(MiddlewareMixin):
         user = request.user if request.user.is_authenticated else 'Anonymous'
         message = f"{request.method} {request.get_full_path()} by {user}"
         logger.info(message)
+
 
 
 class Handle404Middleware:

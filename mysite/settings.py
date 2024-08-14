@@ -160,6 +160,10 @@ STATIC_ROOT = (BASE_DIR/'assert/')
 
 LOGIN_REDIRECT_URL ='index'
 
+#Configuracion de los archivos cargados por los usuarios
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field

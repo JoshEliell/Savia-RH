@@ -36,4 +36,7 @@ urlpatterns = [
     path('register/', user_view.register, name='user-register'),
     path('profile/', user_view.profile, name='user-profile'),
 
-]  #+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
