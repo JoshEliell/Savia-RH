@@ -74,14 +74,14 @@ Crear Solicitud - Bonos Varilleros
                                 <div class="btn-group" role="group" aria-label="Basic example">
                                     {% render_field requerimientoForm.url class="form-control form-control-sm" id="url" accept=".png,.jpg,.jpeg,.pdf,.xls,.xlsx" %}
                                     <input type="hidden" name="folio" value="{{folio}}" id="folio">
-                                    <button id="subirArchivos" name="btn_archivos" type="submit" class="btn btn-primary btn-sm w-25 subirArchivos" title="Subir Archivos" ><i class="fas fa-arrow-up-from-bracket"></i> <span class="">Subir</span></button>
+                                    <button id="subir_archivos" name="btn_archivos" type="submit" class="btn btn-primary btn-sm w-25 subirArchivos" title="Subir Archivos" ><i class="fas fa-arrow-up-from-bracket"></i> <span class="">Subir</span></button>
                                 </div><br>
                                 <small class="text-danger" id="url-error">{{ requerimientoForm.url.errors }}</small> 
                                 </form>
                             </div>
                         </div>
 
-                    <form action="{% url 'crearSolicitudBonos' %}" method="POST">
+                    <form action="{% url 'crearSolicitudBonos' %}" method="POST" id="form_agregar_bono">
                         {% csrf_token %}
                     <div class="card shadow">
                         <div class="card-header">
@@ -224,7 +224,7 @@ Crear Solicitud - Bonos Varilleros
                             <tfoot>
                                 <tr>
                                     <td>
-                                        <form action="{% url 'crearSolicitudBonos' %}" method="POST">
+                                        <form action="{% url 'crearSolicitudBonos' %}" method="POST" id="form_enviar_solicitud">
                                             {% csrf_token %}
                                             <button type="submit" class="btn btn-primary btn-sm" name="enviar_solicitud" id="enviar_solicitud"><i class="fas fa-share"></i> Enviar Solicitud</button>
                                         </form>
@@ -262,6 +262,7 @@ Crear Solicitud - Bonos Varilleros
     {% comment %} select 2 lang es {% endcomment %}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/i18n/es.js"></script>
     <!--<script src="{% static 'js/esquema/bono_varillero/mostrar_boton.js' %}"></script>-->
+
     <script>
     $(document).ready(function() {
     /**Debes reemplazar o cambiar los valores de los bonos asignados por el ID que se encuentran en la subcategoria del bono */
@@ -714,8 +715,40 @@ Crear Solicitud - Bonos Varilleros
             }
         });
     }
-
-
     </script>
+
+    <script>
+        //Prevenir doble click en los formularios
+        document.addEventListener("DOMContentLoaded", (event) => {
+            
+            document.getElementById('form_agregar_bono').addEventListener('submit', function(event) {
+                var submit = document.getElementById('btnAgregar')
+                setTimeout(function(){
+                    event.preventDefault();
+                    document.getElementById('btnAgregar').disabled = true;
+                }, 50);
+                this.submit();
+            })
+
+            document.getElementById('form_enviar_solicitud').addEventListener('submit', function(event) {
+                var submit = document.getElementById('enviar_solicitud')
+                setTimeout(function(){
+                    event.preventDefault();
+                    document.getElementById('enviar_solicitud').disabled = true;
+                }, 50);
+                this.submit();
+            })
+
+            document.getElementById('archivosForm').addEventListener('submit', function(event) {
+                var submit = document.getElementById('subir_archivos')
+                setTimeout(function(){
+                    event.preventDefault();
+                    document.getElementById('subir_archivos').disabled = true;
+                }, 50);
+                this.submit();
+            })
+        });
+    </script>
+
 {% endblock js %}
     

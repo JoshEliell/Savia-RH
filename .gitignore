@@ -12,5 +12,7 @@ static/images/prenomina
 static/images/product_bash
 final.sql
 
+media/
+
 /venv
 *.sql

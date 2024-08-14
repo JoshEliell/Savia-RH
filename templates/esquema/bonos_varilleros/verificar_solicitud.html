@@ -75,14 +75,14 @@ Cambios Solicitud - Bonos Varilleros
                                 <div class="btn-group" role="group" aria-label="Basic example">
                                     {% render_field requerimientoForm.url class="form-control form-control-sm" id="url" accept=".png,.jpg,.jpeg,.pdf,.xls,.xlsx" %}
                                     <input type="hidden" name="folio" value="{{solicitud.folio}}" id="folio">
-                                    <button id="subirArchivos" name="btn_archivos" type="submit" class="btn btn-primary btn-sm w-25 subirArchivos" title="Subir Archivos" ><i class="fas fa-arrow-up-from-bracket"></i> <span class="">Subir</span></button>
+                                    <button id="subir_archivos" name="btn_archivos" type="submit" class="btn btn-primary btn-sm w-25 subirArchivos" title="Subir Archivos" ><i class="fas fa-arrow-up-from-bracket"></i> <span class="">Subir</span></button>
                                 </div><br>
                                 <small class="text-danger" id="url-error">{{ requerimientoForm.url.errors }}</small> 
                                 </form>
                             </div>
                         </div>
 
-                    <form action="{% url 'verificarSolicitudBonosVarilleros' solicitud.id %}" method="POST">
+                    <form action="{% url 'verificarSolicitudBonosVarilleros' solicitud.id %}" method="POST" id="form_agregar_bono">
                         {% csrf_token %}
                     <div class="card shadow">
                         <div class="card-header">
@@ -224,7 +224,7 @@ Cambios Solicitud - Bonos Varilleros
                             <tfoot>
                                 <tr>
                                     <td>
-                                        <form action="{% url 'verificarSolicitudBonosVarilleros' solicitud.id %}" method="POST">
+                                        <form id="form_enviar_solicitud" action="{% url 'verificarSolicitudBonosVarilleros' solicitud.id %}" method="POST">
                                             {% csrf_token %}
                                             <button type="submit" class="btn btn-primary btn-sm" name="actualizar_solicitud" id="actualizar_solicitud"><i class="fas fa-rotate"></i> Actualizar Solicitud</button>
                                         </form>
@@ -731,8 +731,39 @@ Cambios Solicitud - Bonos Varilleros
             }
         });
     }
+    </script>
+    
+    <script>
+        //Prevenir doble click en los formularios
+        document.addEventListener("DOMContentLoaded", (event) => {
+            
+            document.getElementById('form_agregar_bono').addEventListener('submit', function(event) {
+                var submit = document.getElementById('btnAgregar')
+                setTimeout(function(){
+                    event.preventDefault();
+                    document.getElementById('btnAgregar').disabled = true;
+                }, 50);
+                this.submit();
+            })
 
+            document.getElementById('form_enviar_solicitud').addEventListener('submit', function(event) {
+                var submit = document.getElementById('actualizar_solicitud')
+                setTimeout(function(){
+                    event.preventDefault();
+                    document.getElementById('actualizar_solicitud').disabled = true;
+                }, 50);
+                this.submit();
+            })
 
+            document.getElementById('archivosForm').addEventListener('submit', function(event) {
+                var submit = document.getElementById('subir_archivos')
+                setTimeout(function(){
+                    event.preventDefault();
+                    document.getElementById('subir_archivos').disabled = true;
+                }, 50);
+                this.submit();
+            })
+        });
     </script>
 {% endblock js %}
     
