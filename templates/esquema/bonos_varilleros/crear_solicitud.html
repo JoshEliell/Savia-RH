@@ -396,9 +396,6 @@ Crear Solicitud - Bonos Varilleros
     var selectedOption = $('#id_bono').select2('data');
     document.getElementById('soporte').textContent = selectedOption[0].soporte;
 
-
-
-
     /*Se activa cuando escriban los kilometros*/
     $('#kilometros').on('input', function(e) {
         var km = parseFloat($(this).val());//se obtiene el valor de los kilometros
