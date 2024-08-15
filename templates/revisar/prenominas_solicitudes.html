@@ -78,7 +78,7 @@
                     </div>
                     </form>
                 </div>
-                <form method=POST>
+                <form method=POST id="form_autorizar_rapido">
                 {% csrf_token %}
                     <div class="col-12">
                         <div class="card card-body">
@@ -93,7 +93,7 @@
                               {% if user_filter.tipo.nombre == "Gerencia" or user_filter.tipo.nombre == "Control Tecnico" %}
                               <div class="d-flex flex-column flex-md-row align-items-start">
                                 <h6 class="mb-2 mb-md-0">Autorización rápida</h6>
-                                <button type="submit" name="Autorizar" class="btn btn-primary ml-md-2">
+                                <button id="autorizar_rapido" type="submit" name="Autorizar" class="btn btn-primary ml-md-2">
                                   <i class="fa-solid fa-file-circle-check"></i>
                                 </button>
                               </div>
@@ -212,7 +212,19 @@
 
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 <script>
-
+    //Prevenir doble click en los formularios
+    document.addEventListener("DOMContentLoaded", (event) => {
+        document.getElementById('form_autorizar_rapido').addEventListener('submit', function(event) {
+            if (event.submitter.id === 'autorizar_rapido'){
+                var submit = document.getElementById('autorizar_rapido')
+                setTimeout(function(){
+                    event.preventDefault();
+                    document.getElementById('autorizar_rapido').disabled = true;
+                }, 50);
+                this.submit();
+            }
+        })
+    });
 </script>
 {% endblock %}
 
