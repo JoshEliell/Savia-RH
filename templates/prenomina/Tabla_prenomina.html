@@ -185,12 +185,14 @@
     document.addEventListener("DOMContentLoaded", (event) => {
         
         document.getElementById('form_autorizar_rapido').addEventListener('submit', function(event) {
-            var submit = document.getElementById('autorizar_rapido')
-            setTimeout(function(){
-                event.preventDefault();
-                document.getElementById('autorizar_rapido').disabled = true;
-            }, 50);
-            this.submit();
+            if (event.submitter.id === 'autorizar_rapido'){
+                var submit = document.getElementById('autorizar_rapido')
+                setTimeout(function(){
+                    event.preventDefault();
+                    document.getElementById('autorizar_rapido').disabled = true;
+                }, 50);
+                this.submit();
+            }
         })
     });
 </script>

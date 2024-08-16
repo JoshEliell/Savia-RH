@@ -3302,6 +3302,7 @@ def upload_batch_costos(request):
 
         costo_list.activated = True
         costo_list.save()
+        status.complete_costo = True
         status.save()
 
 
@@ -6208,7 +6209,9 @@ def upload_batch_vacaciones_anteriores(request):
                     vacacion4.created_at = fecha5
                     vacacion4.save()
                     vacacion4._meta.get_field('created_at').auto_now = True
-
+                    status.complete_vacaciones = True #Siempre llevar el ultimo periodo
+                    status.save()
+                        
                 if int(row[7]) >= 0:
                     economico = Economicos(status=status, periodo='2024', dias_disfrutados=(3 - int(row[7])),
                                            dias_pendientes=row[7], fecha=None,

@@ -57,7 +57,7 @@
                 <span class="h6">Comentario: {{autorizacion1.comentario}}--Fecha:{{autorizacion1.updated_at}}--Estado:{{autorizacion1.estado.tipo}}</span>
                 <span class="h6">Gerencia: {{autorizacion2.perfil.nombres}} {{autorizacion2.perfil.apellidos}}</span>
                 <span class="h6">Comentario: {{autorizacion2.comentario}}--Fecha:{{autorizacion2.updated_at}}--Estado:{{autorizacion2.estado.tipo}}</span>
-                <form method="POST" enctype="multipart/form-data">
+                <form method="POST" enctype="multipart/form-data" id="form_autorizar_prenomina">
                 {% csrf_token %}
                 <div class="table table-responsive">
                 <table class="table table-striped table-hover bg-white" id="tabla_incidencias">
@@ -84,7 +84,7 @@
 
                             <td>
                                 {% if incidencia.soporte %}
-                                    <small><a title="click para ver el soporte" class="btn btn-success btn-sm" href="{{ incidencia.soporte.url }}" target="_blank"><i class="fas fa-download"></i></a> Ver Soporte</small>
+                                    <small><a title="click para ver el soporte" class="btn btn-success btn-sm" href="{{ incidencia.soporte.url }}" download><i class="fas fa-download"></i></a> Ver Soporte</small>
                                 {% elif incidencia.incidencia.id == 15 %}
                                     <button type="submit" name="vacaciones_pdf" class="btn btn-outline-danger btn-sm" value="{{ incidencia.fecha }}">
                                         <i class="fa-solid fa-file-pdf fa-2xl"></i>
@@ -113,8 +113,8 @@
                 <!-- Botones para 'Aprobar' y 'Rechazar' -->
                 <div class="row my-2 align-items-center">
                     <div class="d-flex flex-column flex-sm-row justify-content-between">
-                        <button type="submit" name="aprobar" class="btn btn-success mb-3 mb-sm-0">Aprobar</button>
-                        <button type="submit" name="rechazar" class="btn btn-danger">Rechazar</button>
+                        <button id="aprobar" type="submit" name="aprobar" class="btn btn-success mb-3 mb-sm-0">Aprobar</button>
+                        <button id="rechazar" type="submit" name="rechazar" class="btn btn-danger">Rechazar</button>
                       </div>
                 </div>
                 <br></br>
@@ -130,6 +130,28 @@
 
 {% block js %}
 <script src="{% static 'js/prenomina/dias_semana.js' %}"></script>
+<script>
+    //Prevenir doble click en los formularios
+    document.addEventListener("DOMContentLoaded", (event) => {
+        document.getElementById('form_autorizar_prenomina').addEventListener('submit', function(event) {
+            if (event.submitter.id === 'aprobar'){
+                var submit = document.getElementById('aprobar')
+                setTimeout(function(){
+                    event.preventDefault();
+                    document.getElementById('aprobar').disabled = true;
+                }, 50);
+                this.submit();
+            }else if (event.submitter.id === 'rechazar'){
+                var submit = document.getElementById('rechazar')
+                setTimeout(function(){
+                    event.preventDefault();
+                    document.getElementById('rechazar').disabled = true;
+                }, 50);
+                this.submit();
+            }
+        })
+    });
+</script>
 {% endblock js %}
 </body>
 
