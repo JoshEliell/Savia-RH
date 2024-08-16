@@ -84,7 +84,7 @@
 
                             <td>
                                 {% if incidencia.soporte %}
-                                    <small><a title="click para ver el soporte" class="btn btn-success btn-sm" href="{{ incidencia.soporte.url }}" target="_blank"><i class="fas fa-download"></i></a> Ver Soporte</small>
+                                    <small><a title="click para ver el soporte" class="btn btn-success btn-sm" href="{{ incidencia.soporte.url }}" download><i class="fas fa-download"></i></a> Ver Soporte</small>
                                 {% elif incidencia.incidencia.id == 15 %}
                                     <button type="submit" name="vacaciones_pdf" class="btn btn-outline-danger btn-sm" value="{{ incidencia.fecha }}">
                                         <i class="fa-solid fa-file-pdf fa-2xl"></i>
