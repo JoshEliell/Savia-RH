@@ -112,7 +112,7 @@ def listarBonosVarilleros(request):
             autorizaciones = AutorizarSolicitudes.objects.filter(
                 created_at=Subquery(subconsulta_ultima_fecha)
             ).select_related('solicitud', 'perfil').filter(
-                solicitud__solicitante_id__distrito_id=solicitante.distrito_id ,solicitud__complete = 1,tipo_perfil_id=usuario.tipo.id
+                solicitud__solicitante_id__distrito_id=solicitante.distrito_id ,solicitud__complete = 1
                 #solicitud__solicitante_id__distrito_id=solicitante.distrito_id,tipo_perfil_id = usuario.tipo.id ,solicitud__complete = 1
             ).order_by("-created_at")
         
