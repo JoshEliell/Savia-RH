@@ -67,7 +67,6 @@ class BonoSolicitado(models.Model):
 def validar_size(value):
     filesize = value.size
     if filesize > 10 * 1024 * 1024:  # 10 MB en bytes
-    #if filesize > 5 * 1024 * 1024:  # 10 MB en bytes
         raise ValidationError('El tamaño del archivo no puede ser mayor a 10 MB.')    
     
     

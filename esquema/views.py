@@ -166,7 +166,7 @@ def comprimir_imagen(imagen):
     img = img.resize((nuevo_ancho, nuevo_alto))
     
     # Comprime la imagen y la guarda en el flujo de bytes
-    img.save(img_temp_output, format='JPEG', quality=25, optimize=True)  # Puedes ajustar la calidad según tus necesidades
+    img.save(img_temp_output, format='JPEG', quality=50, optimize=True)  # Puedes ajustar la calidad según tus necesidades
     
     # Restablece el puntero del flujo de bytes al principio
     img_temp_output.seek(0)
@@ -208,7 +208,7 @@ def comprimir_pdf(pdf):
                 img_buffer = io.BytesIO()
                 
                 # Save the image with reduced quality using Pillow
-                image.save(img_buffer, format='JPEG', quality=80)  # Adjust quality as needed
+                image.save(img_buffer, format='JPEG', quality=80, optimize=True)  # Adjust quality as needed
                 
                 # Store the new image data
                 new_images[xref] = img_buffer.getvalue()
@@ -300,12 +300,19 @@ def crearSolicitudBonos(request):
                 if form.is_valid():
                     #Se recorren los archivos para ser almacenados
                     for archivo in archivos:
-                        #Comprime imagenes
+                        #obtener el tam del archivo cargado en megas
+                        archivo_tam = archivo.size/(1024 * 1024)
                         if archivo.content_type != 'application/pdf' and archivo.content_type != 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' and archivo.content_type != 'application/vnd.ms-excel':
-                            documento = comprimir_imagen(archivo)
-                        #Comprime pdfs
+                            if archivo_tam > 5: # 5 megas
+                                documento = comprimir_imagen(archivo)
+                            else:
+                                documento = archivo
+                        #Comprime pdf
                         elif archivo.content_type == 'application/pdf':
-                            documento = comprimir_pdf(archivo)
+                            if archivo_tam > 8: # 8 megas
+                                documento = comprimir_pdf(archivo)
+                            else:
+                                documento = archivo
                         else:
                             documento = archivo
                         #Guarda el archivo
@@ -320,6 +327,9 @@ def crearSolicitudBonos(request):
                     solicitud.save()
                     messages.success(request, "El soporte se adjunto correctamente")
                     return redirect("crearSolicitudBonos") 
+                else:
+                    # Mensaje de error si el formulario no es válido
+                    messages.error(request, 'Favor de verificar el formato del soporte y el tamaño maximo son 10 MB')
                 
             elif 'btn_agregar' in request.POST:
                 form_solicitud = SolicitudForm(request.POST, instance = solicitud)
@@ -458,7 +468,6 @@ def verificarSolicitudBonosVarilleros(request,solicitud):
                             documento = comprimir_imagen(archivo)
                         #Comprime pdfs
                         elif archivo.content_type == 'application/pdf':
-                            print("Ajustar el archivo pdf")
                             documento = comprimir_pdf(archivo)
                         else:
                             documento = archivo
