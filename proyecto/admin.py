@@ -54,7 +54,7 @@ from .models import Bancarios_Batch
 from .models import Datos_baja
 from .models import Empleado_cv
 
-admin.site.site_header = "SAVIA RH"
+admin.site.site_header = "SAVIA RH - PANEL DE ADMINISTRACIÓN"
 admin.site.index_title = "Bienvenido a la administración del sistema"
 
 class PerfilAdmin(admin.ModelAdmin):
