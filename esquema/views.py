@@ -459,32 +459,41 @@ def verificarSolicitudBonosVarilleros(request,solicitud):
                 #Se envian los formularios con datos                   
                 form = RequerimientoForm(request.POST, request.FILES)  
                 archivos = request.FILES.getlist('url')
-                    
+                
                 if form.is_valid():
                     #Se recorren los archivos para ser almacenados
                     for archivo in archivos:
-                        #Comprime imagenes
+                        #obtener el tam del archivo cargado en megas
+                        archivo_tam = archivo.size/(1024 * 1024)
                         if archivo.content_type != 'application/pdf' and archivo.content_type != 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' and archivo.content_type != 'application/vnd.ms-excel':
-                            documento = comprimir_imagen(archivo)
-                        #Comprime pdfs
+                            if archivo_tam > 5: # 5 megas
+                                documento = comprimir_imagen(archivo)
+                            else:
+                                documento = archivo
+                        #Comprime pdf
                         elif archivo.content_type == 'application/pdf':
-                            documento = comprimir_pdf(archivo)
+                            if archivo_tam > 8: # 8 megas
+                                documento = comprimir_pdf(archivo)
+                            else:
+                                documento = archivo
                         else:
                             documento = archivo
-                        #Guarda imagen o PDF
+                        #Guarda el archivo
                         requerimiento = Requerimiento.objects.create(
                             solicitud_id = solicitud.id,
                             url = documento,
                         )
                         
                         requerimiento.save()
-                    
-                            
+                        
                     solicitud.complete_requerimiento = True
                     solicitud.save()
                     messages.success(request, "El soporte se adjunto correctamente")
                     return redirect('verificarSolicitudBonosVarilleros', solicitud=solicitud.id) 
-                
+                else:
+                    # Mensaje de error si el formulario no es válido
+                    messages.error(request, 'Favor de verificar el formato del soporte y el tamaño maximo son 10 MB')
+                                
             elif 'btn_agregar' in request.POST:
                 form_solicitud = SolicitudForm(request.POST, instance = solicitud)
                 if form_solicitud.is_valid():
