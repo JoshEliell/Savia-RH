@@ -616,13 +616,14 @@ def verDetallesSolicitud(request,solicitud_id):
 #lista bonos aprobados
 @login_required(login_url='user-login')
 def listarBonosVarillerosAprobados(request):
-     
+    from django.db.models import Prefetch
     #se obtiene el usuario logueado
     usuario = get_object_or_404(UserDatos,user_id = request.user.id)
     ids = [9,10,11]
     
     #Se muestran por catorcenas
     fecha_actual = datetime.now()
+    fecha_actual = fecha_actual - timedelta(days=14) #ELIMINAR FECHA DE CATORCENA ANTERIOR
     
     catorcena_actual = Catorcenas.objects.filter(fecha_inicial__lte=fecha_actual, fecha_final__gte=fecha_actual).first()
     fecha_inicial = datetime.combine(catorcena_actual.fecha_inicial, datetime.min.time()) + timedelta(hours=00, minutes=00,seconds=00)
@@ -651,7 +652,26 @@ def listarBonosVarillerosAprobados(request):
             updated_at__range=(fecha_inicial,fecha_final)
            
         ).order_by("-created_at").values('solicitud_id')
-    
+
+        """
+        bonos_solicitados = BonoSolicitado.objects.filter(
+            solicitud__autorizarsolicitudes__isnull=False,
+            solicitud__autorizarsolicitudes__estado_id=1,  # Puedes ajustar los filtros según lo que necesites
+            solicitud__autorizarsolicitudes__tipo_perfil_id=8,
+            solicitud__autorizarsolicitudes__perfil__distrito_id=usuario.distrito.id,
+            solicitud__autorizarsolicitudes__updated_at__range=(fecha_inicial, fecha_final)
+        )
+        
+        for b in bonos_solicitados:
+            print(b)
+            print(b.trabajador)
+            print(b.trabajador.numero_de_trabajador)
+            print(b.bono)
+            print(b.cantidad)
+            print(b.trabajador.status.datosbancarios.no_de_cuenta)
+        
+        """
+        
     else:
         return render(request, 'revisar/403.html')
         
