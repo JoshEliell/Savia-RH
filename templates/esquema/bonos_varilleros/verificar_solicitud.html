@@ -641,6 +641,13 @@ Cambios Solicitud - Bonos Varilleros
                     //renderizar el total en html
                     total = document.getElementById('total').textContent = datos.total
                 }
+                else if (datos.subcategoria == 21){ //Bono ecos y dima
+                    var tabla = document.getElementById("tabla");
+                    while (tabla.rows.length > 2) {
+                        tabla.deleteRow(1); // Borra desde la segunda fila hasta la penúltima
+                    }
+                    total = document.getElementById('total').textContent = datos.total
+                }
                 else{
                     //eliminar la fila
                     const renderizar = document.querySelectorAll(`[data-id="${datos.bono_id}"]`)

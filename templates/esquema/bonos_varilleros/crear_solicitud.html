@@ -612,7 +612,9 @@ Crear Solicitud - Bonos Varilleros
             });
             
             const datos = await respuesta.json();
-            
+            //console.log(datos)
+
+
             if (respuesta.status === 200) {
                 if (datos.bandera){// bandera = true
                     //elimina fila del bono
@@ -624,6 +626,13 @@ Crear Solicitud - Bonos Varilleros
                         celda.textContent = '$' + Number(datos.reparto).toFixed(2);//combierte el dato a decimal y ajusta que se muestren dos decimas
                     });
                     //renderizar el total en html
+                    total = document.getElementById('total').textContent = datos.total
+                }
+                else if (datos.subcategoria == 21){ //Bono ecos y dima
+                    var tabla = document.getElementById("tabla");
+                    while (tabla.rows.length > 2) {
+                        tabla.deleteRow(1); // Borra desde la segunda fila hasta la penúltima
+                    }
                     total = document.getElementById('total').textContent = datos.total
                 }
                 else{

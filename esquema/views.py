@@ -339,6 +339,7 @@ def crearSolicitudBonos(request):
                     form_bonosolicitado = BonoSolicitadoForm(request.POST,instance=bono_solicitado)
                     if form_bonosolicitado.is_valid():
                         puesto = int(request.POST.get('puesto'))
+                        
                         if puesto == 7: # Puesto ID - Todos los que participen en la actividad
                             bono_solicitado.save()
                             # id puesto - todos los que participen en la actividad - dividir la cantidad del bono entre el total de los participantes
@@ -348,7 +349,38 @@ def crearSolicitudBonos(request):
                             solicitud.total = bono_solicitado.cantidad
                             solicitud.save()
                             BonoSolicitado.objects.filter(solicitud_id = solicitud.id).update(cantidad=reparto)
-                        else:
+                        
+                        elif bono_solicitado.bono.esquema_subcategoria.id == 21: # Bono ó Subcategoria ID - TOMA DE REGISTROS ECO Y/O DINA - 9 soportes se paga, 30% ayudante, 70% tecnico
+                            servicios = Requerimiento.objects.filter(solicitud_id = solicitud.id).count()
+                            if servicios >= 9: #9 valor, Paga el novevo servicio - soporte
+                                print("es negativa: ",bono_solicitado.cantidad)
+                                bono_solicitado.save()
+                                cantidad = bono_solicitado.cantidad * (servicios - 2) #8 valor
+                                puestos = BonoSolicitado.objects.filter(solicitud_id = solicitud.id)
+                                if puestos.count() > 1:
+                                    print("reparto del 70 y 30")
+                                    BonoSolicitado.objects.filter(
+                                        solicitud_id=solicitud.id,
+                                        bono__puesto_id=16 # TÉCNICO DE TOMA DE INFORMACIÓN
+                                    ).update(cantidad=Decimal('0.70') * Decimal(cantidad))
+                                    BonoSolicitado.objects.filter(
+                                        solicitud_id=solicitud.id,
+                                        bono__puesto_id=39  # AYUDANTE
+                                    ).update(cantidad=Decimal('0.30') * Decimal(cantidad))
+                                    solicitud.total = Decimal(cantidad)
+                                    solicitud.save()
+                                else:
+                                    print("Técnico al 100%")
+                                    BonoSolicitado.objects.filter(solicitud_id=solicitud.id).update(cantidad=cantidad)
+                                    solicitud.total = Decimal(cantidad)
+                                    solicitud.save()
+                            else:
+                                bono_solicitado.cantidad = Decimal(0.00)
+                                bono_solicitado.save()
+                                solicitud.total = Decimal(0.00)
+                                solicitud.save()
+                        
+                        else: # EN CASO DE OTRO BONO
                             bono_solicitado.bono.id = esquema_bono
                             bono_solicitado.save()
                             total = BonoSolicitado.objects.filter(solicitud_id = solicitud.id).aggregate(total=Sum('cantidad'))['total'] 
@@ -511,6 +543,34 @@ def verificarSolicitudBonosVarilleros(request,solicitud):
                             solicitud.total = bono_solicitado.cantidad
                             solicitud.save()
                             BonoSolicitado.objects.filter(solicitud_id = solicitud.id).update(cantidad=reparto)
+                        
+                        elif bono_solicitado.bono.esquema_subcategoria.id == 21: # Bono ó Subcategoria ID - TOMA DE REGISTROS ECO Y/O DINA - 9 soportes se paga, 30% ayudante, 70% tecnico
+                            servicios = Requerimiento.objects.filter(solicitud_id = solicitud.id).count()
+                            if servicios >= 9: #Paga el novevo servicio - soporte
+                                bono_solicitado.save()
+                                cantidad = bono_solicitado.cantidad * (servicios - 8)
+                                puestos = BonoSolicitado.objects.filter(solicitud_id = solicitud.id)
+                                if puestos.count() > 1:
+                                    BonoSolicitado.objects.filter(
+                                        solicitud_id=solicitud.id,
+                                        bono__puesto_id=16 # TÉCNICO DE TOMA DE INFORMACIÓN
+                                    ).update(cantidad=Decimal('0.70') * Decimal(cantidad))
+                                    BonoSolicitado.objects.filter(
+                                        solicitud_id=solicitud.id,
+                                        bono__puesto_id=39  # AYUDANTE
+                                    ).update(cantidad=Decimal('0.30') * Decimal(cantidad))
+                                    solicitud.total = Decimal(cantidad)
+                                    solicitud.save()
+                                else:
+                                    BonoSolicitado.objects.filter(solicitud_id=solicitud.id).update(cantidad=cantidad)
+                                    solicitud.total = Decimal(cantidad)
+                                    solicitud.save()
+                            else:
+                                bono_solicitado.cantidad = Decimal(0.00)
+                                bono_solicitado.save()
+                                solicitud.total = Decimal(0.00)
+                                solicitud.save()
+                                
                         else:
                             bono_solicitado.bono.id = esquema_bono
                             bono_solicitado.save()
@@ -544,15 +604,7 @@ def verificarSolicitudBonosVarilleros(request,solicitud):
             'autorizacion':autorizacion,
         
         } 
-            
         
-        
-        
-        
-        
-        
-      
-
         return render(request, 'esquema/bonos_varilleros/verificar_solicitud.html', contexto)
     
     else:
@@ -591,16 +643,8 @@ def verDetallesSolicitud(request,solicitud_id):
         #Para obtener el rol del solicitante
         no_trabajador = autorizaciones.solicitud.solicitante.numero_de_trabajador
         distrito = autorizaciones.solicitud.solicitante.distrito.id
-        perfiles = UserDatos.objects.filter(distrito_id = distrito, numero_de_trabajador = no_trabajador);
-        for p in perfiles:
-            print("este es el perfil que choca: ",p)
-            print(p.distrito)
-            print(p.numero_de_trabajador)
-            print("===========")
         rol = UserDatos.objects.get(distrito_id = distrito, numero_de_trabajador = no_trabajador)
-    
         rol = rol.tipo
-        print(rol)
         
         #se carga el formulario con datos iniciales
         autorizarSolicitudesUpdateForm = AutorizarSolicitudesUpdateForm(initial={'estado':autorizaciones.estado.id,'comentario':autorizaciones.comentario})
@@ -624,62 +668,99 @@ def verDetallesSolicitud(request,solicitud_id):
 #lista bonos aprobados
 @login_required(login_url='user-login')
 def listarBonosVarillerosAprobados(request):
+    from django.db.models import Prefetch
     #se obtiene el usuario logueado
     usuario = get_object_or_404(UserDatos,user_id = request.user.id)
-    #ids de los perfiles - ver toda la info del sistema
     ids = [9,10,11]
     
-    #Queries de bonos aprobados dependiento el rol
+    #Se muestran por catorcenas
+    fecha_actual = datetime.now()
+    fecha_actual = fecha_actual - timedelta(days=14) #ELIMINAR FECHA DE CATORCENA ANTERIOR
+    
+    catorcena_actual = Catorcenas.objects.filter(fecha_inicial__lte=fecha_actual, fecha_final__gte=fecha_actual).first()
+    fecha_inicial = datetime.combine(catorcena_actual.fecha_inicial, datetime.min.time()) + timedelta(hours=00, minutes=00,seconds=00)
+    fecha_final = datetime.combine(catorcena_actual.fecha_final, datetime.min.time()) + timedelta(hours=23, minutes=59,seconds=59)
+
+    #flujo permisos y autorizaciones
+    autorizaciones = None
+    #Si es usuario RH de distrito matriz
     if usuario.tipo.id in (9,10,11):
-        #obtiene todos los bonos aprobados de todos los distritos        
-        bonos_solicitados = BonoSolicitado.objects.filter(
-            solicitud__autorizarsolicitudes__isnull=False,
-            solicitud__autorizarsolicitudes__estado_id=1,
-            solicitud__autorizarsolicitudes__tipo_perfil_id=8,
-            #solicitud__autorizarsolicitudes__updated_at__range=(fecha_inicial, fecha_final)
-        ).order_by('-trabajador')
-          
+        #obtiene todos los bonos aprobados de todos los distritos
+        autorizaciones = AutorizarSolicitudes.objects.filter(
+            solicitud__complete = 1,
+            estado_id = 1,
+            tipo_perfil_id = 8,
+            updated_at__range=(fecha_inicial,fecha_final)
+           
+        ).order_by("-created_at").values('solicitud_id')
+    
     elif usuario.tipo.id in (4,12,8):
-        #obtiene todos los bonos aprobados de un solo distrito al que pertenece 
+        #obtiene todos los bonos aprobados de un solo distrito al que pertenece
+        autorizaciones = AutorizarSolicitudes.objects.filter(
+            solicitud__complete = 1,
+            estado_id = 1,
+            tipo_perfil_id = 8,
+            perfil__distrito_id = usuario.distrito.id,
+            updated_at__range=(fecha_inicial,fecha_final)
+           
+        ).order_by("-created_at").values('solicitud_id')
+
+        """
         bonos_solicitados = BonoSolicitado.objects.filter(
             solicitud__autorizarsolicitudes__isnull=False,
-            solicitud__autorizarsolicitudes__estado_id=1,
+            solicitud__autorizarsolicitudes__estado_id=1,  # Puedes ajustar los filtros según lo que necesites
             solicitud__autorizarsolicitudes__tipo_perfil_id=8,
             solicitud__autorizarsolicitudes__perfil__distrito_id=usuario.distrito.id,
-            #solicitud__autorizarsolicitudes__updated_at__range=(fecha_inicial,fecha_final)
-        ).order_by('-trabajador')
+            solicitud__autorizarsolicitudes__updated_at__range=(fecha_inicial, fecha_final)
+        )
+        
+        for b in bonos_solicitados:
+            print(b)
+            print(b.trabajador)
+            print(b.trabajador.numero_de_trabajador)
+            print(b.bono)
+            print(b.cantidad)
+            print(b.trabajador.status.datosbancarios.no_de_cuenta)
+        
+        """
+        
     else:
         return render(request, 'revisar/403.html')
-    
-    #Preparar los bonos aprobados para ser mostrados
-    bonosolicitado_filter = BonoSolicitadoFilter(request.GET, queryset=bonos_solicitados)
-    bonos_solicitados = bonosolicitado_filter.qs
-    
-    total_monto = bonos_solicitados.aggregate(total_monto=Sum('cantidad'))['total_monto']
-    cantidad_bonos_aprobados = bonos_solicitados.count()
-    
-    fecha_inicial = request.GET.get('fecha_inicial_catorcena', None)
-    fecha_final = request.GET.get('fecha_final_catorcena', None)
         
-    if request.method =='POST' and 'excel' in request.POST:
-        return convert_excel_bonos_aprobados(bonos_solicitados,fecha_inicial,fecha_final,total_monto,cantidad_bonos_aprobados)
+    #Permisos
+    if autorizaciones is None:
+        return render(request, 'revisar/403.html')
     
-    p = Paginator(bonos_solicitados, 50)
+    #se buscan los perfiles acredores al bono
+    solicitudes = []
+    for item in autorizaciones:
+        solicitud_id = item['solicitud_id']
+        solicitudes.append(solicitud_id)
+        
+    bonos = BonoSolicitado.objects.filter(solicitud_id__in = solicitudes).order_by('trabajador_id')
+    bonosolicitado_filter = BonoSolicitadoFilter(request.GET, queryset=bonos) 
+    bonos = bonosolicitado_filter.qs
+    
+    total_monto = bonos.aggregate(total_monto=Sum('cantidad'))['total_monto']
+    cantidad_bonos_aprobados = bonos.count()
+    
+    if request.method =='POST' and 'excel' in request.POST:
+        return convert_excel_bonos_aprobados(bonos,catorcena_actual,total_monto,cantidad_bonos_aprobados)
+    
+    p = Paginator(bonos, 50)
     page = request.GET.get('page')
     salidas_list = p.get_page(page)
-    bonos_solicitados = p.get_page(page)
+    bonos = p.get_page(page)
     
     contexto = {
+        'bonos':bonos,
         'salidas_list':salidas_list,
         'bonosolicitado_filter':bonosolicitado_filter,
         'cantidad_bonos_aprobados':cantidad_bonos_aprobados,
         'total_monto':total_monto,
-        #'catorcena':catorcena_actual,
+        'catorcena':catorcena_actual,
         'usuario':usuario,
-        'ids':ids,
-        'bonos_solicitados':bonos_solicitados,
-        'fecha_inicial':fecha_inicial,
-        'fecha_final':fecha_final
+        'ids':ids
     }
     
     return render(request,'esquema/bonos_varilleros/listar_bonos_aprobados.html',contexto)
@@ -762,6 +843,9 @@ def removerBono(request,bono_id):
         if usuario.tipo.id in (4,5):
             try:
                 bono_solicitado = BonoSolicitado.objects.get(pk=bono_id)
+                print("bono: ", bono_id)
+                #print("bono cantidad: ", bono_solicitado.bono.importe)
+                
                 bandera = False #Se utiliza para saber si se realiza una division o suma acumulativa
                 
                 if bono_solicitado.bono.puesto.id == 7: # id puesto - todos los que participen en la actividad
@@ -778,7 +862,13 @@ def removerBono(request,bono_id):
                         return JsonResponse({'bono_id': bono_id,'total':total[0], 'bandera':bandera,'reparto':reparto} ,status=200, safe=True)  
                     else:
                         return JsonResponse({'bono_id': bono_id,'total':0,'bandera':bandera,'reparto':0} ,status=200, safe=True)
-                    
+                
+                elif bono_solicitado.bono.esquema_subcategoria.id == 21: # Bono ó Subcategoria ID - TOMA DE REGISTROS ECO Y/O DINA - 9 soportes se paga, 30% ayudante, 70% tecnico
+                    subcategoria = bono_solicitado.bono.esquema_subcategoria.id
+                    #obtengo el id de la solicitud
+                    solicitud_id = bono_solicitado.solicitud_id
+                    BonoSolicitado.objects.filter(solicitud_id=solicitud_id).delete()
+                    return JsonResponse({'bono_id': bono_id,'total':0.00, 'bandera':bandera,'subcategoria':subcategoria} ,status=200, safe=True)
                 else:
                     #obtengo el id de la solicitud
                     solicitud_id = bono_solicitado.solicitud_id
@@ -809,7 +899,6 @@ def removerBonoVerificar(request,bono_id):
                 bono = BonoSolicitado.objects.get(pk=bono_id)
                 solicitud = Solicitud.objects.get(pk=bono.solicitud_id)
                 if bono.puesto.id == 19: #ID puesto - todos los que participen en la actividad
-                    print("Bono reparto")
                     bandera = 0 #se utiliza para ocultar la tabla del bono
                     participantes = BonoSolicitado.objects.filter(solicitud_id = bono.solicitud.id).count()#se cuenta el numero
                     bandera = participantes
@@ -822,8 +911,10 @@ def removerBonoVerificar(request,bono_id):
                     bono.delete()
                     return JsonResponse({'bono_id': bono_id,'total':solicitud.total, 'reparto':True, 'monto':reparto, 'participantes':participantes, 'bandera':bandera} ,status=200, safe=True)
                 
+                
+                
+                
                 else:    
-                    print("Cualquier bono")
                     solicitud.total -= bono.cantidad
                     solicitud.save()
                     bono.delete()
@@ -862,7 +953,7 @@ def removerArchivo(request,archivo_id):
             return JsonResponse({'mensaje': 'Prohibido'}, status=403,safe=True)        
         
 #GENERACION DE REPORTES EN EXCEL
-def convert_excel_bonos_aprobados(bonos,fecha_incial,fecha_final,total_monto,cantidad_bonos_aprobados):
+def convert_excel_bonos_aprobados(bonos,catorcena,total_monto,cantidad_bonos_aprobados):
     response= HttpResponse(content_type = "application/ms-excel")
     response['Content-Disposition'] = 'attachment; filename = Reporte_bonos_varilleros_aprobados_' + str(date.today())+'.xlsx'
     wb = Workbook()
@@ -917,7 +1008,7 @@ def convert_excel_bonos_aprobados(bonos,fecha_incial,fecha_final,total_monto,can
     (ws.cell(column = columna_max, row = 1, value='{Reporte Creado Automáticamente por Savia RH. UH}')).style = messages_style
     (ws.cell(column = columna_max, row = 2, value='{Software desarrollado por Vordcab S.A. de C.V.}')).style = messages_style
     (ws.cell(column = columna_max, row = 3, value='')).style = messages_style
-    (ws.cell(column = columna_max, row = 5, value=f'Fecha: {fecha_incial} - {fecha_final}')).style = dato_style
+    (ws.cell(column = columna_max, row = 5, value=f'Catorcena: {catorcena.catorcena}: {catorcena.fecha_inicial} - {catorcena.fecha_final}')).style = dato_style
     (ws.cell(column = columna_max, row = 6, value=f'Bonos aprobados: {cantidad_bonos_aprobados}')).style = messages_style
     (ws.cell(column = columna_max, row = 7, value=f'Total $: {total_monto}')).style = messages_style
     ws.column_dimensions[get_column_letter(columna_max)].width = 45
