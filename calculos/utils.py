@@ -35,8 +35,13 @@ def calcular_cuotas_imss(request,sdi_imss):
     salario_datos = SalarioDatos.objects.get()
     
     #multiplica el sdi * el % de cuatoas / el numero de dias de la catorcena
+    #sdi_imss = Decimal(274.97)
     invalidez_vida = sdi_imss * Decimal(variables_patronal.iv_obrero / 100) * 14
     cesantia_vejez = sdi_imss * Decimal(variables_patronal.cav_patron/100) * 14
+    
+    print("sdi_imss: ", sdi_imss)
+    print("este es el valor 1: ",variables_patronal.iv_obrero)
+    print("este es el valor 2: ",variables_patronal.cav_patron)
     
     #obtener el salario cotizacion mensual
     salario_cot_men = sdi_imss * Decimal(30.4)
@@ -51,6 +56,8 @@ def calcular_cuotas_imss(request,sdi_imss):
     
     #La suma del calculo de cada resultado    
     calculo_imss = invalidez_vida + cesantia_vejez + enfermedades_maternidad
+    print("invalidez y vida: ", invalidez_vida, "cesanti vejez: ", cesantia_vejez, "enfermedades maternidad: ", enfermedades_maternidad)
+    print("I.M.S.S", calculo_imss)
     return calculo_imss
 
 #CALULAR ISR
@@ -156,8 +163,7 @@ def calcular_fonacot(fonacot,catorcena_actual):
         ultimo_dia_mes = datetime(catorcena_actual.fecha_inicial.year, catorcena_actual.fecha_inicial.month,
                                 calendar.monthrange(catorcena_actual.fecha_inicial.year, catorcena_actual.fecha_inicial.month)[1]).date()
         numero_catorcenas =  Catorcenas.objects.filter(fecha_final__range=(primer_dia_mes,ultimo_dia_mes)).count()
-        prestamo_fonacot = fonacot / numero_catorcenas
-        
+        prestamo_fonacot = fonacot / numero_catorcenas    
     return prestamo_fonacot
 
 #PRIMA DOMINICAL

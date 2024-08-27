@@ -2,7 +2,7 @@ import django_filters
 
 from .models import Subcategoria,Solicitud
 from revisar.models import AutorizarSolicitudes,Estado
-from proyecto.models import TipoPerfil, Distrito
+from proyecto.models import TipoPerfil, Distrito,Catorcenas
 from esquema.models import BonoSolicitado,Puesto
 from django.db.models import CharField, Value
 from django.db.models.functions import Concat
@@ -17,19 +17,12 @@ class BonoSolicitadoFilter(django_filters.FilterSet):
     bono = django_filters.ModelChoiceFilter(queryset=Subcategoria.objects.all(), field_name='solicitud__bono')
     puesto = django_filters.ModelChoiceFilter(queryset=Puesto.objects.all().order_by('puesto'), field_name='puesto')
     no_trabajador = django_filters.NumberFilter(field_name="trabajador__numero_de_trabajador")
-    #Fecha emision
-    fecha_inicio = django_filters.DateFilter(field_name='fecha', lookup_expr='gte', label='Fecha de inicio')
-    fecha_fin = django_filters.DateFilter(field_name='fecha', lookup_expr='lte', label='Fecha de fin', method='sumar_un_dia')
-    #fecha aprobacion
-    fecha_inicio_a = django_filters.DateFilter(field_name='solicitud__fecha_autorizacion', lookup_expr='gte', label='Fecha de inicio')
-    fecha_fin_a = django_filters.DateFilter(field_name='solicitud__fecha_autorizacion', lookup_expr='lte', label='Fecha de fin', method='sumar_un_dia')
     #fecha catorcena
     fecha_inicial_catorcena = django_filters.DateFilter(field_name='solicitud__fecha_autorizacion', lookup_expr='gte', label='Fecha de inicio')
     fecha_final_catorcena = django_filters.DateFilter(field_name='solicitud__fecha_autorizacion', lookup_expr='lte', label='Fecha de fin',  method='sumar_un_dia')
-    
+            
     def custom_extract_date(self, queryset, name, value):
         return queryset.filter(fecha__date__lte=value)
-  
     
     #suma un dia a la fecha fin. porque a la hora de buscar me resta un dia, tal vez tenga que ver por las horas y minutos
     def sumar_un_dia(self, queryset, name, value):

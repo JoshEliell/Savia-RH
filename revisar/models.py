@@ -20,7 +20,7 @@ class AutorizarSolicitudes(models.Model):
     comentario = models.CharField(max_length=255,null=True)
     revisar = models.BooleanField(default=False)#flujo revisión
     created_at=models.DateTimeField(auto_now=True)
-    updated_at=models.DateTimeField(auto_now=True)
+    updated_at=models.DateTimeField(auto_now=True, db_index=True)
     
 class AutorizarPrenomina(models.Model):
     prenomina = models.ForeignKey(Prenomina,on_delete=models.CASCADE,null=True)

@@ -10,7 +10,8 @@
     
 
 {% block css %}
-
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@x.x.x/dist/select2-bootstrap4.min.css">
 {% endblock css %}
     
 
@@ -45,11 +46,17 @@
                                     </div>
                                     <div class="col-8">
                                         <div class="row">
+                                            
+                                            {% if fecha_inicial and fecha_inicial != None %}
                                             <div class="col-auto">
                                                 <div class="alert alert-primary" role="alert">
+                                                    {% comment %}
                                                     <p class="fw-bold">Catorcena {{catorcena.catorcena}}: {{catorcena.fecha_inicial|date:"d/m/Y"}} - {{catorcena.fecha_final|date:"d/m/Y"}}</p> 
+                                                    {% endcomment %}
+                                                    <p class="fw-bold">Fecha: {{ fecha_inicial }} - {{ fecha_final }}</p>
                                                 </div>           
                                             </div>
+                                           
                                             <div class="col-auto">
                                                 <div class="alert alert-dark" role="alert">
                                                     <p class="fw-bold">Total bonos aprobados: {{cantidad_bonos_aprobados}}</p> 
@@ -66,6 +73,7 @@
                                                 </div>
                                                 {% endif %}
                                             </div>
+                                            {% endif %}
                                         </div>
                                     </div>
                                 </div>
@@ -91,6 +99,15 @@
                                 </div>
                                 <div class="col-lg-3 col-sm-12">
                                     <div class="input-group mb-3">
+                                    <span class="input-group-text" id="basic-addon1"><i class="fa-regular fa-id-badge"></i></span>
+                                        <div class="form-floating form-floating-group flex-grow-1">   
+                                            {{bonosolicitado_filter.form.no_trabajador|add_class:"form-control"|append_attr:"placeholder= No. trabajador"}}
+                                            <label style="color: #121212;" for="id_id">No. trabajador</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-sm-12">
+                                    <div class="input-group mb-3">
                                     <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-user"></i></span>
                                         <div class="form-floating form-floating-group flex-grow-1">   
                                             {{bonosolicitado_filter.form.nombres_apellidos|add_class:"form-control"|append_attr:"placeholder= Nombre"}}
@@ -111,71 +128,47 @@
                                         </div>
                                     </div>
                                 {% endif %}
-                               
+                                {% comment %} bono {% endcomment %}
                                 <div class="col-lg-4 col-sm-12">
                                     <div class="input-group mb-3">
                                     <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-gear"></i></span>
                                         <div class="form-floating form-floating-group flex-grow-1">   
-                                            {{bonosolicitado_filter.form.bono|add_class:"form-control"|append_attr:"placeholder= Bono"}}
-                                            <label style="color: #121212;" for="id_id">Bono</label>
+                                            {{bonosolicitado_filter.form.bono|add_class:"form-control select2-bootstrap"}}
+                                            <label style="color: #121212;" for="id_id"></label>
                                         </div>
                                     </div>
                                 </div>
+                                {% comment %} puesto {% endcomment %}                                    
                                 <div class="col-lg-7 col-sm-12">
                                     <div class="input-group mb-3">
                                     <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-user-tie"></i></span>
                                         <div class="form-floating form-floating-group flex-grow-1">   
-                                            {{bonosolicitado_filter.form.puesto|add_class:"form-control"|append_attr:"placeholder= Puesto"}}
-                                            <label style="color: #121212;" for="id_id">Puesto</label>
+                                            {{bonosolicitado_filter.form.puesto|add_class:"form-control"}}
+                                            <label style="color: #121212;" for="id_id"></label>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-lg-3 col-sm-12">
+
+                                <div id="serie" class="col-lg-2 col-sm-12">
                                     <div class="input-group mb-3">
-                                    <span class="input-group-text" id="basic-addon1"><i class="fa-regular fa-id-badge"></i></span>
+                                    <span class="input-group-text" id="basic-addon1"><i class="fa-regular fa-calendar"></i></span>
                                         <div class="form-floating form-floating-group flex-grow-1">   
-                                            {{bonosolicitado_filter.form.no_trabajador|add_class:"form-control"|append_attr:"placeholder= No. trabajador"}}
-                                            <label style="color: #121212;" for="id_id">No. trabajador</label>
+                                            {% render_field bonosolicitado_filter.form.fecha_inicial_catorcena type="date" class="form-control" %}
+                                        <label style="color: #121212;" for="id_subproyecto">Catorcena - fecha inicio:</label>
                                         </div>
                                     </div>
                                 </div>
-                                <div class = "row">
-                                    <div id="serie" class="col-lg-2 col-sm-12">
-                                        <div class="input-group mb-3">
-                                        <span class="input-group-text" id="basic-addon1"><i class="fa-regular fa-calendar"></i></span>
-                                            <div class="form-floating form-floating-group flex-grow-1">   
-                                                {% render_field bonosolicitado_filter.form.fecha_inicio type="date" class="form-control" %}
-                                            <label style="color: #121212;" for="id_subproyecto">Emisión Desde:</label>
-                                            </div>
+                                <div id="serie" class="col-lg-2 col-sm-12">
+                                    <div class="input-group mb-3">
+                                    <span class="input-group-text" id="basic-addon1"><i class="fa-regular fa-calendar"></i></span>
+                                        <div class="form-floating form-floating-group flex-grow-1">   
+                                            {% render_field bonosolicitado_filter.form.fecha_final_catorcena type="date" class="form-control" %}
+                                        <label style="color: #121212;" for="id_subproyecto">Catorcena - fecha fin:</label>
                                         </div>
                                     </div>
-                                    <div id="serie" class="col-lg-2 col-sm-12">
-                                        <div class="input-group mb-3">
-                                        <span class="input-group-text" id="basic-addon1"><i class="fa-regular fa-calendar"></i></span>
-                                            <div class="form-floating form-floating-group flex-grow-1">   
-                                                {% render_field bonosolicitado_filter.form.fecha_fin type="date" class="form-control" %}
-                                            <label style="color: #121212;" for="id_subproyecto">Emisión Hasta:</label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div id="serie" class="col-lg-2 col-sm-12">
-                                        <div class="input-group mb-3">
-                                        <span class="input-group-text" id="basic-addon1"><i class="fa-regular fa-calendar"></i></span>
-                                            <div class="form-floating form-floating-group flex-grow-1">   
-                                                {% render_field bonosolicitado_filter.form.fecha_inicio_a type="date" class="form-control" %}
-                                            <label style="color: #121212;" for="id_subproyecto">Aprobación Desde:</label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div id="serie" class="col-lg-2 col-sm-12">
-                                        <div class="input-group mb-3">
-                                        <span class="input-group-text" id="basic-addon1"><i class="fa-regular fa-calendar"></i></span>
-                                            <div class="form-floating form-floating-group flex-grow-1">   
-                                                {% render_field bonosolicitado_filter.form.fecha_fin_a type="date" class="form-control" %}
-                                            <label style="color: #121212;" for="id_subproyecto">Aprobación Hasta:</label>
-                                            </div>
-                                        </div>
-                                    </div>
+                                </div>
+
+
                                     <div class="col-12 col-md-2 m-2">
                                         <button type="search" class="btn btn-success"><i class="fas fa-search"></i></button>
                                     </div>
@@ -188,60 +181,58 @@
               </div>
         </div>
     </div>
-    {% comment %} Listar Solicitudes {% endcomment %}
-    {% if bonos|length != 0 %}
-    <div class="row">
-        <div class="col-12 my-3 table-responsive">
-            <table class="table bg-white table-hover table-striped shadow" id="tabla">
-                <thead>
-                    <tr class="tabla-encabezado">
-                        <th>Folio</th>
-                        <th>Fecha emisión</th>
-                        <th>Fecha aprobación</th>
-                        <th># trabajador</th> 
-                        <th>Nombre</th>
-                        <th>No. Cuenta</th>
-                        <th>No. Tarjeta</th>
-                        <th>Banco</th>
-                        <th>Distrito</th>
-                        <th>Bono</th>
-                        <th>Puesto</th>
-                        <th>Cantidad</th>
-                     
-                        <th style="width: 5%;"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for bono in bonos %}
-                    <tr class="text-capitalize"> 
-                        <td>{{bono.solicitud.folio}}</td>
-                        <td>{{bono.solicitud.fecha|date:"d/m/Y H:i"}}</td>
-                        <td>{{bono.solicitud.fecha_autorizacion|date:"d/m/Y H:i"}}</td>
-                        <td>{{bono.trabajador.numero_de_trabajador}}</td>
-                        <td>{{bono.trabajador}}</td>
-                        <td>{{bono.trabajador.status.datosbancarios.no_de_cuenta}}</td>
-                        <td>{{bono.trabajador.status.datosbancarios.numero_de_tarjeta}}</td>
-                        <td>{{bono.trabajador.status.datosbancarios.banco}}</td>
-                        <td>{{bono.bono.distrito}}</td>
-                        <td>{{bono.solicitud.bono}}</td>
-                        <td>{{bono.bono.puesto}}</td>
-                        
-
-                        <td><span class="badge " style="background: #2A628F;">${{bono.cantidad}}</span></td>
-                        <td><a href="{% url 'verDetalleSolicitud' bono.solicitud.id %}" title="La soliciutd está pendiente" class="btn btn-sm btn-success"><i class="fas fa-list"></i></a></td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-    {% else %}
-    <div class="card mt-3">
-        <div class="card-body">
-            <p class="text-muted">Sin resultados</p>
-        </div>
-    </div>
-    {% endif %}
+     {% comment %} Listar Solicitudes {% endcomment %}
+     {% if bonos_solicitados|length != 0 %}
+     <div class="row">
+         <div class="col-12 my-3 table-responsive">
+             <table class="table bg-white table-hover table-striped shadow" id="tabla">
+                 <thead>
+                     <tr class="tabla-encabezado">
+                         <th>Folio</th>
+                         <th>Fecha Registro</th>
+                         <th>Fecha aprobación</th>
+                         <th># trabajador</th> 
+                         <th>Nombre</th>
+                         <th>No. Cuenta</th>
+                         <th>No. Tarjeta</th>
+                         <th>Banco</th>
+                         <th>Distrito</th>
+                         <th>Bono</th>
+                         <th>Puesto</th>
+                         <th>Cantidad</th>
+                      
+                         <th style="width: 5%;"></th>
+                     </tr>
+                 </thead>
+                 <tbody>
+                     {% for bono in bonos_solicitados %}
+                     <tr class="text-capitalize"> 
+                         <td>{{bono.solicitud.folio}}</td>
+                         <td>{{bono.solicitud.fecha|date:"d/m/Y H:i"}}</td>
+                         <td>{{bono.solicitud.fecha_autorizacion|date:"d/m/Y H:i"}}</td>
+                         <td>{{bono.trabajador.numero_de_trabajador}}</td>
+                         <td>{{bono.trabajador}}</td>
+                         <td>{{bono.trabajador.status.datosbancarios.no_de_cuenta}}</td>
+                         <td>{{bono.trabajador.status.datosbancarios.numero_de_tarjeta}}</td>
+                         <td>{{bono.trabajador.status.datosbancarios.banco}}</td>
+                         <td>{{bono.bono.distrito}}</td>
+                         <td>{{bono.solicitud.bono}}</td>
+                         <td>{{bono.bono.puesto}}</td>
+                         <td><span class="badge " style="background: #2A628F;">${{bono.cantidad}}</span></td>
+                         <td><a href="{% url 'verDetalleSolicitud' bono.solicitud.id %}" title="La soliciutd está pendiente" class="btn btn-sm btn-success"><i class="fas fa-list"></i></a></td>
+                     </tr>
+                     {% endfor %}
+                 </tbody>
+             </table>
+         </div>
+     </div>
+     {% else %}
+     <div class="card mt-3">
+         <div class="card-body">
+             <p class="text-muted">Sin resultados</p>
+         </div>
+     </div>
+     {% endif %}
 </div>
 
 <nav aria-label="Page navigation example">
@@ -271,10 +262,31 @@
         {% endif %}
     </ul>
 </nav>
-
 {% endblock content %}
- 
 
 {% block js %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/i18n/es.js"></script>
+<script>
+    $(document).ready(function(){
+        $('.select2-bootstrap').select2({
+            theme:'bootstrap4',
+            language: "es",
+        });
 
+        $('#id_bono').select2({
+            allowClear: true,
+            width: '100%',
+            placeholder: 'Bono',
+            language:"es",
+        });
+
+        $('#id_puesto').select2({
+            allowClear: true,
+            width: '100%',
+            placeholder: 'Puesto',
+            language:"es",
+        });
+    });
+</script>
 {% endblock js %}
