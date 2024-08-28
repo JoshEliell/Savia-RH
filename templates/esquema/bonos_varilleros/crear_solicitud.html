@@ -270,6 +270,10 @@ Crear Solicitud - Bonos Varilleros
     const bonoViajePep = 19
     const bonoCursoPep = 23
     const bonoMantenimiento = 36
+    const bonoTesoreria = 37
+    const bonoComplemento = 38
+    const listadoBonos = [bonoCursoPep, bonoMantenimiento,bonoTesoreria,bonoComplemento]
+    
     
     $('.select2-bootstrap').select2({
         theme:'bootstrap4',
@@ -346,7 +350,8 @@ Crear Solicitud - Bonos Varilleros
     $('#id_bono').on('select2:select', function(e){
         document.getElementById('id_cantidad').value = ''
         //console.log("desde el data",e.params.data)
-        var bonoId = e.params.data.id;
+        var bonoId = parseInt(e.params.data.id);
+        console.log("bonoID esd e tipo", typeof(bonoId))
         var soporte = e.params.data.soporte;
         //console.log("soporte es: ", soporte)
         // Mostrar/ocultar el campo km basado en el bono seleccionado
@@ -358,7 +363,10 @@ Crear Solicitud - Bonos Varilleros
         }
 
         //Activar/Desactivar el campo cantidad del bono cursoPep
-        if (bonoId == bonoCursoPep || bonoId == bonoMantenimiento) {
+        //if (bonoId == bonoCursoPep || bonoId == bonoMantenimiento || bonoId == bonoTesoreria) {
+        if(listadoBonos.includes(bonoId)){
+            console.log("se ejecuta")
+        //if (listadoBonos.includes(bonoId)){
             document.getElementById('id_cantidad').removeAttribute('readonly');
         } else {
             //console.log("no quitar")
@@ -384,12 +392,14 @@ Crear Solicitud - Bonos Varilleros
 
     /* se verifica si esta prepargado un bono - cuando se carga la pagina*/
     var selectedValue = $('#id_bono').val();
+    var selectedValue = parseInt(selectedValue)
     
     if (selectedValue == bonoViajePep){
         document.getElementById('km').classList.remove("d-none");
     }
     
-    if (selectedValue == bonoCursoPep || selectedValue == bonoMantenimiento) {
+    //if (selectedValue == bonoCursoPep || selectedValue == bonoMantenimiento) {
+    if(listadoBonos.includes(selectedValue)){
         document.getElementById('id_cantidad').removeAttribute('readonly');
     } else {
         //console.log("no quitar")
