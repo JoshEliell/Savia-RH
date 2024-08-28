@@ -71,8 +71,8 @@ from calculos.utils import excel_estado_prenomina, excel_estado_prenomina_format
 #funcion para obtener la catorcena actual
 def obtener_catorcena():
     fecha_actual = datetime.date.today()
-    fecha_actual = datetime.date.today() - datetime.timedelta(days=14)
-    print("Esta es la fecha actual: ", fecha_actual)
+    #fecha_actual = datetime.date.today() - datetime.timedelta(days=14)
+    #print("Esta es la fecha actual: ", fecha_actual)
     catorcena_actual = Catorcenas.objects.filter(fecha_inicial__lte=fecha_actual, fecha_final__gte=fecha_actual).first()
     return catorcena_actual
 
