@@ -269,7 +269,8 @@ Crear Solicitud - Bonos Varilleros
     /**Debes reemplazar o cambiar los valores de los bonos asignados por el ID que se encuentran en la subcategoria del bono */
     const bonoViajePep = 19
     const bonoCursoPep = 23
-
+    const bonoMantenimiento = 36
+    
     $('.select2-bootstrap').select2({
         theme:'bootstrap4',
         language: "es",
@@ -357,7 +358,7 @@ Crear Solicitud - Bonos Varilleros
         }
 
         //Activar/Desactivar el campo cantidad del bono cursoPep
-        if (bonoId == bonoCursoPep) {
+        if (bonoId == bonoCursoPep || bonoId == bonoMantenimiento) {
             document.getElementById('id_cantidad').removeAttribute('readonly');
         } else {
             //console.log("no quitar")
@@ -388,7 +389,7 @@ Crear Solicitud - Bonos Varilleros
         document.getElementById('km').classList.remove("d-none");
     }
     
-    if (selectedValue == bonoCursoPep) {
+    if (selectedValue == bonoCursoPep || selectedValue == bonoMantenimiento) {
         document.getElementById('id_cantidad').removeAttribute('readonly');
     } else {
         //console.log("no quitar")
