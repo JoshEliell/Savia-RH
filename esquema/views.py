@@ -269,8 +269,8 @@ def crearSolicitudBonos(request):
         perfiles = empleados.filter(numero_de_trabajador__in = superintendentes, distrito_id = usuario.distrito.id)
         #se carga el formulario en automatico definiendo filtros
         bonoSolicitadoForm.fields["trabajador"].queryset = empleados 
-        folio = Solicitud.objects.latest('id').id + 1
-                
+        #folio = Solicitud.objects.latest('id').id + 1
+        folio = Solicitud.objects.filter(complete = True).values_list('folio', flat=True).last() + 1
         solicitud, created = Solicitud.objects.get_or_create(complete = False, defaults={'complete': False, 'folio':folio,'solicitante_id':solicitante.id, 'total':0.00})
         #Obtiene los bonos que han sido creados en la solicitud
         bonos_solicitados = BonoSolicitado.objects.filter(solicitud_id = solicitud.id)
@@ -580,8 +580,6 @@ def verificarSolicitudBonosVarilleros(request,solicitud):
                             solicitud.save()
                             
             elif 'actualizar_solicitud' in request.POST:
-                print("Enviar la solicitud")
-                print(autorizacion.estado)
                 autorizacion.estado_id = 3# Estado pendiente
                 autorizacion.save()
                 messages.success(request, "La solicitud se envio con nuevos cambios al superintendente")
@@ -613,7 +611,7 @@ def verificarSolicitudBonosVarilleros(request,solicitud):
         
 #para ver detalles de la solicitud
 @login_required(login_url='user-login')
-def verDetallesSolicitud(request,solicitud_id):    
+def verDetallesSolicitud(request,solicitud_id):  
     usuario = get_object_or_404(UserDatos,user_id = request.user.id)
     if usuario.tipo not in [1,2,3]:
         #obtener_bono = Solicitud.objects.filter(pk=solicitud_id).values('bono_id').first()

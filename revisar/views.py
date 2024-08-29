@@ -146,14 +146,14 @@ def autorizarSolicitud(request,solicitud):
         if autorizarSolicitudesUpdateForm.is_valid():
             usuario = request.user
             rol = UserDatos.objects.get(user_id = usuario.id)
-                    
+                            
             autorizar = AutorizarSolicitudes.objects.get(solicitud_id = solicitud, tipo_perfil_id = rol.tipo_id)
             
             comentarioDato = autorizarSolicitudesUpdateForm.cleaned_data['comentario']
             if 'aprobar' in request.POST:#aprobado
 
-                if rol.tipo_id == 6:#superintendente -> control tecnico
-
+                print("entra aprobado")
+                if rol.tipo_id in (6,12):#cualquier superintentende -> control tecnico
                         #se guardan los datos de la autorizacion en el superintendente
                         autorizar.estado_id = 1 #aprobado
                         autorizar.comentario = comentarioDato

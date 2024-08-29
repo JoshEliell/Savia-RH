@@ -33,7 +33,7 @@
                     <span class="fw-bold"><i class="fas fa-bookmark"></i> Folio: </span> {{autorizaciones.solicitud.folio}}
                   </div>
                   <div class="">
-                    <span class="fw-bold"><i class="fas fa-calendar-alt"></i> Fecha emisión: </span> {{autorizaciones.solicitud.fecha|date:'d/m/Y H:i'}}
+                    <span class="fw-bold"><i class="fas fa-calendar-alt"></i> Fecha Registro: </span> {{autorizaciones.solicitud.fecha|date:'d/m/Y H:i'}}
                   </div>
                   <div class="">
                   
@@ -147,6 +147,7 @@
                         
                     </div>
                     {% comment %}Rol - Supervisor{% endcomment %}
+                    
                     {% if usuario.tipo.id == 5%}
                     <div class="row">
                         <div class="col-8">
@@ -220,6 +221,7 @@
                                 <label for="" class="fw-bold"></label>
                                 <div class="input-group">                                        
                                     {% if usuario.tipo.id == autorizaciones.tipo_perfil.id and autorizaciones.estado.id == 3 %}
+                                    
                                         <div class="col-12 d-flex justify-content-between">
                                             <button class="btn btn-success" name="aprobar"><i class="fas fa-check"></i> Aprobar</button>
                                             
