@@ -17,7 +17,7 @@ import logging
 from proyecto.models import Distrito,Perfil,Puesto,UserDatos,Catorcenas,DatosBancarios
 from .models import Categoria,Subcategoria,Bono,Solicitud,BonoSolicitado,Requerimiento
 from revisar.models import AutorizarSolicitudes
-from .forms import SolicitudForm,BonoSolicitadoForm,RequerimientoForm,AutorizarSolicitudesUpdateForm,AutorizarSolicitudesGerenteUpdateForm,BonoSolicitadoPuestoForm
+from .forms import SolicitudForm,BonoSolicitadoForm,RequerimientoForm,AutorizarSolicitudesUpdateForm,AutorizarSolicitudesGerenteUpdateForm,BonoSolicitadoPuestoForm,AutorizarSolicitudForm
 from django.db import connection
 from django.core.paginator import Paginator
 from .filters import SolicitudFilter,AutorizarSolicitudesFilter,BonoSolicitadoFilter
@@ -259,18 +259,18 @@ def crearSolicitudBonos(request):
         bonoSolicitadoForm = BonoSolicitadoForm()
         bonoSolicitadoPuestoForm = BonoSolicitadoPuestoForm()
         requerimientoForm = RequerimientoForm()
+        autorizarSolicitudForm = AutorizarSolicitudForm()
         #se hace una consulta con los empleados del distrito que pertenecen
         empleados = Perfil.objects.filter(distrito_id = usuario.distrito.id).exclude(baja = 1).order_by('nombres')
         solicitante = Perfil.objects.get(numero_de_trabajador = usuario.numero_de_trabajador, distrito_id = usuario.distrito.id)
+        #obtener los superintendentes operativos, administrativos
+        superintendentes = UserDatos.objects.filter(distrito_id=usuario.distrito.id, tipo_id__in=[6,12]).values_list('numero_de_trabajador', flat=True)
+        #perfiles = Perfil.objects.filter(numero_de_trabajador__in = superintendentes, distrito_id = usuario.distrito.id)
+        perfiles = empleados.filter(numero_de_trabajador__in = superintendentes, distrito_id = usuario.distrito.id)
         #se carga el formulario en automatico definiendo filtros
         bonoSolicitadoForm.fields["trabajador"].queryset = empleados 
-        ultimo_registro = Solicitud.objects.filter(complete = True).values_list('folio', flat=True).last()
-        
-        if ultimo_registro:
-            folio = ultimo_registro + 1 
-        else:
-            folio = 1
-            
+        folio = Solicitud.objects.latest('id').id + 1
+                
         solicitud, created = Solicitud.objects.get_or_create(complete = False, defaults={'complete': False, 'folio':folio,'solicitante_id':solicitante.id, 'total':0.00})
         #Obtiene los bonos que han sido creados en la solicitud
         bonos_solicitados = BonoSolicitado.objects.filter(solicitud_id = solicitud.id)
@@ -287,8 +287,8 @@ def crearSolicitudBonos(request):
         ]
         
         errors = {}
-        #Para guardar la solicitud
         
+        #Para guardar la solicitud
         if request.method == "POST":
             #obtiene un queryset de los archivos de la solicitud
         
@@ -353,12 +353,10 @@ def crearSolicitudBonos(request):
                         elif bono_solicitado.bono.esquema_subcategoria.id == 21: # Bono ó Subcategoria ID - TOMA DE REGISTROS ECO Y/O DINA - 9 soportes se paga, 30% ayudante, 70% tecnico
                             servicios = Requerimiento.objects.filter(solicitud_id = solicitud.id).count()
                             if servicios >= 9: #9 valor, Paga el novevo servicio - soporte
-                                print("es negativa: ",bono_solicitado.cantidad)
                                 bono_solicitado.save()
                                 cantidad = bono_solicitado.cantidad * (servicios - 2) #8 valor
                                 puestos = BonoSolicitado.objects.filter(solicitud_id = solicitud.id)
                                 if puestos.count() > 1:
-                                    print("reparto del 70 y 30")
                                     BonoSolicitado.objects.filter(
                                         solicitud_id=solicitud.id,
                                         bono__puesto_id=16 # TÉCNICO DE TOMA DE INFORMACIÓN
@@ -370,7 +368,6 @@ def crearSolicitudBonos(request):
                                     solicitud.total = Decimal(cantidad)
                                     solicitud.save()
                                 else:
-                                    print("Técnico al 100%")
                                     BonoSolicitado.objects.filter(solicitud_id=solicitud.id).update(cantidad=cantidad)
                                     solicitud.total = Decimal(cantidad)
                                     solicitud.save()
@@ -393,26 +390,29 @@ def crearSolicitudBonos(request):
                     messages.error(request, 'Falta adjuntar soportes')
                     return redirect(request.META.get('HTTP_REFERER'))
                 
-                #Se envia la solicitud al superintendente
-                superintendente = UserDatos.objects.filter(distrito_id=usuario.distrito.id, tipo_id=6).values_list('numero_de_trabajador',flat=True).first()
-                perfil_superintendente = Perfil.objects.filter(numero_de_trabajador = superintendente).values_list('id',flat=True).first()
+                autorizarSolicitudForm = AutorizarSolicitudForm(request.POST)
                 
-                #se crea la autorizacion
-                AutorizarSolicitudes.objects.create(
-                    solicitud_id = solicitud.id,
-                    perfil_id =  perfil_superintendente,
-                    tipo_perfil_id = 6, # superintendente
-                    estado_id = 3, # pendiente
-                )
-                
-                #Se guarda la solicitud en complete
-                solicitud.complete = 1
-                solicitud.save()
-                
-                messages.success(request, "La solicitud se envio al superintendente")
-                return redirect('listarBonosVarilleros')
+                if autorizarSolicitudForm.is_valid():    
+                    
+                    autorizar = autorizarSolicitudForm.save(commit=False)
+        
+                    #obtener el rol
+                    superintendente = Perfil.objects.get(pk=autorizar.perfil.id).numero_de_trabajador
+                    rol = UserDatos.objects.get(distrito_id = usuario.distrito.id, numero_de_trabajador = superintendente).tipo_id
+                    #guardar en la BD
+                    autorizar.solicitud_id = solicitud.id
+                    autorizar.tipo_perfil_id = rol
+                    autorizar.estado_id = 3
+                    autorizar.save()
+                    
+                    #Se guarda la solicitud en complete
+                    solicitud.complete = 1
+                    solicitud.save()
+                    messages.success(request, "La solicitud se envio al superintendente")
+                    return redirect('listarBonosVarilleros')
                 
         solicitudForm =  SolicitudForm(instance = solicitud)
+        autorizarSolicitudForm.fields['perfil'].queryset = perfiles
     
         contexto = {
             'folio': folio,
@@ -422,12 +422,13 @@ def crearSolicitudBonos(request):
             'solicitudForm':solicitudForm,
             'bonoSolicitadoForm':bonoSolicitadoForm,
             'requerimientoForm':requerimientoForm,
+            'autorizarSolicitudForm':autorizarSolicitudForm,
             'bonoSolicitadoPuestoForm':bonoSolicitadoPuestoForm,
             'lista_archivos': lista_archivos,
             'bonos_solicitados': bonos_solicitados,
             'errors':errors,
             'solicitud':solicitud,
-        
+
         } 
 
         return render(request,'esquema/bonos_varilleros/crear_solicitud.html',contexto)

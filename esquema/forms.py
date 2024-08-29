@@ -33,9 +33,17 @@ class BonoSolicitadoForm(forms.ModelForm):
 class BonoSolicitadoPuestoForm(forms.Form):
     puesto = forms.ModelChoiceField(queryset=Puesto.objects.none(), required=True)        
 
-
-        
-                
+#Perfiles de superintendente operativo, administrativo - tipo_perfil_id = 6 y 12
+class AutorizarSolicitudForm(forms.ModelForm):
+    class Meta:
+        model = AutorizarSolicitudes
+        fields = ['perfil']
+        error_messages = {
+            'perfil': {
+                'required': 'Debe seleccionar un perfil',
+            },
+        }
+                        
 """  
 class BonoSolicitadoForm(forms.ModelForm):
     class Meta:

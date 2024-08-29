@@ -20,6 +20,16 @@ Crear Solicitud - Bonos Varilleros
 <h6>&nbsp;</h6>
 <h6>&nbsp;</h6>
 <div class="container-fluid">
+        {% if autorizarSolicitudForm.errors %}
+            <div class="alert alerta-danger alert-dismissible fade show">
+                <ul>
+                    {% for field, error in autorizarSolicitudForm.errors.items %}
+                        <strong>{{ error.as_text }}</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
         {% comment %}Un mensaje de alerta{% endcomment %}
         {% if messages %}
             {% for message in messages %}
@@ -224,18 +234,26 @@ Crear Solicitud - Bonos Varilleros
                             </tbody>
                             <tfoot>
                                 <tr>
-                                    <td>
-                                        <form action="{% url 'crearSolicitudBonos' %}" method="POST" id="form_enviar_solicitud">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn btn-primary btn-sm" name="enviar_solicitud" id="enviar_solicitud"><i class="fas fa-share"></i> Enviar Solicitud</button>
-                                        </form>
-                                    </td>   
+                                    <td></td>   
                                     <td></td>
                                     <td colspan="" class="fw-bold">Total: $<span id="total">{{solicitud.total}}</span> </td>
                                     <td></td>
-                                </tr>                       
+                                </tr>     
+                                <tr>
+                                    <form action="{% url 'crearSolicitudBonos' %}" method="POST" id="form_enviar_solicitud">
+                                        <td>
+                                         
+                                        </td> 
+                                        <td>
+                                            {{autorizarSolicitudForm.perfil|add_class:"form-control"}}
+                                        </td>  
+                                        <td>
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-primary btn-sm" name="enviar_solicitud" id="enviar_solicitud"><i class="fas fa-share"></i> Enviar Solicitud</button>
+                                        </td>   
+                                     </form>
+                                </tr>      
                             </tfoot>
-                           
                         </table>  
                     </div>                    
 
