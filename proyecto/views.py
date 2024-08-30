@@ -1287,8 +1287,9 @@ def CostoUpdate(request, pk):
 @login_required(login_url='user-login')
 def Costo_revisar(request, pk):
     user_filter = UserDatos.objects.get(user=request.user)
+    print("usuario: ", user_filter)
     costo = Costo.objects.get(id=pk)
-    if user_filter.tipo.id in [4,8,9,10,11,12] and user_filter.distrito == costo.status.perfil.distrito: #Perfil RH
+    if (user_filter.tipo.id in (9,10,11)) or (user_filter.tipo.id in (4,8,12) and user_filter.distrito.id == costo.status.perfil.distrito.id): #Perfil RH
         ahora = datetime.date.today()
         catorcena = Catorcenas.objects.filter(fecha_inicial__lte=ahora, fecha_final__gte=ahora).first()
         bonos_dato = Bonos.objects.filter(costo=costo, fecha_bono__range=[catorcena.fecha_inicial, catorcena.fecha_final])
@@ -1302,6 +1303,7 @@ def Costo_revisar(request, pk):
             existe = 1
         else:
             existe = 0 
+            
         costo.numero_de_trabajador=costo.status.perfil.numero_de_trabajador
         costo.empresa=costo.status.perfil.empresa
         costo.distrito=costo.status.perfil.distrito
