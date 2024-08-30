@@ -468,7 +468,12 @@ def verificarSolicitudBonosVarilleros(request,solicitud):
         bonoSolicitadoForm.fields["trabajador"].queryset = empleados 
         
         #se llama la autorizacion relacionada
-        autorizacion = AutorizarSolicitudes.objects.select_related('solicitud').filter(solicitud=solicitud).last()
+        #comentario = AutorizarSolicitudes.objects.filter(solicitud_id=solicitud.id).values_list('comentario',flat=True).last()
+        comentario = AutorizarSolicitudes.objects.filter(solicitud_id=solicitud.id).exclude(comentario__isnull=True).values_list('comentario', flat=True)
+        comentario = comentario[0]
+       
+        autorizacion = AutorizarSolicitudes.objects.filter(solicitud_id=solicitud.id).first()
+        
         bonos_solicitados = BonoSolicitado.objects.filter(solicitud_id = solicitud.id)
         lista_archivos = Requerimiento.objects.filter(solicitud_id = solicitud.id)
         
@@ -579,8 +584,8 @@ def verificarSolicitudBonosVarilleros(request,solicitud):
                             solicitud.total = total
                             solicitud.save()
                             
-            elif 'actualizar_solicitud' in request.POST:
-                autorizacion.estado_id = 3# Estado pendiente
+            elif 'actualizar_solicitud' in request.POST:    
+                autorizacion.estado_id = 3 # Estado pendiente
                 autorizacion.save()
                 messages.success(request, "La solicitud se envio con nuevos cambios al superintendente")
                 return redirect('listarBonosVarilleros')
@@ -601,6 +606,7 @@ def verificarSolicitudBonosVarilleros(request,solicitud):
             'errors':errors,
             'solicitud':solicitud,
             'autorizacion':autorizacion,
+            'comentario': comentario
         
         } 
         
