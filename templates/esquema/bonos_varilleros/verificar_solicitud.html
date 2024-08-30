@@ -245,7 +245,10 @@ Cambios Solicitud - Bonos Varilleros
                                 <h5>Observaciones</h5>
                             </div>
                             <div class="card-body">
-                                <b>{{comentario}}</b>
+                                {% for comentario in comentarios  %}
+                                    {{comentario}}
+                                    <hr>
+                                {% endfor %}
                             </div>
                         </div>
                     </div>

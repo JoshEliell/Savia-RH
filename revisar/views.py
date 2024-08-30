@@ -150,9 +150,8 @@ def autorizarSolicitud(request,solicitud):
             autorizar = AutorizarSolicitudes.objects.get(solicitud_id = solicitud, tipo_perfil_id = rol.tipo_id)
             
             comentarioDato = autorizarSolicitudesUpdateForm.cleaned_data['comentario']
+            
             if 'aprobar' in request.POST:#aprobado
-
-                print("entra aprobado")
                 if rol.tipo_id in (6,12):#cualquier superintentende -> control tecnico
                         #se guardan los datos de la autorizacion en el superintendente
                         autorizar.estado_id = 1 #aprobado
@@ -175,7 +174,8 @@ def autorizarSolicitud(request,solicitud):
                         #entra en el flujo de verifica o cambios
                         if autorizar.revisar and not created:
                             control_tecnico.estado_id = 3
-                            control_tecnico.comentario = comentarioDato
+                            #control_tecnico.comentario = comentarioDato
+                            #control_tecnico.comentario = None
                             control_tecnico.save()
 
                         messages.success(request, "La solicitud se aprobó por el Superintendente, pasa a revisión a Control Técnico")
@@ -183,8 +183,9 @@ def autorizarSolicitud(request,solicitud):
 
                 elif rol.tipo_id == 7: #control tecnico -> gerente
                         #se guardan los datos de la autorizacion del control tecnico
-                        autorizar.estado_id = 1#aprobado
-                        autorizar.comentario = None
+                        autorizar.estado_id = 1 #aprobado
+                        #autorizar.comentario = 
+                        autorizar.comentario = comentarioDato
                         autorizar.save(update_fields=['estado_id', 'comentario'])
 
 

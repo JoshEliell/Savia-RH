@@ -469,8 +469,14 @@ def verificarSolicitudBonosVarilleros(request,solicitud):
         
         #se llama la autorizacion relacionada
         #comentario = AutorizarSolicitudes.objects.filter(solicitud_id=solicitud.id).values_list('comentario',flat=True).last()
-        comentario = AutorizarSolicitudes.objects.filter(solicitud_id=solicitud.id).exclude(comentario__isnull=True).values_list('comentario', flat=True)
-        comentario = comentario[0]
+        comentarios = AutorizarSolicitudes.objects.filter(solicitud_id=solicitud.id).exclude(comentario__isnull=True).values_list('comentario', flat=True).order_by('-id')
+        for c in comentarios:
+            print(c)
+        #print(comentario)
+        #for c in comentario:
+        #    print (c)
+        #comentario = comentario[0]
+
        
         autorizacion = AutorizarSolicitudes.objects.filter(solicitud_id=solicitud.id).first()
         
@@ -606,7 +612,7 @@ def verificarSolicitudBonosVarilleros(request,solicitud):
             'errors':errors,
             'solicitud':solicitud,
             'autorizacion':autorizacion,
-            'comentario': comentario
+            'comentarios': comentarios
         
         } 
         
