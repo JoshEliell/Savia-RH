@@ -38,6 +38,13 @@ class StatusForm(forms.ModelForm):
         fields = ['perfil','puesto','registro_patronal','fecha_ingreso','nss','curp','rfc','profesion',
                 'no_cedula','fecha_cedula','nivel','tipo_de_contrato','ultimo_contrato_vence','tipo_sangre',
                 'sexo','domicilio','estado_civil','fecha_planta_anterior','fecha_planta','telefono','fecha_alta_imss']
+    
+    def __init__(self, *args, **kwargs):
+        super(StatusForm, self).__init__(*args, **kwargs)
+        # Establecer el campo 'perfil' como no requerido
+        self.fields['profesion'].required = False
+        self.fields['no_cedula'].required = False
+        self.fields['fecha_cedula'].required = False
 
 class StatusUpdateForm(forms.ModelForm):
     class Meta:

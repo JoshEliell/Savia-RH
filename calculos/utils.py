@@ -30,36 +30,40 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 
 #CUOTAS IMSS
-def calcular_cuotas_imss(request,sdi_imss):
+def calcular_cuotas_imss(request,sdi_imss,salario):
     variables_patronal = Variables_imss_patronal.objects.get()
     salario_datos = SalarioDatos.objects.get()
     
-    #multiplica el sdi * el % de cuatoas / el numero de dias de la catorcena
-    #sdi_imss = Decimal(274.97)
-    invalidez_vida = sdi_imss * Decimal(variables_patronal.iv_obrero / 100) * 14
-    cesantia_vejez = sdi_imss * Decimal(variables_patronal.cav_patron/100) * 14
+    #Cuando el empleador gane el salario minimo no se calcula el imss y por defecto es 0  
+    if (salario <= salario_datos.Salario_minimo):
+        return Decimal(0.00)
+    else:
+        #multiplica el sdi * el % de cuatoas / el numero de dias de la catorcena
+        #sdi_imss = Decimal(632.00)
+        invalidez_vida = sdi_imss * Decimal(variables_patronal.iv_obrero / 100) * 14
+        cesantia_vejez = sdi_imss * Decimal(variables_patronal.cav_patron/100) * 14
+        
+        print("sdi_imss: ", sdi_imss)
+        print("este es el valor 1: ",variables_patronal.iv_obrero)
+        print("este es el valor 2: ",variables_patronal.cav_patron)
+        
+        #obtener el salario cotizacion mensual
+        salario_cot_men = sdi_imss * Decimal(30.4)
+        gastos_medicos = sdi_imss * Decimal(variables_patronal.gmp_obrero/100) * 14
+        en_dinero = sdi_imss * Decimal(variables_patronal.pd_obrero/100) * 14 
+        
+        #calcular cuota fija por cada trabajador hasta por 3 UMAs
+        cuota_fija_umas = salario_datos.UMA * Decimal(30.4) * 3
+        diferencia_sbc_umas = salario_cot_men - cuota_fija_umas
+        cuota_fija = (diferencia_sbc_umas * Decimal(variables_patronal.cf_obrero / 100) / Decimal(30.4)) * 14
+        enfermedades_maternidad = gastos_medicos + en_dinero + cuota_fija
+        
+        #La suma del calculo de cada resultado    
+        calculo_imss = invalidez_vida + cesantia_vejez + enfermedades_maternidad
+        print("invalidez y vida: ", invalidez_vida, "cesanti vejez: ", cesantia_vejez, "enfermedades maternidad: ", enfermedades_maternidad)
+        print("I.M.S.S", calculo_imss)
+        return calculo_imss
     
-    print("sdi_imss: ", sdi_imss)
-    print("este es el valor 1: ",variables_patronal.iv_obrero)
-    print("este es el valor 2: ",variables_patronal.cav_patron)
-    
-    #obtener el salario cotizacion mensual
-    salario_cot_men = sdi_imss * Decimal(30.4)
-    gastos_medicos = sdi_imss * Decimal(variables_patronal.gmp_obrero/100) * 14
-    en_dinero = sdi_imss * Decimal(variables_patronal.pd_obrero/100) * 14 
-    
-    #calcular cuota fija por cada trabajador hasta por 3 UMAs
-    cuota_fija_umas = salario_datos.UMA * Decimal(30.4) * 3
-    diferencia_sbc_umas = salario_cot_men - cuota_fija_umas
-    cuota_fija = (diferencia_sbc_umas * Decimal(variables_patronal.cf_obrero / 100) / Decimal(30.4)) * 14
-    enfermedades_maternidad = gastos_medicos + en_dinero + cuota_fija
-    
-    #La suma del calculo de cada resultado    
-    calculo_imss = invalidez_vida + cesantia_vejez + enfermedades_maternidad
-    print("invalidez y vida: ", invalidez_vida, "cesanti vejez: ", cesantia_vejez, "enfermedades maternidad: ", enfermedades_maternidad)
-    print("I.M.S.S", calculo_imss)
-    return calculo_imss
-
 #CALULAR ISR
 def calcular_isr(salario,prima_dominical_isr,prima_vacacional_isr,aguinaldo_isr,prenomina,catorcena):           
     salario_datos = SalarioDatos.objects.get()
@@ -709,7 +713,7 @@ def excel_estado_prenomina(request,prenominas,filtro,user_filter):
         sdi_imss = prenomina.empleado.status.costo.sdi_imss
                 
         #realiza el calculo de las cuotas imss
-        calculo_imss = calcular_cuotas_imss(request,sdi_imss)
+        calculo_imss = calcular_cuotas_imss(request,sdi_imss, salario)
         
         #obtener el total de los bonos
         total_bonos = obtener_total_bonos(request,prenomina,catorcena_actual)
@@ -802,11 +806,24 @@ def excel_estado_prenomina(request,prenominas,filtro,user_filter):
         salario_catorcenal = (proporcion_laborados * salario) + pagos_dobles
 
         apoyo_pasajes = (apoyo_pasajes / 12 ) * (12 - (descuento_pasajes))
-                  
+        
         total_percepciones = salario_catorcenal + apoyo_pasajes + total_bonos + prima_dominical + prima_vacacional + aguinaldo
         #IMSS y el ISR
         total_deducciones = prestamo_infonavit + prestamo_fonacot + calculo_isr + calculo_imss
         pagar_nomina = (total_percepciones - total_deducciones)
+        #cuando el salario catorcenal es 0 es por incapacidad u otro concepto y el calculo debe dar 0 en todo. 
+        """
+        if salario_catorcenal == Decimal(0.00):
+            #IMPORTANTE FALTA IMPLEMENTAR EL CODIGO - PREGUNTAR SI ES EL VA 
+            total_percepciones = salario_catorcenal + apoyo_pasajes + total_bonos + prima_dominical + prima_vacacional + aguinaldo
+            total_deducciones = prestamo_infonavit + prestamo_fonacot + calculo_isr + calculo_imss
+            pagar_nomina = (total_percepciones - total_deducciones)
+        else:  
+            total_percepciones = salario_catorcenal + apoyo_pasajes + total_bonos + prima_dominical + prima_vacacional + aguinaldo
+            #IMSS y el ISR
+            total_deducciones = prestamo_infonavit + prestamo_fonacot + calculo_isr + calculo_imss
+            pagar_nomina = (total_percepciones - total_deducciones)
+        """
         
         #Mostrar el conteo de las incidencias del empleado    
         if retardos == 0: 

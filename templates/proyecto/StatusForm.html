@@ -231,7 +231,7 @@
                                 </div>
                             </div>
                     <hr>
-                            <button type="submit" name="btnSend" class="btn btn-success">
+                            <button type="submit" name="btnSend" class="btn btn-success" id="btnSend">
                                 <span class="glyphicon glyphicon-ok"></span> Guardar
                             </button>
                             <a href="{% url 'Status' %}" class="btn btn">Cancelar</a>
@@ -240,86 +240,112 @@
         </div>
     </div>
 <script>
-document.getElementById("empleados").addEventListener("change", function(element){
-    var select = document.getElementById("empleados");
-    var select_empleado = document.getElementById("id_perfil");
+document.addEventListener("DOMContentLoaded", function() {
+
+    document.getElementById("empleados").addEventListener("change", function(element){
+        var select = document.getElementById("empleados");
+        var select_empleado = document.getElementById("id_perfil");
 
 
 
-    var registros = document.getElementsByClassName("reg");
+        var registros = document.getElementsByClassName("reg");
 
-    var current_option = select.options[select.selectedIndex];
-    var target = current_option.getAttribute('target');
-    var empresa = current_option.getAttribute('empresa');
-    var id = current_option.getAttribute('id');
-    console.log(target);
-    for (var j=0; j < select_empleado.length; j++){
+        var current_option = select.options[select.selectedIndex];
+        var target = current_option.getAttribute('target');
+        var empresa = current_option.getAttribute('empresa');
+        var id = current_option.getAttribute('id');
+        console.log(target);
+        for (var j=0; j < select_empleado.length; j++){
 
-        if (select_empleado.options[j].value == target){
-            select_empleado.selectedIndex = j
-            console.log(select_empleado.selectedIndex)
+            if (select_empleado.options[j].value == target){
+                select_empleado.selectedIndex = j
+                console.log(select_empleado.selectedIndex)
+            }
         }
-    }
 
-    //console.log(select_empleado.options[target])
+        //console.log(select_empleado.options[target])
 
-    var other_select = document.getElementById('registro_patronal');
-    var registro = document.getElementById('id_registro_patronal');
-    //console.log(id)
-    //console.log(other_select.options[0])
-    if (id == "default_sel"){
-        other_select.selectedIndex = 0
-        registro.selectedIndex = 0
-    }
-    for (var i=0; i < registros.length; i++){
-        if (registros[i].getAttribute('empresa') != empresa){
-            registros[i].setAttribute('class','reg d-none')
-        } else {
-            registros[i].setAttribute('class','reg')
+        var other_select = document.getElementById('registro_patronal');
+        var registro = document.getElementById('id_registro_patronal');
+        //console.log(id)
+        //console.log(other_select.options[0])
+        if (id == "default_sel"){
+            other_select.selectedIndex = 0
+            registro.selectedIndex = 0
         }
-    }
-});
-
-document.getElementById("registro_patronal").addEventListener("change", function(element){
- var select = document.getElementById('registro_patronal');
- var current_option = select.options[select.selectedIndex].value;
- console.log(current_option)
- var other_selector = document.getElementById('id_registro_patronal');
- other_selector.selectedIndex = select.selectedIndex;
-});
-
-document.getElementById("txt_puesto").addEventListener("change", (event)=>{
-    var select = document.getElementById("txt_puesto");
-    var browserChildren = document.getElementById('puesto').children;
-    var other_select = document.getElementById('id_puesto');
-    var cont = 0;
-
-    for(let i = 0; i < browserChildren.length; i++){
-        if (browserChildren[i].value === select.value){
-            let id = browserChildren[i].getAttribute('valor');
-            other_select.value = id;
-            cont = 1;
+        for (var i=0; i < registros.length; i++){
+            if (registros[i].getAttribute('empresa') != empresa){
+                registros[i].setAttribute('class','reg d-none')
+            } else {
+                registros[i].setAttribute('class','reg')
+            }
         }
-    }
-    console.log(select.value)
-    //El cont = 0 es un indicador/bandera si encuentra al menos una similitud en el for no se activa
-    if ((!select.value) || (cont === 0)){
-        other_select.value = 0;
-    }
-});
+    });
 
-document.getElementById("btnSave").addEventListener("click", function(event){
-    var text_puesto = document.getElementById('txt_puesto');
-    var save = document.getElementById('btnSave');
-    if (!text_puesto){
-        save.removeAttribute('type');
-        Swal.fire({
-            "title":"Error",
-            "text":"Debes ingresar un puesto",
-            "icon":"error",
-        });
-    }
-});
+    document.getElementById("registro_patronal").addEventListener("change", function(element){
+    var select = document.getElementById('registro_patronal');
+    var current_option = select.options[select.selectedIndex].value;
+    console.log(current_option)
+    var other_selector = document.getElementById('id_registro_patronal');
+    other_selector.selectedIndex = select.selectedIndex;
+    });
 
+    document.getElementById("txt_puesto").addEventListener("change", (event)=>{
+        var select = document.getElementById("txt_puesto");
+        var browserChildren = document.getElementById('puesto').children;
+        var other_select = document.getElementById('id_puesto');
+        var cont = 0;
+
+        for(let i = 0; i < browserChildren.length; i++){
+            if (browserChildren[i].value === select.value){
+                let id = browserChildren[i].getAttribute('valor');
+                other_select.value = id;
+                cont = 1;
+            }
+        }
+        console.log(select.value)
+        //El cont = 0 es un indicador/bandera si encuentra al menos una similitud en el for no se activa
+        if ((!select.value) || (cont === 0)){
+            other_select.value = 0;
+        }
+    });
+
+    document.getElementById("btnSend").addEventListener("click", function(event){
+        var text_puesto = document.getElementById('txt_puesto').value;//puesto
+        var perfil = document.getElementById('id_perfil').value; //empleado
+        var registro_patronal = document.getElementById("id_registro_patronal").value;
+        var save = document.getElementById('btnSend');
+        
+        if (!text_puesto){
+            save.removeAttribute('type');
+            Swal.fire({
+                "title":"Error",
+                "text":"Debes seleccionar un puesto",
+                "icon":"error",
+            });
+        }
+
+        if (!perfil){
+            save.removeAttribute('type');
+            Swal.fire({
+                "title":"Error",
+                "text":"Debes seleccionar un empleado",
+                "icon":"error",
+            });
+        }
+
+        if (!registro_patronal){
+            save.removeAttribute('type');
+            Swal.fire({
+                "title":"Error",
+                "text":"Debes seleccionar el registro patronal",
+                "icon":"error",
+            });
+        }
+
+
+    });
+
+});
 </script>
 {% endblock %}

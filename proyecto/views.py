@@ -417,7 +417,6 @@ def FormularioStatus(request):
                 empleado.complete_status=True
                 empleado.save()
                 return redirect('Status')
-
         context = {
             'form':form,
             'empleados':empleados,
