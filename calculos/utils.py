@@ -33,7 +33,7 @@ from django.db.models import Q
 def calcular_cuotas_imss(request,sdi_imss,salario):
     variables_patronal = Variables_imss_patronal.objects.get()
     salario_datos = SalarioDatos.objects.get()
-    
+        
     #Cuando el empleador gane el salario minimo no se calcula el imss y por defecto es 0  
     if (salario <= salario_datos.Salario_minimo):
         return Decimal(0.00)
@@ -42,11 +42,7 @@ def calcular_cuotas_imss(request,sdi_imss,salario):
         #sdi_imss = Decimal(632.00)
         invalidez_vida = sdi_imss * Decimal(variables_patronal.iv_obrero / 100) * 14
         cesantia_vejez = sdi_imss * Decimal(variables_patronal.cav_patron/100) * 14
-        
-        print("sdi_imss: ", sdi_imss)
-        print("este es el valor 1: ",variables_patronal.iv_obrero)
-        print("este es el valor 2: ",variables_patronal.cav_patron)
-        
+                
         #obtener el salario cotizacion mensual
         salario_cot_men = sdi_imss * Decimal(30.4)
         gastos_medicos = sdi_imss * Decimal(variables_patronal.gmp_obrero/100) * 14
@@ -60,8 +56,6 @@ def calcular_cuotas_imss(request,sdi_imss,salario):
         
         #La suma del calculo de cada resultado    
         calculo_imss = invalidez_vida + cesantia_vejez + enfermedades_maternidad
-        print("invalidez y vida: ", invalidez_vida, "cesanti vejez: ", cesantia_vejez, "enfermedades maternidad: ", enfermedades_maternidad)
-        print("I.M.S.S", calculo_imss)
         return calculo_imss
     
 #CALULAR ISR
@@ -621,7 +615,7 @@ def excel_estado_prenomina(request,prenominas,filtro,user_filter):
     dato_style = NamedStyle(name='dato_style',number_format='DD/MM/YYYY')
     dato_style.font = Font(name="Arial Narrow", size = 11)
         
-    columns = ['Empleado','#Trabajador','Distrito','#Catorcena','Fecha','Estado general','RH','CT','Gerencia','Autorizada','Retardos','Castigos','Permiso con goce de sueldo',
+    columns = ['Empleado','#Trabajador','Distrito','Empresa','#Catorcena','Fecha','Estado general','RH','CT','Gerencia','Autorizada','Retardos','Castigos','Permiso con goce de sueldo',
                'Permiso sin goce de sueldo','Descansos','Incapacidad Enfermedad','Incapacidad Riesgo Laboral','Incapacidad Maternidad','Faltas','Comisión','Domingo','Dia de descanso laborado','Festivos','Festivos laborados','Economicos','Vacaciones','Salario Cartocenal',
                'Previsión social', 'Total bonos','Prima Vacacional','Prima dominical','Aguinaldo','Total percepciones','Prestamo infonavit','IMSS','Fonacot','ISR Retenido','Total deducciones','Neto a pagar en nomina']
 
@@ -711,7 +705,7 @@ def excel_estado_prenomina(request,prenominas,filtro,user_filter):
         infonavit = prenomina.empleado.status.costo.amortizacion_infonavit
         fonacot = prenomina.empleado.status.costo.fonacot 
         sdi_imss = prenomina.empleado.status.costo.sdi_imss
-                
+        
         #realiza el calculo de las cuotas imss
         calculo_imss = calcular_cuotas_imss(request,sdi_imss, salario)
         
@@ -808,22 +802,20 @@ def excel_estado_prenomina(request,prenominas,filtro,user_filter):
         apoyo_pasajes = (apoyo_pasajes / 12 ) * (12 - (descuento_pasajes))
         
         total_percepciones = salario_catorcenal + apoyo_pasajes + total_bonos + prima_dominical + prima_vacacional + aguinaldo
-        #IMSS y el ISR
-        total_deducciones = prestamo_infonavit + prestamo_fonacot + calculo_isr + calculo_imss
-        pagar_nomina = (total_percepciones - total_deducciones)
-        #cuando el salario catorcenal es 0 es por incapacidad u otro concepto y el calculo debe dar 0 en todo. 
-        """
-        if salario_catorcenal == Decimal(0.00):
-            #IMPORTANTE FALTA IMPLEMENTAR EL CODIGO - PREGUNTAR SI ES EL VA 
-            total_percepciones = salario_catorcenal + apoyo_pasajes + total_bonos + prima_dominical + prima_vacacional + aguinaldo
-            total_deducciones = prestamo_infonavit + prestamo_fonacot + calculo_isr + calculo_imss
-            pagar_nomina = (total_percepciones - total_deducciones)
-        else:  
-            total_percepciones = salario_catorcenal + apoyo_pasajes + total_bonos + prima_dominical + prima_vacacional + aguinaldo
+        
+        # si es igual a 0, no se debe realizar el calculo, por ende se maneja en 0.00
+        if total_percepciones == Decimal('0.00'):
             #IMSS y el ISR
+            total_deducciones = Decimal('0.00')
+            prestamo_infonavit = Decimal('0.00')
+            prestamo_fonacot = Decimal('0.00')
+            calculo_isr = Decimal('0.00')
+            calculo_imss = Decimal('0.00')
+        else:
+            #IMSS y el ISR 
             total_deducciones = prestamo_infonavit + prestamo_fonacot + calculo_isr + calculo_imss
-            pagar_nomina = (total_percepciones - total_deducciones)
-        """
+                
+        pagar_nomina = (total_percepciones - total_deducciones)
         
         #Mostrar el conteo de las incidencias del empleado    
         if retardos == 0: 
@@ -879,6 +871,7 @@ def excel_estado_prenomina(request,prenominas,filtro,user_filter):
             prenomina.empleado.status.perfil.nombres + ' ' + prenomina.empleado.status.perfil.apellidos,
             prenomina.empleado.status.perfil.numero_de_trabajador,
             prenomina.empleado.status.perfil.distrito.distrito,
+            prenomina.empleado.status.perfil.empresa.empresa,
             catorcena_num,
             str(prenomina.catorcena.fecha_inicial) + " " + str(prenomina.catorcena.fecha_final),
             prenomina.estado_general,
@@ -935,22 +928,22 @@ def excel_estado_prenomina(request,prenominas,filtro,user_filter):
         sub_total_deducciones = sub_total_deducciones + total_deducciones
         sub_pagar_nomina = sub_pagar_nomina + pagar_nomina
         
-    # Ahora puedes usar la lista rows como lo estás haciendo actualmente en tu código
+    # Ahora puedes usar la lista rows como lo estás haciendo actualmente en tu código - Recuerda que el row empieza en 1
     for row_num, row in enumerate(rows, start=2):
         for col_num, value in enumerate(row, start=1):
-            if col_num < 4:
+            if col_num < 6:
                 ws.cell(row=row_num, column=col_num, value=value).style = body_style
-            elif col_num == 5: #fecha
+            elif col_num == 6: #fecha
                 ws.cell(row=row_num, column=col_num, value=value).style = date_style
-            elif col_num > 5 and col_num < 27: #Salario catorcenal
+            elif col_num > 6 and col_num < 28: #Salario catorcenal
                 ws.cell(row=row_num, column=col_num, value=value).style = body_style
-            elif col_num >= 24:
+            elif col_num >= 27:
                 ws.cell(row=row_num, column=col_num, value=value).style = money_style
             else:
                 ws.cell(row=row_num, column=col_num, value=value).style = body_style
        
     #Muestra la suma total de cada columna             
-    add_last_row = ['Total','','','','','','','','','','','','','','','','','','','','','','','','','',
+    add_last_row = ['Total','','','','','','','','','','','','','','','','','','','','','','','','','','',
                     #sub_salario_catorcenal_costo,
                     sub_salario_catorcenal,
                     sub_apoyo_pasajes,

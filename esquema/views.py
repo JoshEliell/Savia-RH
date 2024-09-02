@@ -686,7 +686,7 @@ def listarBonosVarillerosAprobados(request):
     
     #Se muestran por catorcenas
     fecha_actual = datetime.now()
-    fecha_actual = fecha_actual - timedelta(days=14) #ELIMINAR FECHA DE CATORCENA ANTERIOR
+    fecha_actual = fecha_actual - timedelta(days=25) #ELIMINAR FECHA DE CATORCENA ANTERIOR
     
     catorcena_actual = Catorcenas.objects.filter(fecha_inicial__lte=fecha_actual, fecha_final__gte=fecha_actual).first()
     fecha_inicial = datetime.combine(catorcena_actual.fecha_inicial, datetime.min.time()) + timedelta(hours=00, minutes=00,seconds=00)

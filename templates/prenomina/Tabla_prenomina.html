@@ -45,18 +45,45 @@
                     <h5>Filtro de empleados</h5>
                     <form method="GET" class="row g-3">
                         {% csrf_token %}
-                        <div class="col-auto">
-                            <label for="prenomina_filter.form.id" class="col-sm-auto col-form-label text-right"><strong>ID Prenomina:</strong></label>
-                            {% render_field prenomina_filter.form.id class="form-control" %}
+                        {% comment %}
+                        <div class="col-lg-3 col-sm-12">
+                            <div class="input-group mb-3">
+                            <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-hashtag"></i></span>
+                                <div class="form-floating form-floating-group flex-grow-1">   
+                                    {{prenomina_filter.form.id|add_class:"form-control"|append_attr:"placeholder= No. de trabajador"}}
+                                    <label style="color: #121212;" for="">ID preonomina</label>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-auto">
-                            <label for="prenomina_filter.form.numero_de_trabajador" class="col-sm-auto col-form-label text-right"><strong>No. Trabajador:</strong></label>
-                            {% render_field prenomina_filter.form.numero_de_trabajador class="form-control" %}
+                        {% endcomment %}
+                        <div class="col-lg-3 col-sm-12">
+                            <div class="input-group mb-3">
+                            <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-hashtag"></i></span>
+                                <div class="form-floating form-floating-group flex-grow-1">   
+                                    {{prenomina_filter.form.numero_de_trabajador|add_class:"form-control"|append_attr:"placeholder= No. de trabajador"}}
+                                    <label style="color: #121212;" for="">No. de trabajador</label>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-auto">
-                            <label for="prenomina_filter.form.nombres" class="col-sm-auto col-form-label text-right"><strong>Nombre:</strong></label>
-                            {% render_field prenomina_filter.form.nombres_apellidos class="form-control" %}
+                        <div class="col-lg-3 col-sm-12">
+                            <div class="input-group mb-3">
+                            <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-user"></i></span>
+                                <div class="form-floating form-floating-group flex-grow-1">   
+                                    {{prenomina_filter.form.nombres_apellidos|add_class:"form-control"|append_attr:"placeholder= Nombre"}}
+                                    <label style="color: #121212;" for="">Nombre</label>
+                                </div>
+                            </div>
                         </div>
+                        <div class="col-lg-3 col-sm-12">
+                            <div class="input-group mb-3">
+                            <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-building"></i></span>
+                                <div class="form-floating form-floating-group flex-grow-1">   
+                                    {{ prenomina_filter.form.empresa|add_class:"form-control"|append_attr:"placeholder= Empresa"}}
+                                    <label style="color: #121212;" for="id_id">Empresa</label>
+                                </div>
+                            </div>
+                        </div>
+
                         {% comment %}
                         <div class="col-auto">
                             <label for="prenomina_filter.form.nombres" class="col-sm-auto col-form-label text-right"><strong>Incidencias:</strong></label>
@@ -70,7 +97,7 @@
                             {% render_field prenomina_filter.form.distrito class="form-control" %}
                         </div>
                         {% endif %}-->
-                        <div class="col-auto mt-5">
+                        <div class="col-auto">
                             <button class="btn btn-outline-success" type="submit" value="Buscar"><i class="fa-solid fa-magnifying-glass"></i></button>
                         </div>
                     </div>
