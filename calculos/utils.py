@@ -617,7 +617,7 @@ def excel_estado_prenomina(request,prenominas,filtro,user_filter):
         
     columns = ['Empleado','#Trabajador','Distrito','Empresa','#Catorcena','Fecha','Estado general','RH','CT','Gerencia','Autorizada','Retardos','Castigos','Permiso con goce de sueldo',
                'Permiso sin goce de sueldo','Descansos','Incapacidad Enfermedad','Incapacidad Riesgo Laboral','Incapacidad Maternidad','Faltas','Comisión','Domingo','Dia de descanso laborado','Festivos','Festivos laborados','Economicos','Vacaciones','Salario Cartocenal',
-               'Previsión social', 'Total bonos','Prima Vacacional','Prima dominical','Aguinaldo','Total percepciones','Prestamo infonavit','IMSS','Fonacot','ISR Retenido','Total deducciones','Neto a pagar en nomina']
+               'Dias Vacaciones','Previsión social', 'Total bonos','Prima Vacacional','Prima dominical','Aguinaldo','Total percepciones','Prestamo infonavit','IMSS','Fonacot','ISR Retenido','Total deducciones','Neto a pagar en nomina']
 
     for col_num in range(len(columns)):
         (ws.cell(row = row_num, column = col_num+1, value=columns[col_num])).style = head_style
@@ -658,6 +658,7 @@ def excel_estado_prenomina(request,prenominas,filtro,user_filter):
 
     sub_salario_catorcenal_costo = Decimal(0.00) #Valor de referencia del costo
     sub_salario_catorcenal = Decimal(0.00)
+    sub_sueldo_vacaciones = Decimal(0.00)
     sub_apoyo_pasajes = Decimal(0.00)
     sub_total_bonos = Decimal(0.00)
     prima_vacacional_total = Decimal(0.00)
@@ -798,10 +799,15 @@ def excel_estado_prenomina(request,prenominas,filtro,user_filter):
         proporcion_septimos_dias = Decimal((dias_laborados * 2) / 12)
         proporcion_laborados = proporcion_septimos_dias + dias_laborados
         salario_catorcenal = (proporcion_laborados * salario) + pagos_dobles
-
-        apoyo_pasajes = (apoyo_pasajes / 12 ) * (12 - (descuento_pasajes))
         
-        total_percepciones = salario_catorcenal + apoyo_pasajes + total_bonos + prima_dominical + prima_vacacional + aguinaldo
+        #Separar la columna entre salario catorcenal y el pago de vacaciones:
+        sueldo_vacaciones = 0
+        if vacaciones > 0:
+            sueldo_vacaciones = Decimal(vacaciones * salario)
+            salario_catorcenal = salario_catorcenal - sueldo_vacaciones
+            
+        apoyo_pasajes = (apoyo_pasajes / 12 ) * (12 - (descuento_pasajes))
+        total_percepciones = salario_catorcenal + apoyo_pasajes + total_bonos + prima_dominical + prima_vacacional + aguinaldo + sueldo_vacaciones
         
         # si es igual a 0, no se debe realizar el calculo, por ende se maneja en 0.00
         if total_percepciones == Decimal('0.00'):
@@ -865,6 +871,9 @@ def excel_estado_prenomina(request,prenominas,filtro,user_filter):
         
         if vacaciones == 0:
             vacaciones = ''
+            
+        #if sueldo_vacaciones == 0:
+        #    sueldo_vacaciones = ''
         
         # Agregar los valores a la lista rows para cada prenomina
         row = (
@@ -896,6 +905,7 @@ def excel_estado_prenomina(request,prenominas,filtro,user_filter):
             economicos,
             vacaciones,
             salario_catorcenal,
+            sueldo_vacaciones,
             apoyo_pasajes,
             total_bonos,
             prima_vacacional,
@@ -915,6 +925,7 @@ def excel_estado_prenomina(request,prenominas,filtro,user_filter):
         #es la suma del total de cada columna
         sub_salario_catorcenal = sub_salario_catorcenal + salario_catorcenal
         sub_apoyo_pasajes = sub_apoyo_pasajes + apoyo_pasajes
+        sub_sueldo_vacaciones = sub_sueldo_vacaciones + sueldo_vacaciones
         sub_total_bonos = sub_total_bonos + total_bonos            
         prima_vacacional_total = prima_vacacional_total + prima_vacacional
         prima_dominical_total = prima_dominical_total + prima_dominical
@@ -946,6 +957,7 @@ def excel_estado_prenomina(request,prenominas,filtro,user_filter):
     add_last_row = ['Total','','','','','','','','','','','','','','','','','','','','','','','','','','',
                     #sub_salario_catorcenal_costo,
                     sub_salario_catorcenal,
+                    sueldo_vacaciones,
                     sub_apoyo_pasajes,
                     sub_total_bonos,
                     prima_vacacional_total,
@@ -1102,6 +1114,7 @@ def excel_estado_prenomina_formato(request,prenominas, user_filter, reporte):
 
     sub_salario_catorcenal_costo = Decimal(0.00) #Valor de referencia del costo
     sub_salario_catorcenal = Decimal(0.00)
+    sub_sueldo_vacaciones = Decimal(0.0)
     sub_apoyo_pasajes = Decimal(0.00)
     sub_total_bonos = Decimal(0.00)
     sub_total_percepciones = Decimal(0.00)
@@ -1348,6 +1361,10 @@ def excel_estado_prenomina_formato(request,prenominas, user_filter, reporte):
         
         if vacaciones == 0:
             vacaciones = ''
+        
+        if sueldo_vacacion == 0:
+            sueldo_vacacion = ''
+        
         fechas_con_etiquetas = obtener_fechas_con_incidencias(request, prenomina, catorcena_actual)
         estados_por_dia = [abreviaciones.get(estado, estado) for _, estado in fechas_con_etiquetas]
         row = (
