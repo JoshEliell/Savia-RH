@@ -2219,7 +2219,8 @@ def convert_excel_costo_anterior(request,costos):
     from django.utils import formats
     from django.utils.translation import activate
     activate('es')
-    if costos is None:
+    print(costos)
+    if costos is not None:
         c = costos.first()
         fecha_reporte = formats.date_format(c.created_at, "F Y")
         
@@ -6713,6 +6714,7 @@ def costo_mensual(request):
             bono_total = costo.bono_total,
             laborados_imss = costo.laborados_imss,
             sdi_imss = costo.sdi_imss,
+            apoyo_salud = costo.apoyo_salud
         ) for costo in costos]
         
         #se llama el metodo para pasar todos los datos

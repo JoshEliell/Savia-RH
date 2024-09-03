@@ -36,12 +36,12 @@ class BonoSolicitadoPuestoForm(forms.Form):
 #Perfiles de superintendente operativo, administrativo - tipo_perfil_id = 6 y 12
 class AutorizarSolicitudForm(forms.ModelForm):
     perfil = forms.ModelChoiceField(
-        queryset=Perfil.objects.none(),
-        empty_label="-- SELECCIONAR PERFIL --",  # Opción no seleccionable
+        queryset=Perfil.objects.none(),  # Inicialmente vacío
+        empty_label="-- SELECCIONAR PERFIL --",
         required=True,
         widget=forms.Select(attrs={'class': 'form-control'})
     )
-
+    
     class Meta:
         model = AutorizarSolicitudes
         fields = ['perfil']
@@ -50,7 +50,16 @@ class AutorizarSolicitudForm(forms.ModelForm):
                 'required': 'Debe seleccionar un perfil',
             },
         }
-                        
+        
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)  # Extrae el usuario del kwargs
+        super().__init__(*args, **kwargs)
+        if user is not None:
+            # Construye el queryset usando el usuario
+            distrito_id = user.userdatos.distrito.id
+            self.fields['perfil'].queryset = Perfil.objects.filter(distrito_id=distrito_id)
+             
+    
 """  
 class BonoSolicitadoForm(forms.ModelForm):
     class Meta:

@@ -192,7 +192,8 @@ def autorizarSolicitud(request,solicitud):
                         #se busca el perfil del gerente correspondiente al distrito
                         rol = UserDatos.objects.filter(distrito_id=usuario.userdatos.distrito, tipo_id=8).values_list('numero_de_trabajador','distrito').first()
                         perfil_gerente = Perfil.objects.filter(numero_de_trabajador = rol[0], distrito_id = rol[1]).values('id').first()
-
+                        
+                        
                         #buscar o crea la autorizacion para el gerente
                         gerente, created = AutorizarSolicitudes.objects.get_or_create(
                             solicitud_id=solicitud,

@@ -390,7 +390,7 @@ def crearSolicitudBonos(request):
                     messages.error(request, 'Falta adjuntar soportes')
                     return redirect(request.META.get('HTTP_REFERER'))
                 
-                autorizarSolicitudForm = AutorizarSolicitudForm(request.POST)
+                autorizarSolicitudForm = AutorizarSolicitudForm(request.POST, user = request.user)
                 
                 if autorizarSolicitudForm.is_valid():    
                     
