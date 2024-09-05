@@ -154,17 +154,8 @@ class TipoPerfil(models.Model): #Boleanos para filtrar lo que puede hacer cada u
     def __str__(self):
         return f'{self.nombre}'
 
-class UserDatos(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    distrito = models.ForeignKey(Distrito, on_delete = models.CASCADE, null=True)
-    tipo = models.ForeignKey(TipoPerfil, on_delete = models.CASCADE, null=True)
-    cargo_distrito = models.ForeignKey(Distrito, on_delete = models.CASCADE, null=True, related_name='cargo_distrito')
-    numero_de_trabajador = models.IntegerField(null=True,blank=True)
-
-    def __str__(self):
-        return f'{self.user}, distrito: {self.distrito} '
-
 class Perfil(models.Model):
+    usuario = models.OneToOneField(User,on_delete=models.CASCADE, null=True, blank=True, related_name="perfil")
     foto = models.ImageField(null=True, blank=True, upload_to="perfil/")
     numero_de_trabajador = models.IntegerField(null=True)
     empresa = models.ForeignKey(Empresa, on_delete = models.CASCADE, null=True)
@@ -173,7 +164,7 @@ class Perfil(models.Model):
     nombres = models.CharField(max_length=50,null=True)
     apellidos = models.CharField(max_length=50,null=True)
     fecha_nacimiento = models.DateField(null=True)
-    correo_electronico = models.EmailField(max_length=50)
+    correo_electronico = models.EmailField(max_length=50, null=True, blank=True)
     proyecto = models.ForeignKey(Proyecto, on_delete = models.CASCADE, null=True)
     subproyecto = models.ForeignKey(SubProyecto, on_delete = models.CASCADE, null=True)
     complete = models.BooleanField(default=False)
@@ -205,6 +196,18 @@ class Perfil(models.Model):
         if self.complete == False:
             return "Campo vacio"
         return f'{self.nombres} {self.apellidos}' or ''
+
+class UserDatos(models.Model):
+    perfil = models.ForeignKey(Perfil, on_delete = models.CASCADE, null=True, related_name='user_datos')
+    user = models.OneToOneField(User, on_delete=models.CASCADE)#quitar
+    distrito = models.ForeignKey(Distrito, on_delete = models.CASCADE, null=True)
+    tipo = models.ForeignKey(TipoPerfil, on_delete = models.CASCADE, null=True)
+    cargo_distrito = models.ForeignKey(Distrito, on_delete = models.CASCADE, null=True, related_name='cargo_distrito')#quitar
+    numero_de_trabajador = models.IntegerField(null=True,blank=True)#quitar
+    activo = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f'{self.user}, distrito: {self.distrito}'
 
  #Tabla de vacaciones
 class Nivel(models.Model):
