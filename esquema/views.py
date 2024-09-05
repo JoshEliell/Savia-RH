@@ -80,14 +80,12 @@ def inicio(request):
 #Listar las solicitudes
 @login_required(login_url='user-login')
 def listarBonosVarilleros(request):    
-    #se obtiene el usuario logueado
-    usuario = get_object_or_404(UserDatos,user_id = request.user.id)
-    ids = [9,10,11]
+    ids = [9,10,11]    
+    user = request.user
+    usuario = UserDatos.objects.get(user_id=user.id, activo=True, perfil__distrito_id=user.perfil.distrito.id)
     
     if usuario.tipo not in [1,2,3]:
-        #se obtiene el perfil del usuario logueado
-        solicitante = get_object_or_404(Perfil,numero_de_trabajador = usuario.numero_de_trabajador, distrito = usuario.distrito)
-        
+                
         subconsulta_ultima_fecha = AutorizarSolicitudes.objects.values('solicitud_id').annotate(
                 ultima_fecha=Max('created_at')
             ).filter(solicitud_id=OuterRef('solicitud_id')).values('ultima_fecha')[:1]
@@ -104,7 +102,7 @@ def listarBonosVarilleros(request):
             autorizaciones = AutorizarSolicitudes.objects.filter(
                 created_at=Subquery(subconsulta_ultima_fecha)
             ).select_related('solicitud', 'perfil').filter(
-                solicitud__solicitante_id__distrito_id=solicitante.distrito_id, solicitud__complete = 1
+                solicitud__solicitante_id__distrito_id=usuario.distrito.id, solicitud__complete = 1
                 #solicitud__solicitante_id__distrito_id=solicitante.distrito_id,tipo_perfil_id = usuario.tipo.id ,solicitud__complete = 1
             ).order_by("-created_at")
         else:
@@ -112,7 +110,7 @@ def listarBonosVarilleros(request):
             autorizaciones = AutorizarSolicitudes.objects.filter(
                 created_at=Subquery(subconsulta_ultima_fecha)
             ).select_related('solicitud', 'perfil').filter(
-                solicitud__solicitante_id__distrito_id=solicitante.distrito_id ,solicitud__complete = 1
+                solicitud__solicitante_id__distrito_id=usuario.distrito.id ,solicitud__complete = 1
                 #solicitud__solicitante_id__distrito_id=solicitante.distrito_id,tipo_perfil_id = usuario.tipo.id ,solicitud__complete = 1
             ).order_by("-created_at")
         
@@ -125,7 +123,7 @@ def listarBonosVarilleros(request):
         autorizaciones= p.get_page(page)
         
         contexto = {
-            'usuario':usuario,
+            #'usuario':usuario,
             'autorizaciones':autorizaciones,
             'autorizaciones_filter': autorizaciones_filter,
             'salidas_list':salidas_list,
