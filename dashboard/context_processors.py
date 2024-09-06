@@ -27,6 +27,7 @@ def contadores_processor(request):
         userdatos = request.session.get('usuario_datos', None)
             
         if userdatos is not None:
+            usuario_id = userdatos.get('usuario_id')
             usuario_tipo = userdatos.get('tipo_id')
             usuario_distrito = userdatos.get('distrito_id')
             usuario_perfil = userdatos.get('perfil_id')
@@ -36,7 +37,7 @@ def contadores_processor(request):
             usuario_distrito = None
             usuario_perfil = None
             usuario_rol = None
-        
+        #usuario = UserDatos.objects.get(pk = 3)
         bonos_count = 0
         #if not UserDatos.objects.filter(user=request.user.id):
         if userdatos is None:
@@ -45,8 +46,7 @@ def contadores_processor(request):
             status_fijo = None
             prenomina_estado = None
         else:
-            #usuario = UserDatos.objects.get(user=request.user.id)
-            usuario = UserDatos.objects.get(user_id=request.user.id, activo=True, perfil__distrito_id=request.user.perfil.distrito.id)
+            usuario = UserDatos.objects.get(pk = usuario_id)
             usuario_fijo = Perfil.objects.filter(pk = usuario_perfil)
             
             if not usuario_fijo:

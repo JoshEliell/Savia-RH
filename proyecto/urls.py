@@ -98,6 +98,7 @@ urlpatterns = [
     
     path('listar_tabulador_bonos', views.listar_tabulador_bonos, name='listar_tabulador_bonos'),
     
+
     
     
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

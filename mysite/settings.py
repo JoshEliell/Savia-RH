@@ -158,7 +158,8 @@ STATICFILES_DIRS = [
 
 STATIC_ROOT = (BASE_DIR/'assert/')
 
-LOGIN_REDIRECT_URL ='index'
+#LOGIN_REDIRECT_URL ='index'
+LOGIN_REDIRECT_URL = 'seleccionar_perfil'
 
 #Configuracion de los archivos cargados por los usuarios
 MEDIA_URL = '/media/'

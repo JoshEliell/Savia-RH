@@ -37,10 +37,12 @@ from django.conf import settings
 import locale
 from proyecto.models import Costo,CostoAnterior,SalarioDatos
 import calendar
+from user.decorators import perfil_session_seleccionado
 locale.setlocale( locale.LC_ALL, '' )
 
 #MUESTRA EL CONTEO DE LOS DATOS DE LAS CARTAS EN EL PANEL DE DASHBOARD
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def index(request):
     
     # Obtener el diccionario de la sesión

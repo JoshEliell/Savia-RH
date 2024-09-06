@@ -199,15 +199,15 @@ class Perfil(models.Model):
 
 class UserDatos(models.Model):
     perfil = models.ForeignKey(Perfil, on_delete = models.CASCADE, null=True, related_name='user_datos')
-    user = models.OneToOneField(User, on_delete=models.CASCADE)#quitar
+    #user = models.OneToOneField(User, on_delete=models.CASCADE)#quitar
     distrito = models.ForeignKey(Distrito, on_delete = models.CASCADE, null=True)
     tipo = models.ForeignKey(TipoPerfil, on_delete = models.CASCADE, null=True)
-    cargo_distrito = models.ForeignKey(Distrito, on_delete = models.CASCADE, null=True, related_name='cargo_distrito')#quitar
-    numero_de_trabajador = models.IntegerField(null=True,blank=True)#quitar
+    #cargo_distrito = models.ForeignKey(Distrito, on_delete = models.CASCADE, null=True, related_name='cargo_distrito')#quitar
+    #numero_de_trabajador = models.IntegerField(null=True,blank=True)#quitar
     activo = models.BooleanField(default=False)
 
     def __str__(self):
-        return f'{self.user}, distrito: {self.distrito}'
+        return f'{self.tipo} - {self.distrito}'
 
  #Tabla de vacaciones
 class Nivel(models.Model):

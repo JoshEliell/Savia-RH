@@ -58,6 +58,7 @@ from django.http import HttpResponseRedirect
 import calendar
 
 from calculos.utils import excel_estado_prenomina,excel_estado_prenomina_formato
+from user.decorators import perfil_session_seleccionado
 
 
 from reportlab.pdfgen import canvas
@@ -138,6 +139,7 @@ def Tabla_dias_vacaciones(request):
     return render(request, 'proyecto/Tabla_dias_vacaciones.html',context)
 
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def Perfil_vista(request):
     ids = [9,10,11]
     user_filter = UserDatos.objects.get(user=request.user)

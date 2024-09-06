@@ -5,18 +5,21 @@
     <!--FotAwesome CDN-->
     <script src="https://kit.fontawesome.com/b6755a6261.js" crossorigin="anonymous"></script>
 </head>
+{% if user.is_authenticated %}
 <nav class="navbar fixed-top navbar-dark bg-dark">
-    {% if user.is_authenticated %}
         <div class="container-fluid">
             <a class="navbar-brand" href="{% url 'index' %}">
             <img src="{% static 'images/SAVIA_Logo1.png' %}" alt="SAVIA" width="50" height="50" class="rounded-circle">
             </a>
+            
+            {% if request.session.usuario_datos %}    
             <ul class="nav nav-pills" >
                 <li  class="nav-item">
 
                     <a class="nav-link text-white" aria-current="page" href="{% url 'index' %}">Dashboard</a>
                 </li>
             </ul>
+            {% endif %}
             <ul class="nav justify-content-end">
                 {% if usuario_fijo.numero_de_trabajador == None %}
                     <div>
@@ -38,6 +41,7 @@
                     </form>
                 </li>
             </ul>
+            {% if request.session.usuario_datos %}
             <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
                     <span class="navbar-toggler-icon"></span>
             </button>
@@ -213,6 +217,7 @@
                     </div>
                 </div>
             </div>
+            {% endif %}
     <!--
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <a class="navbar-brand text-white" href="#">
@@ -229,5 +234,5 @@
             </div>
     -->
         </div>
-    {% endif %}
 </nav>
+{% endif %}

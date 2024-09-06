@@ -1,0 +1,75 @@
+{% extends 'partials/base.html'%}
+{% load widget_tweaks %}
+{% load static %}
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+{% block title %}SISTEMA - SAVIA RH{% endblock %}
+{% block content %}
+<!-- Esta es la zona donde se crean los mensajes perrones con sweet alert -->
+<div class="row my-4">
+    <div class="col-md-4">
+    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        {% if messages %}
+            {% for message in messages %}
+                {% if message.tags == "error" %}
+                <script>
+                Swal.fire({
+                    "title":"Error",
+                    "text":"{{message}}",
+                    "icon":"error",
+                })
+                </script>
+                {% else %}
+                <script>
+                Swal.fire({
+                    "title":"Excelente",
+                    "text":"{{message}}",
+                    "icon":"success",
+                })
+                </script>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    </div>
+</div>
+</head>
+<hr>
+<hr>
+
+<body>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-6">
+            <div class="card my-2">
+                <div class="card-header">
+                    <p>BIENVENIDO - {{request.user.perfil}}</p>
+                </div>
+                <div class="card-body">
+                    <form action="{% url 'seleccionar_perfil' %}" method="post">
+                        {% csrf_token %}
+                        <div class="col-lg-12 col-sm-12">
+                            <div class="input-group mb-3">
+                            <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-user"></i></span>
+                                <div class="form-floating form-floating-group flex-grow-1">   
+                                    {{form.user_datos|add_class:"form-control"|append_attr:"placeholder=Perfil"}}
+                                    <label style="color: #121212;" for="id_id">Selecciona un perfil</label>
+                                </div>
+                            </div>
+                            <div class="input-group mt-4">
+                                <button type="submit" class="btn btn-primary" name="btn_seleccionar">seleccionar</button>
+                            </div>
+                        </div>   
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+</body>
+{% endblock %}
+
+</html>
