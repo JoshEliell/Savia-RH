@@ -72,6 +72,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.utils import ImageReader
 import os
 from django.db import transaction
+from django.db import IntegrityError
 
 
 @login_required(login_url='user-login')
@@ -213,7 +214,7 @@ def Perfil_vista_baja(request):
 def FormularioPerfil(request):
     user_filter = UserDatos.objects.get(user=request.user)
     if user_filter.tipo.id in [4,9,10,11]: #Perfil RH
-        empleado,created=Perfil.objects.get_or_create(complete=False)
+        empleado, created = Perfil.objects.get_or_create(complete=False)
         subproyectos = SubProyecto.objects.all()
 
         if user_filter.tipo.id in [9,10,11]:
@@ -223,7 +224,7 @@ def FormularioPerfil(request):
         ahora = datetime.date.today()
 
         if request.method == 'POST' and 'btnSend' in request.POST:
-            if user_filter.tipo.id in [9,10,11] :
+            if user_filter.tipo.id in [9,10,11]:
                 form = PerfilForm(request.POST, request.FILES, instance=empleado)
                 no_trabajador = request.POST.get('numero_de_trabajador')
             else:
@@ -232,38 +233,47 @@ def FormularioPerfil(request):
                 
             distrito_form = request.POST.get('distrito')
             
-            trabajador_existe = Perfil.objects.filter(numero_de_trabajador = no_trabajador, distrito_id = distrito_form).exists()
-            form.save(commit=False)
+            # Validar si ya existe un trabajador con los mismos datos
+            trabajador_existe = Perfil.objects.filter(numero_de_trabajador=no_trabajador, distrito_id=distrito_form).exists()
 
-            if empleado.foto and empleado.foto.size > 2097152:
-                messages.error(request,'El tamaño del archivo es mayor de 2 MB')
-            elif empleado.numero_de_trabajador < 0:
-                messages.error(request, '(Número empleado) El numero de empleado debe ser mayor o igual a 0')
-            elif empleado.fecha_nacimiento >= ahora:
-                messages.error(request, 'La fecha de nacimiento no puede ser mayor o igual a hoy')
-            elif trabajador_existe == True:
-                messages.error(request, '(Número empleado) El numero de empleado se repite con otro')
-            #elif form == PerfilDistritoForm() and Perfil.objects.filter(numero_de_trabajador=empleado.numero_de_trabajador, distrito = empleado.distrito).exists():
-            #    messages.error(request, '(Número empleado) El numero de empleado se repite con otro')
+            # Comprobar si el formulario es válido antes de guardar
+            if form.is_valid():
+                # Verificar tamaño de archivo, fecha de nacimiento, etc.
+                if empleado.foto and empleado.foto.size > 2097152:
+                    messages.error(request, 'El tamaño del archivo es mayor de 2 MB')
+                elif int(no_trabajador) < 0:
+                    messages.error(request, '(Número empleado) El número de empleado debe ser mayor o igual a 0')
+                elif form.cleaned_data.get('fecha_nacimiento') >= ahora:
+                    messages.error(request, 'La fecha de nacimiento no puede ser mayor o igual a hoy')
+                elif trabajador_existe:
+                    messages.error(request, '(Número empleado) El número de empleado se repite con otro')
+                else:
+                    try:
+                        # Asignar el distrito si el usuario es de tipo 4
+                        if user_filter.tipo.id == 4:
+                            empleado.distrito = user_filter.distrito
+                        # Obtener el nombre completo
+                        nombre = Perfil.objects.get(numero_de_trabajador=user_filter.numero_de_trabajador, distrito=user_filter.distrito)
+                        empleado.editado = f"C: {nombre.nombres} {nombre.apellidos}"
+                        empleado.complete = True
+                        
+                        # Guardar el formulario
+                        form.save()
+                        messages.success(request, 'Información capturada con éxito')
+                        return redirect('Perfil')
+                    except IntegrityError:
+                        messages.error(request, 'Ya existe un registro con ese número de empleado y distrito')
             else:
-                messages.success(request, 'Información capturada con éxito')
-                if form.is_valid():
-                    if user_filter.tipo.id == 4:
-                        empleado.distrito = user_filter.distrito
-                    nombre = Perfil.objects.get(numero_de_trabajador = user_filter.numero_de_trabajador, distrito = user_filter.distrito)
-                    empleado.editado = str("C:"+nombre.nombres+" "+nombre.apellidos)
-                    empleado.complete=True
-                    form.save()
-                    return redirect('Perfil')
-
+                messages.error(request, 'Por favor, corrija los errores en el formulario.')
+                
         context = {
-            'form':form,
-            'subproyectos':subproyectos
-            }
-
-        return render(request, 'proyecto/PerfilForm.html',context)
-    else:   
-	    return render(request, 'revisar/403.html')
+            'form': form,
+            'subproyectos': subproyectos
+        }
+        return render(request, 'proyecto/PerfilForm.html', context)
+    else:
+        return render(request, 'revisar/403.html')
+   
     
 @login_required(login_url='user-login')
 def PerfilUpdate(request, pk):
