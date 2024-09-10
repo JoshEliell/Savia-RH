@@ -354,7 +354,7 @@ def crearSolicitudBonos(request):
                             servicios = Requerimiento.objects.filter(solicitud_id = solicitud.id).count()
                             if servicios >= 9: #9 valor, Paga el novevo servicio - soporte
                                 bono_solicitado.save()
-                                cantidad = bono_solicitado.cantidad * (servicios - 2) #8 valor
+                                cantidad = bono_solicitado.cantidad * (servicios - 8) #8 valor
                                 puestos = BonoSolicitado.objects.filter(solicitud_id = solicitud.id)
                                 if puestos.count() > 1:
                                     BonoSolicitado.objects.filter(
