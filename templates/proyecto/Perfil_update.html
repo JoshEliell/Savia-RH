@@ -97,6 +97,7 @@
                                         </div>
                                 </div>
                             </div> 
+                            {% if usuario.tipo.id == 10 %}
                             <div class="mb-3 row">
                                 <label for="inputPassword" class="col-12 col-md-2 col-form-label fw-bold">Distrito: </label>
                                 <div class="col-12 col-md-4">
@@ -106,6 +107,10 @@
                                     </div>
                                 </div>
                             </div> 
+                            {% else %}
+                                {{form.distrito|add_class:"d-none"}}
+                            {% endif %}
+                           
                             <div class="mb-3 row">
                                 <label for="inputPassword" class="col-12 col-md-2 col-form-label fw-bold">Nombres: </label>
                                 <div class="col-12 col-md-4">

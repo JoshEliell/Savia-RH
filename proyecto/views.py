@@ -269,7 +269,7 @@ def FormularioPerfil(request):
 def PerfilUpdate(request, pk):
     user_filter = UserDatos.objects.get(user=request.user)
     empleado = Perfil.objects.get(id=pk)
-    if user_filter.tipo.id in [4,9,10,11] and user_filter.distrito == empleado.distrito: #Perfil RH
+    if (user_filter.tipo.id in [4,9,11] and user_filter.distrito == empleado.distrito) or user_filter.tipo.id == 10:  #Perfil RH
             
         ahora = datetime.date.today()
         subproyectos = SubProyecto.objects.all()
@@ -299,6 +299,7 @@ def PerfilUpdate(request, pk):
             'empleado':empleado,
             'subproyectos':subproyectos,
             'registros':registros,
+            'usuario':user_filter
             }
     else:
         return render(request, 'revisar/403.html')
