@@ -14,5 +14,4 @@ def seleccionar_perfil_sesion(sender, request, user, **kwargs):
 @receiver(user_logged_out)
 def limpiar_sesion(sender, request, user, **kwargs):
     if 'usuario_datos' in request.session:
-        print("se ha limpiado la session")
         del request.session['usuario_datos']

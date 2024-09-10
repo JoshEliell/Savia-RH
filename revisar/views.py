@@ -144,11 +144,12 @@ def autorizarSolicitud(request,solicitud):
         autorizarSolicitudesUpdateForm = AutorizarSolicitudesUpdateForm(request.POST)
         
         if autorizarSolicitudesUpdateForm.is_valid():
-            usuario = request.user
-            rol = UserDatos.objects.get(user_id = usuario.id)
-                            
-            autorizar = AutorizarSolicitudes.objects.get(solicitud_id = solicitud, tipo_perfil_id = rol.tipo_id)
-            
+            #obtener datos de la sesion y el usuario logeado
+            userdatos = request.session.get('usuario_datos')        
+            usuario_id = userdatos.get('usuario_id')
+            usuario = UserDatos.objects.get(pk = usuario_id)
+                                        
+            autorizar = AutorizarSolicitudes.objects.get(solicitud_id = solicitud, perfil_id = usuario.perfil.id, tipo_perfil_id = usuario.tipo.id)
             comentarioDato = autorizarSolicitudesUpdateForm.cleaned_data['comentario']
             
             if 'aprobar' in request.POST:#aprobado
@@ -238,7 +239,7 @@ def autorizarSolicitud(request,solicitud):
                 autorizar.revisar = True
                 autorizar.save()
 
-                messages.success(request, "El supervisor debe realizar cambios en la solicitud emitida")
+                messages.success(request, "El solicitante debe realizar cambios en la solicitud emitida")
                 return redirect('listarBonosVarilleros')
             
 #PRENOMINA

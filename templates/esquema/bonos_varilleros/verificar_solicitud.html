@@ -512,6 +512,7 @@ Cambios Solicitud - Bonos Varilleros
     /*************************************************************************************************************************************************/
 
     /**Remover bono de la solicitud*/
+    /*
     async function removerBono(bonoId){
         const url = `/esquema/remover_bono/${bonoId}/`
         console.log(url)
@@ -584,6 +585,7 @@ Cambios Solicitud - Bonos Varilleros
 
         }
     }
+    */
 
     /*presionar el boton eleminar */
     tabla = document.getElementById("tabla")
@@ -622,10 +624,11 @@ Cambios Solicitud - Bonos Varilleros
         });
     }
 
-     /**Remover bono de la solicitud- good*/
+    /**Remover bono de la solicitud- good*/
     async function removerBono(bonoId){
+        console.log("se llama este removerBono")
         const url = `/esquema/remover_bono/${bonoId}/`
-        console.log(url)
+        //console.log(url)
         try {
             var respuesta= await fetch(url,{
                 method: 'POST',
@@ -639,7 +642,9 @@ Cambios Solicitud - Bonos Varilleros
             });
             
             const datos = await respuesta.json();
-            
+            console.log(datos)
+
+
             if (respuesta.status === 200) {
                 if (datos.bandera){// bandera = true
                     //elimina fila del bono
@@ -654,9 +659,9 @@ Cambios Solicitud - Bonos Varilleros
                     total = document.getElementById('total').textContent = datos.total
                 }
                 else if (datos.subcategoria == 21){ //Bono ecos y dima
-                    var tabla = document.getElementById("tabla");
-                    while (tabla.rows.length > 2) {
-                        tabla.deleteRow(1); // Borra desde la segunda fila hasta la penúltima
+                    var tbody = document.querySelector("#tabla tbody"); // Selecciona solo el tbody
+                    while (tbody.rows.length > 0) {
+                        tbody.deleteRow(0); // Borra todas las filas del tbody
                     }
                     total = document.getElementById('total').textContent = datos.total
                 }

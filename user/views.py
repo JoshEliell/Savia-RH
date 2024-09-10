@@ -14,6 +14,8 @@ from proyecto.models import UserDatos
 from django.shortcuts import redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import logout
+from django.urls import reverse
 
 # Create your views here.
 
@@ -30,6 +32,11 @@ def seleccionar_perfil(request):
     #obtener los perfiles del usuario
     user = request.user
     roles = UserDatos.objects.filter(perfil_id = user.perfil.id,activo=True)
+    
+    if not roles.exists():  # Si no tiene roles activos
+        logout(request)   # Cerrar session
+        messages.success(request, 'You have been logged out successfully.')
+        return redirect('user-login')
     
     #cargar el formulario con sus perfiles        
     form = UserDatosForm()

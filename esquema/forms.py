@@ -56,10 +56,9 @@ class AutorizarSolicitudForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if user is not None:
             # Construye el queryset usando el usuario
-            distrito_id = user.userdatos.distrito.id
+            distrito_id = user.distrito
             self.fields['perfil'].queryset = Perfil.objects.filter(distrito_id=distrito_id)
-             
-    
+            
 """  
 class BonoSolicitadoForm(forms.ModelForm):
     class Meta:

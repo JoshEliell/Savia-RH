@@ -56,9 +56,10 @@ class Solicitud(models.Model):
     complete = models.BooleanField(default=False)
     fecha_autorizacion = models.DateTimeField(null=True,auto_now_add=False)
     comentario = models.CharField(max_length=255,null=True)
+    distrito = models.ForeignKey(Distrito, on_delete=models.CASCADE,null=True, blank=True)
     
 class BonoSolicitado(models.Model):
-    solicitud = models.ForeignKey(Solicitud,on_delete=models.CASCADE,null=False) 
+    solicitud = models.ForeignKey(Solicitud,on_delete=models.CASCADE,null=False,related_name='bonos_solicitados') 
     trabajador = models.ForeignKey(Perfil,on_delete=models.CASCADE,null=True)
     bono = models.ForeignKey(Bono,on_delete=models.CASCADE,null=True)
     cantidad = models.DecimalField(max_digits=10,decimal_places=2,null=False) 
@@ -72,6 +73,6 @@ def validar_size(value):
     
 #Se pueden subir imagenes o pdf al esquema bono solicitado - Es el soporte del bono es decir los archivos PDF e Imagenes
 class Requerimiento(models.Model):
-    solicitud = models.ForeignKey(Solicitud,on_delete=models.CASCADE,null=False)
+    solicitud = models.ForeignKey(Solicitud,on_delete=models.CASCADE,null=False, related_name='requerimientos')
     fecha = models.DateTimeField(null=False,auto_now_add=True)
     url = models.FileField(upload_to="bonos/",unique=True,null=False,validators=[validar_size,FileExtensionValidator(allowed_extensions=['pdf', 'png', 'jpg','jpeg','xls', 'xlsx'])])

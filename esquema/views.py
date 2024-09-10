@@ -63,6 +63,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 import io
+from user.decorators import perfil_session_seleccionado
 
 
 #Pagina inicial de los esquemas de los bonos
@@ -79,10 +80,14 @@ def inicio(request):
 
 #Listar las solicitudes
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def listarBonosVarilleros(request):    
     ids = [9,10,11]    
-    user = request.user
-    usuario = UserDatos.objects.get(user_id=user.id, activo=True, perfil__distrito_id=user.perfil.distrito.id)
+    
+    #obtener datos de la sesion y el usuario logeado
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    usuario = UserDatos.objects.get(pk = usuario_id)
     
     if usuario.tipo not in [1,2,3]:
                 
@@ -97,21 +102,26 @@ def listarBonosVarilleros(request):
             ).select_related('solicitud', 'perfil').filter(
                 solicitud__complete = 1
             ).order_by("-created_at")
-        elif usuario.tipo.id in [4,5,12]: #rh, supervisor, superintendente adm.
+        elif usuario.tipo.id in [4,5]: #rh, supervisor - Ve todas sus solicitudes creadas y en el flujo en que se encuentran
             #obtiene todas las ultimas autorizaciones de su distrito y roles
             autorizaciones = AutorizarSolicitudes.objects.filter(
                 created_at=Subquery(subconsulta_ultima_fecha)
             ).select_related('solicitud', 'perfil').filter(
-                solicitud__solicitante_id__distrito_id=usuario.distrito.id, solicitud__complete = 1
-                #solicitud__solicitante_id__distrito_id=solicitante.distrito_id,tipo_perfil_id = usuario.tipo.id ,solicitud__complete = 1
+                solicitud__solicitante__id = usuario.perfil_id, solicitud__distrito_id = usuario.distrito.id,solicitud__complete = 1 #mostrar solamente sus solicitudes y de nadie mas
             ).order_by("-created_at")
-        else:
+        elif usuario.tipo.id in [8]: #GE puede ver todas las solicitudes creadas y en el flujo en el que se encuentran
             #obtiene la ultima autorizacion independientemente en el flujo que se encuentre            
             autorizaciones = AutorizarSolicitudes.objects.filter(
                 created_at=Subquery(subconsulta_ultima_fecha)
             ).select_related('solicitud', 'perfil').filter(
-                solicitud__solicitante_id__distrito_id=usuario.distrito.id ,solicitud__complete = 1
-                #solicitud__solicitante_id__distrito_id=solicitante.distrito_id,tipo_perfil_id = usuario.tipo.id ,solicitud__complete = 1
+                solicitud__distrito_id = usuario.distrito.id, solicitud__complete = 1
+            ).order_by("-created_at")
+        else:
+            #solo obtiene la solicitud que le pertenece          
+            autorizaciones = AutorizarSolicitudes.objects.filter(
+                created_at=Subquery(subconsulta_ultima_fecha)
+            ).select_related('solicitud', 'perfil').filter(
+                perfil_id = usuario.perfil.id, tipo_perfil_id = usuario.tipo.id, solicitud__distrito_id = usuario.distrito.id, solicitud__complete = 1
             ).order_by("-created_at")
         
         autorizaciones_filter = AutorizarSolicitudesFilter(request.GET, queryset=autorizaciones)
@@ -248,9 +258,12 @@ def comprimir_pdf(pdf):
     
 #para crear solicitudes de bonos
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def crearSolicitudBonos(request):
-    #usuario = request.user  
-    usuario = get_object_or_404(UserDatos,user_id = request.user.id)
+    
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    usuario = UserDatos.objects.get(pk = usuario_id) 
     
     #Todos los supervisores y RH pueden crear solicitudes
     if usuario.tipo_id in (5,4): 
@@ -259,16 +272,12 @@ def crearSolicitudBonos(request):
         requerimientoForm = RequerimientoForm()
         autorizarSolicitudForm = AutorizarSolicitudForm()
         #se hace una consulta con los empleados del distrito que pertenecen
-        empleados = Perfil.objects.filter(distrito_id = usuario.distrito.id).exclude(baja = 1).order_by('nombres')
-        solicitante = Perfil.objects.get(numero_de_trabajador = usuario.numero_de_trabajador, distrito_id = usuario.distrito.id)
+        empleados = Perfil.objects.filter(distrito_id = usuario.distrito.id).exclude(baja = 1).order_by('nombres')        
+        solicitante = usuario.perfil
         #obtener los superintendentes operativos, administrativos
-        superintendentes = UserDatos.objects.filter(distrito_id=usuario.distrito.id, tipo_id__in=[6,12]).values_list('numero_de_trabajador', flat=True)
-        #perfiles = Perfil.objects.filter(numero_de_trabajador__in = superintendentes, distrito_id = usuario.distrito.id)
-        perfiles = empleados.filter(numero_de_trabajador__in = superintendentes, distrito_id = usuario.distrito.id)
-        #se carga el formulario en automatico definiendo filtros
+        perfiles = Perfil.objects.filter(distrito_id = usuario.distrito.id, user_datos__tipo_id__in=[6,12])
         bonoSolicitadoForm.fields["trabajador"].queryset = empleados 
-        #folio = Solicitud.objects.latest('id').id + 1
-        folio = Solicitud.objects.filter(complete = True).values_list('folio', flat=True).last() + 1
+        folio = Solicitud.objects.filter(complete=True).order_by('-folio').values_list('folio', flat=True).first() + 1
         solicitud, created = Solicitud.objects.get_or_create(complete = False, defaults={'complete': False, 'folio':folio,'solicitante_id':solicitante.id, 'total':0.00})
         #Obtiene los bonos que han sido creados en la solicitud
         bonos_solicitados = BonoSolicitado.objects.filter(solicitud_id = solicitud.id)
@@ -337,7 +346,6 @@ def crearSolicitudBonos(request):
                     form_bonosolicitado = BonoSolicitadoForm(request.POST,instance=bono_solicitado)
                     if form_bonosolicitado.is_valid():
                         puesto = int(request.POST.get('puesto'))
-                        
                         if puesto == 7: # Puesto ID - Todos los que participen en la actividad
                             bono_solicitado.save()
                             # id puesto - todos los que participen en la actividad - dividir la cantidad del bono entre el total de los participantes
@@ -352,7 +360,7 @@ def crearSolicitudBonos(request):
                             servicios = Requerimiento.objects.filter(solicitud_id = solicitud.id).count()
                             if servicios >= 9: #9 valor, Paga el novevo servicio - soporte
                                 bono_solicitado.save()
-                                cantidad = bono_solicitado.cantidad * (servicios - 2) #8 valor
+                                cantidad = bono_solicitado.cantidad * (servicios - 8) #8 valor
                                 puestos = BonoSolicitado.objects.filter(solicitud_id = solicitud.id)
                                 if puestos.count() > 1:
                                     BonoSolicitado.objects.filter(
@@ -388,25 +396,25 @@ def crearSolicitudBonos(request):
                     messages.error(request, 'Falta adjuntar soportes')
                     return redirect(request.META.get('HTTP_REFERER'))
                 
-                autorizarSolicitudForm = AutorizarSolicitudForm(request.POST, user = request.user)
+                autorizarSolicitudForm = AutorizarSolicitudForm(request.POST, user = usuario)
                 
                 if autorizarSolicitudForm.is_valid():    
+                    autorizar = autorizarSolicitudForm.save(commit=False)  
                     
-                    autorizar = autorizarSolicitudForm.save(commit=False)
-        
-                    #obtener el rol
-                    superintendente = Perfil.objects.get(pk=autorizar.perfil.id).numero_de_trabajador
-                    rol = UserDatos.objects.get(distrito_id = usuario.distrito.id, numero_de_trabajador = superintendente).tipo_id
+                    #se obtiene el rol del perifil
+                    superintendente = UserDatos.objects.get(perfil_id = autorizar.perfil.id,distrito_id = usuario.distrito.id, tipo_id__in=[6,12],activo = True)
+
                     #guardar en la BD
                     autorizar.solicitud_id = solicitud.id
-                    autorizar.tipo_perfil_id = rol
+                    autorizar.tipo_perfil_id= superintendente.tipo_id
                     autorizar.estado_id = 3
+                    autorizar.tipo_id = superintendente.tipo.id
                     autorizar.save()
-                    
                     #Se guarda la solicitud en complete
+                    solicitud.distrito_id = usuario.distrito.id
                     solicitud.complete = 1
                     solicitud.save()
-                    messages.success(request, "La solicitud se envio al superintendente")
+                    messages.success(request, f"La solicitud se envio a {autorizar.perfil}")
                     return redirect('listarBonosVarilleros')
                 
         solicitudForm =  SolicitudForm(instance = solicitud)
@@ -438,13 +446,14 @@ def crearSolicitudBonos(request):
 
 @login_required(login_url='user-login')  
 def verificarSolicitudBonosVarilleros(request,solicitud):
-    #usuario = request.user
-    usuario = get_object_or_404(UserDatos,user_id = request.user.id)
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    usuario = UserDatos.objects.get(pk = usuario_id)
     #solamente RH y supervisores
     if usuario.tipo.id in (4,5):
         
-        perfil = Perfil.objects.filter(numero_de_trabajador=usuario.numero_de_trabajador,distrito_id = usuario.distrito.id).values_list('id',flat=True)
-        permiso = Solicitud.objects.filter(solicitante_id=perfil[0], pk=solicitud).values_list('id',flat=True)
+        #perfil = Perfil.objects.filter(numero_de_trabajador=usuario.numero_de_trabajador,distrito_id = usuario.distrito.id).values_list('id',flat=True)
+        permiso = Solicitud.objects.filter(solicitante_id=usuario.perfil.id, pk=solicitud).values_list('id',flat=True)
         
         #checa el perfil correspondiente para cambiar la solicitud - policy
         if not permiso:
@@ -461,21 +470,12 @@ def verificarSolicitudBonosVarilleros(request,solicitud):
         
         #se hace una consulta con los empleados del distrito que pertenecen
         empleados = Perfil.objects.filter(distrito_id = usuario.distrito.id).exclude(baja = 1).order_by('nombres')
-        solicitante = Perfil.objects.get(numero_de_trabajador = usuario.numero_de_trabajador, distrito_id = usuario.distrito.id)
+        solicitante = Perfil.objects.get(pk = usuario.perfil.id, distrito_id = usuario.distrito.id)
         #se carga el formulario en automatico definiendo filtros
         bonoSolicitadoForm.fields["trabajador"].queryset = empleados 
-        
         #se llama la autorizacion relacionada
-        #comentario = AutorizarSolicitudes.objects.filter(solicitud_id=solicitud.id).values_list('comentario',flat=True).last()
         comentarios = AutorizarSolicitudes.objects.filter(solicitud_id=solicitud.id).exclude(comentario__isnull=True).values_list('comentario', flat=True).order_by('-id')
-        for c in comentarios:
-            print(c)
-        #print(comentario)
-        #for c in comentario:
-        #    print (c)
-        #comentario = comentario[0]
-
-       
+        
         autorizacion = AutorizarSolicitudes.objects.filter(solicitud_id=solicitud.id).first()
         
         bonos_solicitados = BonoSolicitado.objects.filter(solicitud_id = solicitud.id)
@@ -621,39 +621,34 @@ def verificarSolicitudBonosVarilleros(request,solicitud):
         
 #para ver detalles de la solicitud
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def verDetallesSolicitud(request,solicitud_id):  
-    usuario = get_object_or_404(UserDatos,user_id = request.user.id)
+    #obtener datos de la sesion y el usuario logeado
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    usuario = UserDatos.objects.get(pk = usuario_id)
+    
     if usuario.tipo not in [1,2,3]:
-        #obtener_bono = Solicitud.objects.filter(pk=solicitud_id).values('bono_id').first()
-        obtener_bono = Solicitud.objects.filter(pk=solicitud_id).first()
-        
-        if obtener_bono is None:
-            raise Http404("No encontrado") 
-        
-        #Permisos - Los usuarios pueden ver de todos los distritos - Los demas solo pueden ver de su distrito
-        if usuario.tipo.id not in [9,10,11] and usuario.distrito.id != obtener_bono.solicitante.distrito.id:
-            return render(request, 'revisar/403.html')
-        
-        soporte_detalles = Subcategoria.objects.filter(pk=obtener_bono.bono_id).values('soporte').first()
-        soporte = soporte_detalles['soporte']
-        
-        #los bonos solicitados
-        bonos = BonoSolicitado.objects.filter(solicitud_id = solicitud_id)
-        #los archivos
-        requerimientos = Requerimiento.objects.filter(solicitud_id = solicitud_id)
-        
         #busca la ultima solicitud con relacion a sus modelos     
         autorizaciones = AutorizarSolicitudes.objects.filter(
             solicitud_id=solicitud_id
+        ).select_related(
+            'solicitud',  # Relación con Solicitud
+            'solicitud__solicitante',  # Relación a Perfil desde Solicitud
+            'solicitud__bono',  # Relación a Subcategoria desde Solicitud
+            'solicitud__distrito',  # Relación a Distrito desde Solicitud
+        ).prefetch_related(
+            'solicitud__bonos_solicitados',  # Relación a BonoSolicitado desde Solicitud (usa related_name si está definido)
+            'solicitud__requerimientos',  # Relación a Requerimiento desde Solicitud (usa related_name si está definido)
         ).annotate(
             ultima_fecha=Max('created_at')
         ).order_by('-ultima_fecha').first()
+            
+        if usuario.tipo.id not in [9,10,11] and usuario.distrito.id != autorizaciones.solicitud.solicitante.distrito.id:
+            return render(request, 'revisar/403.html')
                 
-        #Para obtener el rol del solicitante
-        no_trabajador = autorizaciones.solicitud.solicitante.numero_de_trabajador
-        distrito = autorizaciones.solicitud.solicitante.distrito.id
-        rol = UserDatos.objects.get(distrito_id = distrito, numero_de_trabajador = no_trabajador)
-        rol = rol.tipo
+        #obtener el rol del solicitante    
+        rol = UserDatos.objects.get(perfil_id = autorizaciones.solicitud.solicitante.id, distrito_id = autorizaciones.solicitud.distrito.id, tipo_id__in=[4,5], activo = True)
         
         #se carga el formulario con datos iniciales
         autorizarSolicitudesUpdateForm = AutorizarSolicitudesUpdateForm(initial={'estado':autorizaciones.estado.id,'comentario':autorizaciones.comentario})
@@ -662,15 +657,13 @@ def verDetallesSolicitud(request,solicitud_id):
         contexto = {
             "usuario":usuario,
             "autorizaciones":autorizaciones,
-            "bonos":bonos,
-            "requerimientos": requerimientos,
             "autorizarSolicitudesUpdateForm":autorizarSolicitudesUpdateForm,
             "autorizarSolicitudesGerenteUpdateForm":autorizarSolicitudesGerenteUpdateForm,
-            "soporte":soporte,
             "rol":rol
         }
         
         return render(request,'esquema/bonos_varilleros/detalles_solicitud.html',contexto)
+    
     else:
         return render(request, 'revisar/403.html')
 
@@ -847,13 +840,14 @@ def removerBono(request,bono_id):
     #hacer el complete requerimiento a 0 - contar el numero de archivos cuando es 0
     if request.method == "POST":
         
-        usuario = get_object_or_404(UserDatos,user_id = request.user.id)
+        #obtener el usuario
+        userdatos = request.session.get('usuario_datos')    
+        usuario_id = userdatos.get('usuario_id')
+        usuario = UserDatos.objects.get(pk = usuario_id)
         
         if usuario.tipo.id in (4,5):
             try:
                 bono_solicitado = BonoSolicitado.objects.get(pk=bono_id)
-                print("bono: ", bono_id)
-                #print("bono cantidad: ", bono_solicitado.bono.importe)
                 
                 bandera = False #Se utiliza para saber si se realiza una division o suma acumulativa
                 
@@ -944,7 +938,11 @@ def removerBonoVerificar(request,bono_id):
 def removerArchivo(request,archivo_id):
     if request.method == "POST":
         
-        usuario = get_object_or_404(UserDatos,user_id = request.user.id)
+        #obtener el usuario
+        userdatos = request.session.get('usuario_datos')    
+        usuario_id = userdatos.get('usuario_id')
+        usuario = UserDatos.objects.get(pk = usuario_id)
+        
         if usuario.tipo.id in (4,5):
             try:
                 archivo = get_object_or_404(Requerimiento,pk=archivo_id)
@@ -1073,20 +1071,26 @@ def tabuladorBonos(request):
 @login_required(login_url='user-login')
 def get_puestos(request):    
     try:
-        usuario = request.user
+        #obtener el usuario
+        userdatos = request.session.get('usuario_datos')    
+        usuario_id = userdatos.get('usuario_id')
+        usuario = UserDatos.objects.get(pk = usuario_id)
+        
         bono_id = request.GET.get('bono_id')
         folio = request.GET.get('folio')
         data = []
         
         if bono_id:
-            
+            print("este es el bono subcategoria: ", bono_id)
             if int(bono_id) in (1,2):#IDS DEL MODELO ESQUEMA_SUBATEGORIA - evic extracion, evic introduccion
+                print("entramos aqui")
+                print("folio: ", folio)
                 bonos_solicitados = BonoSolicitado.objects.filter(solicitud__folio = folio).select_related('bono__puesto').values_list('bono__puesto_id',flat=True)
-                 #Trae todos los bonos por puesto por distrito, estado 1 = baja | 0 = activo - se excluye el puesto para este caso
-                puestos_qs = Bono.objects.filter(esquema_subcategoria = bono_id,distrito_id = usuario.userdatos.distrito.id,estado = 0).exclude(puesto_id__in = list(bonos_solicitados)).values('id','puesto__id','puesto__puesto','importe')
+                #Trae todos los bonos por puesto por distrito, estado 1 = baja | 0 = activo - se excluye el puesto para este caso
+                puestos_qs = Bono.objects.filter(esquema_subcategoria = bono_id,distrito_id = usuario.distrito.id,estado = 0).exclude(puesto_id__in = list(bonos_solicitados)).values('id','puesto__id','puesto__puesto','importe')
             else:
                 #Trae todos los bonos por puesto por distrito, estado 1 = baja | 0 = activo
-                puestos_qs = Bono.objects.filter(esquema_subcategoria = bono_id,distrito_id = usuario.userdatos.distrito.id,estado = 0).values('id','puesto__id','puesto__puesto','importe')
+                puestos_qs = Bono.objects.filter(esquema_subcategoria = bono_id,distrito_id = usuario.distrito.id,estado = 0).values('id','puesto__id','puesto__puesto','importe')
             
             for puesto in puestos_qs:
                 puesto['importe'] = str(puesto['importe'])
