@@ -535,8 +535,12 @@ def Status_revisar(request, pk):
          return render(request, 'revisar/403.html')
     
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def Administrar_tablas(request):
-    user_filter = UserDatos.objects.get(user=request.user)
+    #obtener datos de la sesion y el usuario logeado
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    user_filter = UserDatos.objects.get(pk = usuario_id)
     if user_filter.tipo.id in [4,8,9,10,11,12]: #Perfil RH
         puestos = Puesto.objects.all()
         salario = SalarioDatos.objects.get()
@@ -1286,11 +1290,15 @@ def CostoUpdate(request, pk):
         return render(request, 'revisar/403.html')
     
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def Costo_revisar(request, pk):
-    user_filter = UserDatos.objects.get(user=request.user)
-    print("usuario: ", user_filter)
+    #obtener datos de la sesion y el usuario logeado
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    usuario = UserDatos.objects.get(pk = usuario_id)
     costo = Costo.objects.get(id=pk)
-    if (user_filter.tipo.id in (9,10,11)) or (user_filter.tipo.id in (4,8,12) and user_filter.distrito.id == costo.status.perfil.distrito.id): #Perfil RH
+    
+    if (usuario.tipo.id in (9,10,11)) or (usuario.tipo.id in (4,8,12) and usuario.distrito.id == costo.status.perfil.distrito.id): #Perfil RH
         ahora = datetime.date.today()
         catorcena = Catorcenas.objects.filter(fecha_inicial__lte=ahora, fecha_final__gte=ahora).first()
         bonos_dato = Bonos.objects.filter(costo=costo, fecha_bono__range=[catorcena.fecha_inicial, catorcena.fecha_final])
@@ -1445,23 +1453,26 @@ def Empleado_Costo(request, pk):
         return render(request, 'revisar/403.html')
     
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def TablaCosto(request):
     ids = [9,10,11]
-    user_filter = UserDatos.objects.get(user=request.user)
-    if user_filter.tipo.id in [4,8,9,10,11,12]: #Perfil RH
-            
-        #revisar_perfil = Perfil.objects.get(distrito=user_filter.distrito,numero_de_trabajador=user_filter.numero_de_trabajador)
-        if user_filter.tipo.id in [9,10,11]:
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    usuario = UserDatos.objects.get(pk = usuario_id)
+    if usuario.tipo.id in [4,8,9,10,11,12]: #Perfil RH
+        if usuario.tipo.id in [9,10,11]:
             costos= Costo.objects.filter(complete=True).order_by("status__perfil__numero_de_trabajador")
         else:
-            perfil = Perfil.objects.filter(distrito = user_filter.distrito,complete=True)
-            costos = Costo.objects.filter(status__perfil__id__in=perfil.all(), complete=True).order_by("status__perfil__numero_de_trabajador")
+            costos = Costo.objects.select_related('status__perfil').filter(
+                status__perfil__distrito_id=usuario.distrito.id,
+                    complete=True
+                ).order_by("status__perfil__numero_de_trabajador")
             
         costo_filter = CostoFilter(request.GET, queryset=costos)
         costos = costo_filter.qs
-
-        comision=Decimal(0.09)
-
+        
+        #comision=Decimal(0.09)
+        
         if request.method =='POST' and 'Excel' in request.POST:
             return convert_excel_costo(request, costos)
 

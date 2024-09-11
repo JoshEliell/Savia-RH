@@ -68,14 +68,12 @@ from user.decorators import perfil_session_seleccionado
 
 #Pagina inicial de los esquemas de los bonos
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def inicio(request):
-    
     bonos = Categoria.objects.all();
-    
     context= {
         'bonos':bonos,
     }
-    
     return render(request,'esquema/inicio.html',context)
 
 #Listar las solicitudes
@@ -669,10 +667,14 @@ def verDetallesSolicitud(request,solicitud_id):
 
 #lista bonos aprobados
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def listarBonosVarillerosAprobados(request):
     from django.db.models import Prefetch
-    #se obtiene el usuario logueado
-    usuario = get_object_or_404(UserDatos,user_id = request.user.id)
+    #obtener datos de la sesion y el usuario logeado
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    usuario = UserDatos.objects.get(pk = usuario_id)
+    
     ids = [9,10,11]
     
     #Se muestran por catorcenas
@@ -769,52 +771,54 @@ def listarBonosVarillerosAprobados(request):
 
 #generar reportes bonos aprobados
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def generarReporteBonosVarillerosAprobados(request):
+    #obtener datos de la sesion y el usuario logeado
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    usuario = UserDatos.objects.get(pk = usuario_id)
     
-    #se obtiene el usuario logueado
-    usuario = get_object_or_404(UserDatos,user_id = request.user.id)
     ids = [9,10,11]
-    
-    print(usuario.tipo.id)
-    
+        
     #Flujo de las autorizaciones y permisos
     if usuario.tipo.id in (9,10,11,12): #
         #se buscan los perfiles acredores al bono
-        folios = Solicitud.objects.filter(fecha_autorizacion__isnull=False).values('folio')
+        folios = Solicitud.objects.filter(fecha_autorizacion__isnull=False).values('id')
     elif usuario.tipo.id in (4,12,8): #RH, SA, GE
-        folios = Solicitud.objects.filter(fecha_autorizacion__isnull=False, solicitante__distrito_id = usuario.distrito.id).values('folio')
+        folios = Solicitud.objects.filter(fecha_autorizacion__isnull=False, solicitante__distrito_id = usuario.distrito.id).values('id')
     else:
         return render(request, 'revisar/403.html')
-        
-    #if not folios:
-    #    return render(request, 'revisar/403.html')
+   
     
     #se prepara un 
     solicitudes = []
     for item in folios:
-        solicitud_id = item['folio']
+        solicitud_id = item['id']
         solicitudes.append(solicitud_id)
         
-    bonos = BonoSolicitado.objects.filter(solicitud_id__in = solicitudes).order_by('trabajador_id')
-            
+    bonos = BonoSolicitado.objects.filter(solicitud_id__in = solicitudes)     
     bonosolicitado_filter = BonoSolicitadoFilter(request.GET, queryset=bonos) 
     bonos = bonosolicitado_filter.qs
     
-    for b in bonos:
-        print(b)
-            
     bono = bonos.last()
     
-    if bono is not None:
-        catorcena = Catorcenas.objects.filter(fecha_inicial__lte=bono.solicitud.fecha_autorizacion, fecha_final__gte=bono.solicitud.fecha_autorizacion).first()
-    else:
+    if not request.GET:
         catorcena = None
-        
+    else:
+        try:#se maneja una expecion cuando no se encuentran bonos en una catorcena o fecha especificada
+            catorcena = Catorcenas.objects.filter(fecha_inicial__lte=bono.solicitud.fecha_autorizacion, fecha_final__gte=bono.solicitud.fecha_autorizacion).first()
+        except AttributeError as e:
+            catorcena = None
+             
+            
     total_monto = bonos.aggregate(total_monto=Sum('cantidad'))['total_monto']
     cantidad_bonos_aprobados = bonos.count()
-        
+    
     if request.method =='POST' and 'excel' in request.POST:
-        return convert_excel_bonos_aprobados(bonos,catorcena,total_monto,cantidad_bonos_aprobados)
+        try:
+            return convert_excel_bonos_aprobados(bonos,catorcena,total_monto,cantidad_bonos_aprobados)
+        except Exception as e:
+                messages.error(request,'No existen bono aprobados para generar el reporte')
     
     p = Paginator(bonos, 50)
     page = request.GET.get('page')

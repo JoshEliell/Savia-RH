@@ -60,12 +60,13 @@ def contadores_processor(request):
                 status_fijo = Status.objects.get(perfil__id = usuario_perfil)
                 
             #bonos autorizaciones
+            print("perfil: ", usuario.perfil)
             if usuario_tipo in [5,4]:
                 #perfil = Perfil.objects.filter(numero_de_trabajador = usuario.numero_de_trabajador,distrito_id = usuario.distrito.id).values_list('id',flat=True)
-                bonos_count = AutorizarSolicitudes.objects.filter(solicitud__solicitante__id = usuario_perfil, estado_id = 4).count()
+                bonos_count = AutorizarSolicitudes.objects.filter(solicitud__solicitante__id = usuario_perfil, estado_id = 4, solicitud__distrito_id = usuario.distrito.id).count()
             if usuario_tipo in [6,7,8,12]:
-                bonos_count = AutorizarSolicitudes.objects.filter(perfil__id = usuario_perfil,estado_id = 3).count()
-        
+                bonos_count = AutorizarSolicitudes.objects.filter(perfil_id = usuario_perfil,estado_id = 3, solicitud__distrito_id = usuario.distrito.id).count()
+                
             
             #prenominas - autorizaciones       
             if usuario_tipo in [8,9,10,11]:#GE, SU ADMIN, SU RH, SU Nomina
