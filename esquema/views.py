@@ -443,6 +443,7 @@ def crearSolicitudBonos(request):
     
 
 @login_required(login_url='user-login')  
+@perfil_session_seleccionado
 def verificarSolicitudBonosVarilleros(request,solicitud):
     userdatos = request.session.get('usuario_datos')        
     usuario_id = userdatos.get('usuario_id')
@@ -840,6 +841,7 @@ def generarReporteBonosVarillerosAprobados(request):
 
 #para remover bonos agregados
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def removerBono(request,bono_id):
     #hacer el complete requerimiento a 0 - contar el numero de archivos cuando es 0
     if request.method == "POST":
@@ -939,6 +941,7 @@ def removerBonoVerificar(request,bono_id):
         
 #para remover archivos agregados
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def removerArchivo(request,archivo_id):
     if request.method == "POST":
         
@@ -1073,6 +1076,7 @@ def tabuladorBonos(request):
     return render(request, 'esquema/crear_bonos/tabulador_bonos.html')
 
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def get_puestos(request):    
     try:
         #obtener el usuario

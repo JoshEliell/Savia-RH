@@ -5,6 +5,7 @@ from django.db import models
 from proyecto.models import Costo, Catorcenas, Dia_vacacion
 from django.core.validators import FileExtensionValidator
 from django.core.exceptions import ValidationError
+from proyecto.models import Distrito
 
 class Prenomina(models.Model):
     empleado = models.ForeignKey(Costo, on_delete = models.CASCADE, null=True)
@@ -13,6 +14,7 @@ class Prenomina(models.Model):
     created_at=models.DateTimeField(auto_now=True)
     updated_at=models.DateTimeField(auto_now=True)
     editado = models.CharField(max_length=100,blank=True)
+    distrito = models.ForeignKey(Distrito, on_delete=models.CASCADE,null=True, blank=True)
 
     def __str__(self):
         return f'Empleado: {self.empleado}, Cartocena: {self.catorcena}'

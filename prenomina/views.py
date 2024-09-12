@@ -78,6 +78,8 @@ def obtener_catorcena():
     catorcena_actual = Catorcenas.objects.filter(fecha_inicial__lte=fecha_actual, fecha_final__gte=fecha_actual).first()
     return catorcena_actual
 
+@login_required(login_url='user-login')
+@perfil_session_seleccionado
 def registrar_rango_incidencias(request,pk):    
     if request.method == 'POST':
         #catorcena
@@ -216,7 +218,7 @@ def Tabla_prenomina(request):
         catorcena_actual = obtener_catorcena()
         
         costo = Costo.objects.filter(status__perfil__distrito_id=user_filter.distrito.id, complete=True, status__perfil__baja=False).order_by("status__perfil__numero_de_trabajador").values_list('id',flat=True)
-        prenominas = Prenomina.objects.filter(empleado__in=costo,catorcena_id=catorcena_actual.id).order_by("empleado__status__perfil__apellidos")
+        prenominas = Prenomina.objects.filter(empleado__in=costo,catorcena_id=catorcena_actual.id, distrito_id = user_filter.distrito_id).order_by("empleado__status__perfil__apellidos")
         
         #crear las prenominas actuales si es que ya es nueva catorcena
         nuevas_prenominas = []
@@ -225,7 +227,7 @@ def Tabla_prenomina(request):
             prenomina_existente = prenominas.filter(empleado_id=empleado).exists()
             #si no existe crear una nueva prenomina
             if not prenomina_existente:
-                nueva_prenomina = Prenomina(empleado_id=empleado, catorcena_id=catorcena_actual.id)
+                nueva_prenomina = Prenomina(empleado_id=empleado, catorcena_id=catorcena_actual.id, distrito_id = user_filter.distrito.id)
                 nuevas_prenominas.append(nueva_prenomina) 
         if nuevas_prenominas:
             Prenomina.objects.bulk_create(nuevas_prenominas)              
@@ -484,6 +486,7 @@ def Autorizar_general(request,prenominas, user_filter, catorcena_actual):
         return redirect('Prenomina')  # Cambia 'ruta_a_redirigir' por la URL a la que deseas redirigir después de autorizar las prenóminas
     
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def PrenominaRevisar(request, pk):
     #obtener datos de la sesion y el usuario logeado
     userdatos = request.session.get('usuario_datos')        
@@ -493,15 +496,21 @@ def PrenominaRevisar(request, pk):
         #llamar la fucion para obtener la catorcena actual
         catorcena_actual = obtener_catorcena()
         
-        #obtener el empleado respecto a su prenomina     
-        costo = Costo.objects.get(id=pk)
-        prenomina = Prenomina.objects.get(empleado_id=costo.id,catorcena_id = catorcena_actual.id)
-        
+        #solo pueden ver de su mismo distrito
+        try:   
+            if user_filter.tipo.id == 4: #RH solo puede ver su distrito
+                #obtener el empleado respecto a su prenomina     
+                costo = Costo.objects.get(id=pk)
+                prenomina = Prenomina.objects.get(empleado_id=costo.id,catorcena_id = catorcena_actual.id, distrito_id = user_filter.distrito.id)
+            else:
+                costo = Costo.objects.get(id=pk)
+                prenomina = Prenomina.objects.get(empleado_id=costo.id,catorcena_id = catorcena_actual.id)
+        except Prenomina.DoesNotExist:
+            return render(request, 'revisar/403.html')
+            
         #flujo de las autorizaciones
         autorizacion1 = prenomina.autorizarprenomina_set.filter(tipo_perfil__id=7).first()#control tecnico
         autorizacion2 = prenomina.autorizarprenomina_set.filter(tipo_perfil__id=8).first()#gerencia
-        #autorizacion1 = prenomina.autorizarprenomina_set.filter(tipo_perfil__nombre="Control Tecnico").first()
-        #autorizacion2 = prenomina.autorizarprenomina_set.filter(tipo_perfil__nombre="Gerencia").first()
         
         if request.method == 'POST':
             #Para guardar los datos en la prenomina
@@ -786,15 +795,26 @@ def determinar_estado_general(request, ultima_autorizacion):
     return 'Estado no reconocido'
 
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def filtrar_prenominas(request, pk):
     #obtener datos de la sesion y el usuario logeado
     userdatos = request.session.get('usuario_datos')        
     usuario_id = userdatos.get('usuario_id')
     user_filter = UserDatos.objects.get(pk = usuario_id)
-        
+    
     if user_filter.tipo.id in [4,8,10,11,12]:
-        prenomina = Prenomina.objects.get(id = pk)
-        verificado_rh = AutorizarPrenomina.objects.filter(prenomina_id=prenomina.id).first()
+        
+        try: 
+            if user_filter.tipo.id in [4,8]:#solo ve por el distrito a que pertence no a todos
+                prenomina = Prenomina.objects.get(id = pk, distrito_id = user_filter.distrito.id)
+                verificado_rh = AutorizarPrenomina.objects.filter(prenomina_id=prenomina.id).first()
+            else:
+                prenomina = Prenomina.objects.get(id = pk)
+                verificado_rh = AutorizarPrenomina.objects.filter(prenomina_id=prenomina.id).first()
+        except Prenomina.DoesNotExist:
+            return render(request, 'revisar/403.html') 
+                
+            
         
         #Se crean las fechas para ser mostradas en el template
         fecha_inicio = prenomina.catorcena.fecha_inicial

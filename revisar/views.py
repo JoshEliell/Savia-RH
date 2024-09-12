@@ -323,8 +323,13 @@ def Prenomina_Solicitud_Revisar(request, pk):
         costo = Costo.objects.get(id=pk)
         #se trae la funcion desde Prenomina.view para obtener la catorcena actual
         catorcena_actual=obtener_catorcena()
-        prenomina = Prenomina.objects.get(empleado_id=costo.id,catorcena_id=catorcena_actual.id)
-        verificado_rh = AutorizarPrenomina.objects.filter(prenomina_id=prenomina.id).first()
+        
+        #solo pueden ver del mismo distrito
+        try:
+            prenomina = Prenomina.objects.get(empleado_id=costo.id,catorcena_id=catorcena_actual.id, distrito_id = user_filter.distrito.id)
+            verificado_rh = AutorizarPrenomina.objects.filter(prenomina_id=prenomina.id).first()
+        except Prenomina.DoesNotExist:
+            return render(request, 'revisar/403.html')
         
         #Se crean las fechas para ser mostradas en el template
         fecha_inicio = catorcena_actual.fecha_inicial
