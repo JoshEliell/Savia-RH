@@ -291,6 +291,7 @@
     
     
             } catch (error) {
+                console.log(error)
                 Swal.fire({
                     title: "Error",
                     text: "No se pudo procesar la solicitud",
@@ -305,7 +306,6 @@
              e.preventDefault();
              //se obtiene el valor del id del input hidden costo  
              var costo = document.getElementById('costo-id').value 
-             console.log(costo)
              //se llama la función
              verificarIncidencias(costo)
          });

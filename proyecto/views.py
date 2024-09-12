@@ -6913,24 +6913,26 @@ def costo_revisar_anterior(request, pk):
 
 @login_required(login_url='user-login')
 def TablaPrenominas(request):
-
-    
-    
     ids = [9,10,11]
-    user_filter = UserDatos.objects.get(user=request.user)
+    
+    #obtener datos de la sesion y el usuario logeado
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    user_filter = UserDatos.objects.get(pk = usuario_id)
+    
     if user_filter.tipo.id in [4,8,9,10,11,12]: #Perfil RH o observador
         #revisar_perfil = Perfil.objects.get(distrito=user_filter.distrito,numero_de_trabajador=user_filter.numero_de_trabajador)
         if user_filter.tipo.id in [9,10,11]:
             prenominas= Prenomina.objects.all().order_by("empleado__status__perfil__numero_de_trabajador")
         else:
-            perfil = Perfil.objects.filter(distrito = user_filter.distrito,complete=True)
+            perfil = Perfil.objects.filter(distrito_id = user_filter.distrito.id,complete=True).values_list('id',flat=True)
             prenominas= Prenomina.objects.filter(empleado__status__perfil__id__in=perfil.all()).order_by("empleado__status__perfil__apellidos")
 
         prenomina_filter = PrenominaFilter(request.GET, queryset=prenominas)
         prenominas = prenomina_filter.qs
 
         for prenomina in prenominas:
-            ultima_autorizacion = AutorizarPrenomina.objects.filter(prenomina=prenomina).order_by('-updated_at').first() #Ultimo modificado
+            ultima_autorizacion = AutorizarPrenomina.objects.filter(prenomina_id=prenomina.id).order_by('-updated_at').first() #Ultimo modificado
 
             if ultima_autorizacion is not None:
                 prenomina.valor = ultima_autorizacion.estado.tipo #Esta bien como agarra el dato de RH arriba que es el primero
@@ -6964,23 +6966,23 @@ def TablaPrenominas(request):
 def determinar_estado_general(request, ultima_autorizacion):
     if ultima_autorizacion is None:
         return "Sin autorizaciones"
-
-    tipo_perfil = ultima_autorizacion.tipo_perfil.nombre.lower()
-    estado_tipo = ultima_autorizacion.estado.tipo.lower()
-
-    if tipo_perfil == 'rh' and estado_tipo == 'aprobado': #Ultimo upd rh y fue aprobado
+    
+    tipo_perfil = ultima_autorizacion.tipo_perfil_id
+    estado_tipo = ultima_autorizacion.estado_id
+    
+    if tipo_perfil == 4 and estado_tipo == 1: #Ultimo upd rh y fue aprobado
         return 'Controles técnicos pendiente'              #Solo puede editarlo ct
 
-    if tipo_perfil == 'control tecnico' and estado_tipo == 'aprobado': #Ultimo upd ct y fue aprobado
+    if tipo_perfil == 7 and estado_tipo == 1: #Ultimo upd ct y fue aprobado
         return 'Gerente pendiente'                         
     
-    if tipo_perfil == 'gerencia' and estado_tipo == 'aprobado': #Ultimo upd gerencia y fue aprobado
+    if tipo_perfil == 8 and estado_tipo == 1: #Ultimo upd gerencia y fue aprobado
         return 'Gerente aprobado (Prenomina aprobada)'
 
-    if tipo_perfil == 'control tecnico' and estado_tipo == 'rechazado': #Ultimo upd ct y fue rechazado
+    if tipo_perfil == 7 and estado_tipo == 2: #Ultimo upd ct y fue rechazado
         return 'RH pendiente (rechazado por Controles técnicos)'
     
-    if tipo_perfil == 'gerencia' and estado_tipo == 'rechazado': #Ultimo upd gerencia y fue rechazado
+    if tipo_perfil == 8 and estado_tipo == 2: #Ultimo upd gerencia y fue rechazado
         return 'RH pendiente (rechazado por Gerencia)'
 
     return 'Estado no reconocido'

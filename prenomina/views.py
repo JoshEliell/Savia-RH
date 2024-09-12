@@ -65,6 +65,7 @@ from .forms import PrenominaIncidenciasFormSet,IncidenciaRangoForm
 import time
 
 from calculos.utils import excel_estado_prenomina, excel_estado_prenomina_formato, calcular_aguinaldo_eventual, calcular_aguinaldo, calcular_prima_vacacional 
+from user.decorators import perfil_session_seleccionado
 
 # Create your views here.
 
@@ -82,8 +83,7 @@ def registrar_rango_incidencias(request,pk):
         #catorcena
         catorcena_actual = obtener_catorcena()
         #RH
-        user_filter = UserDatos.objects.get(user=request.user)
-        prenomina = Prenomina.objects.get(empleado=pk,catorcena = catorcena_actual.id)
+        prenomina = Prenomina.objects.get(empleado_id=pk,catorcena_id = catorcena_actual.id)
         #Se trae el formulario de las incapacidades para ser validado
         incidencias_form = IncidenciaRangoForm(request.POST, request.FILES)
         if incidencias_form.is_valid():
@@ -203,56 +203,46 @@ def registrar_rango_incidencias(request,pk):
             return JsonResponse(response_data, status=422)
         
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def Tabla_prenomina(request):
-    start_time = time.time()  # Registrar el tiempo de inicio
-    user_filter = UserDatos.objects.get(user=request.user)
+    #obtener datos de la sesion y el usuario logeado
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    user_filter = UserDatos.objects.get(pk = usuario_id)
 
     if user_filter.tipo.id in [4,9,10,11]: #Perfil RH
 
         #llamar la fucion para obtener la catorcena actual
         catorcena_actual = obtener_catorcena()
-        #para traer los empleados segun el filtro
-        #if user_filter.distrito.distrito == 'Matriz':
-        #    costo = Costo.objects.filter(complete=True, status__perfil__baja=False).order_by("status__perfil__numero_de_trabajador").values_list('id',flat=True)
-           
-        #else:
-        #costo = Costo.objects.filter(
-        #    Q(status__perfil__distrito=user_filter.distrito, status__perfil__cargo_distrito__isnull=True) | Q(status__perfil__cargo_distrito=user_filter.distrito),
-        #    complete=True,  status__perfil__baja=False
-        #    ).order_by("status__perfil__numero_de_trabajador").values_list('id',flat=True)
-        costo = Costo.objects.filter(status__perfil__distrito=user_filter.distrito, complete=True,  status__perfil__baja=False).order_by("status__perfil__numero_de_trabajador").values_list('id',flat=True)
-        #print(costo)
-        prenominas = Prenomina.objects.filter(empleado__in=costo,catorcena=catorcena_actual.id).order_by("empleado__status__perfil__apellidos")
-    
-        festivos = TablaFestivos.objects.filter(dia_festivo__range=(catorcena_actual.fecha_inicial, catorcena_actual.fecha_final))
+        
+        costo = Costo.objects.filter(status__perfil__distrito_id=user_filter.distrito.id, complete=True, status__perfil__baja=False).order_by("status__perfil__numero_de_trabajador").values_list('id',flat=True)
+        prenominas = Prenomina.objects.filter(empleado__in=costo,catorcena_id=catorcena_actual.id).order_by("empleado__status__perfil__apellidos")
+        
         #crear las prenominas actuales si es que ya es nueva catorcena
         nuevas_prenominas = []
         for empleado in costo:
             #checar si existe prenomina para el empleado en la catorcena actual
-            prenomina_existente = prenominas.filter(empleado=empleado).exists()
+            prenomina_existente = prenominas.filter(empleado_id=empleado).exists()
             #si no existe crear una nueva prenomina
             if not prenomina_existente:
-                nueva_prenomina = Prenomina(empleado_id=empleado, catorcena=catorcena_actual)
+                nueva_prenomina = Prenomina(empleado_id=empleado, catorcena_id=catorcena_actual.id)
                 nuevas_prenominas.append(nueva_prenomina) 
         if nuevas_prenominas:
             Prenomina.objects.bulk_create(nuevas_prenominas)              
-        #costo_filter = CostoFilter(request.GET, queryset=costo)
-        #costo = costo_filter.qs
-        #prenominas = Prenomina.objects.filter(empleado__in=costo,catorcena = catorcena_actual.id).order_by("empleado__status__perfil__numero_de_trabajador").prefetch_related('incidencias')
-        
+            
         prenomina_filter = PrenominaFilter(request.GET, queryset=prenominas)
         prenominas = prenomina_filter.qs
 
         #para verificar las autotizaciones
         for prenomina in prenominas:
-            ultima_autorizacion = AutorizarPrenomina.objects.filter(prenomina=prenomina).order_by('-updated_at').first() #Ultimo modificado
+            ultima_autorizacion = AutorizarPrenomina.objects.filter(prenomina_id=prenomina.id).order_by('-updated_at').first() #Ultimo modificado
 
             if ultima_autorizacion is not None:
-                prenomina.valor = ultima_autorizacion.estado.tipo #Esta bien como agarra el dato de RH arriba que es el primero
+                prenomina.valor = ultima_autorizacion.tipo_perfil #Esta bien como agarra el dato de RH arriba que es el primero
             prenomina.estado_general = determinar_estado_general(request,ultima_autorizacion)
 
         if request.method =='POST' and 'Autorizar' in request.POST:
-            if user_filter.tipo.nombre ==  "RH":
+            if user_filter.tipo.id == 4: #RH
                 prenominas_filtradas = [prenom for prenom in prenominas if prenom.estado_general == 'RH pendiente (rechazado por Controles técnicos)' or prenom.estado_general == 'RH pendiente (rechazado por Gerencia)' or prenom.estado_general == 'Sin autorizaciones']
                 if prenominas_filtradas:
                     # Llamar a la función Autorizar_gerencia con las prenominas filtradas
@@ -278,16 +268,14 @@ def Tabla_prenomina(request):
             'salidas_list': salidas_list,
             'prenominas':prenominas
         }
-        end_time = time.time()  # Registrar el tiempo de finalización
-        print(f"Tiempo total de carga de la página: {end_time - start_time} segundos")
         return render(request, 'prenomina/Tabla_prenomina.html', context)
     else:
         return render(request, 'revisar/403.html')
 
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def Autorizar_general(request,prenominas, user_filter, catorcena_actual):
     if request.user.is_authenticated:
-        nombre = Perfil.objects.get(numero_de_trabajador=user_filter.numero_de_trabajador, distrito=user_filter.distrito) #persona que autoriza
         festivos = TablaFestivos.objects.filter(dia_festivo__range=[catorcena_actual.fecha_inicial, catorcena_actual.fecha_final]) #festivos en la catorcena actual
         for prenomina in prenominas:    
             incidencias = PrenominaIncidencias.objects.filter(
@@ -484,10 +472,9 @@ def Autorizar_general(request,prenominas, user_filter, catorcena_actual):
                             break
             """                      
             
-            revisado, created = AutorizarPrenomina.objects.get_or_create(prenomina=prenomina, tipo_perfil=user_filter.tipo) #Checa si existe autorización de su perfil y si no lo crea 
-            revisado.estado = Estado.objects.get(tipo="aprobado")
-            nombre = Perfil.objects.get(numero_de_trabajador=user_filter.numero_de_trabajador, distrito=user_filter.distrito)
-            revisado.perfil = nombre
+            revisado, created = AutorizarPrenomina.objects.get_or_create(prenomina_id=prenomina.id, tipo_perfil_id=user_filter.tipo.id) #Checa si existe autorización de su perfil y si no lo crea 
+            revisado.estado_id = 1 #aprobado
+            revisado.perfil_id = user_filter.perfil.id
             revisado.comentario = 'Aprobación general'
             revisado.save()
             #Se ejecutan los aguinaldos
@@ -498,19 +485,23 @@ def Autorizar_general(request,prenominas, user_filter, catorcena_actual):
     
 @login_required(login_url='user-login')
 def PrenominaRevisar(request, pk):
-    user_filter = UserDatos.objects.get(user=request.user)
+    #obtener datos de la sesion y el usuario logeado
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    user_filter = UserDatos.objects.get(pk = usuario_id)
     if user_filter.tipo.id in [4,9,10,11]: #Perfil RH
-        start_time = time.time()  # Registrar el tiempo de inicio
         #llamar la fucion para obtener la catorcena actual
         catorcena_actual = obtener_catorcena()
         
         #obtener el empleado respecto a su prenomina     
         costo = Costo.objects.get(id=pk)
-        prenomina = Prenomina.objects.get(empleado=costo,catorcena = catorcena_actual.id)
+        prenomina = Prenomina.objects.get(empleado_id=costo.id,catorcena_id = catorcena_actual.id)
         
         #flujo de las autorizaciones
-        autorizacion1 = prenomina.autorizarprenomina_set.filter(tipo_perfil__nombre="Control Tecnico").first()
-        autorizacion2 = prenomina.autorizarprenomina_set.filter(tipo_perfil__nombre="Gerencia").first()
+        autorizacion1 = prenomina.autorizarprenomina_set.filter(tipo_perfil__id=7).first()#control tecnico
+        autorizacion2 = prenomina.autorizarprenomina_set.filter(tipo_perfil__id=8).first()#gerencia
+        #autorizacion1 = prenomina.autorizarprenomina_set.filter(tipo_perfil__nombre="Control Tecnico").first()
+        #autorizacion2 = prenomina.autorizarprenomina_set.filter(tipo_perfil__nombre="Gerencia").first()
         
         if request.method == 'POST':
             #Para guardar los datos en la prenomina
@@ -578,10 +569,9 @@ def PrenominaRevisar(request, pk):
                 calcular_aguinaldo_eventual(prenomina)
                 calcular_aguinaldo(prenomina)
                 
-                revisado_rh, created = AutorizarPrenomina.objects.get_or_create(prenomina=prenomina, tipo_perfil=user_filter.tipo)
-                revisado_rh.estado =  Estado.objects.get(pk=1) #aprobado
-                perfil_rh = Perfil.objects.get(numero_de_trabajador = user_filter.numero_de_trabajador, distrito = user_filter.distrito)
-                revisado_rh.perfil=perfil_rh
+                revisado_rh, created = AutorizarPrenomina.objects.get_or_create(prenomina_id=prenomina.id, tipo_perfil_id=user_filter.tipo.id)
+                revisado_rh.estado_id = 1 #aprobado
+                revisado_rh.perfil_id= user_filter.perfil.id
                 revisado_rh.comentario="Revisado por RH"
                 revisado_rh.save()
                 
@@ -766,8 +756,6 @@ def PrenominaRevisar(request, pk):
                 'dias_semana':dias_semana
                 
             }
-            end_time = time.time()  # Registrar el tiempo de finalización
-            print(f"Tiempo total de carga de la página: {end_time - start_time} segundos")
             return render(request, 'prenomina/Actualizar_revisar.html',context)
     else:
         return render(request, 'revisar/403.html')
@@ -776,33 +764,37 @@ def PrenominaRevisar(request, pk):
 def determinar_estado_general(request, ultima_autorizacion):
     if ultima_autorizacion is None:
         return "Sin autorizaciones"
-
-    tipo_perfil = ultima_autorizacion.tipo_perfil.nombre.lower()
-    estado_tipo = ultima_autorizacion.estado.tipo.lower()
-
-    if tipo_perfil == 'rh' and estado_tipo == 'aprobado': #Ultimo upd rh y fue aprobado
+    
+    tipo_perfil = ultima_autorizacion.tipo_perfil_id
+    estado_tipo = ultima_autorizacion.estado_id
+    
+    if tipo_perfil == 4 and estado_tipo == 1: #Ultimo upd rh y fue aprobado
         return 'Controles técnicos pendiente'              #Solo puede editarlo ct
 
-    if tipo_perfil == 'control tecnico' and estado_tipo == 'aprobado': #Ultimo upd ct y fue aprobado
+    if tipo_perfil == 7 and estado_tipo == 1: #Ultimo upd ct y fue aprobado
         return 'Gerente pendiente'                         
     
-    if tipo_perfil == 'gerencia' and estado_tipo == 'aprobado': #Ultimo upd gerencia y fue aprobado
+    if tipo_perfil == 8 and estado_tipo == 1: #Ultimo upd gerencia y fue aprobado
         return 'Gerente aprobado (Prenomina aprobada)'
 
-    if tipo_perfil == 'control tecnico' and estado_tipo == 'rechazado': #Ultimo upd ct y fue rechazado
+    if tipo_perfil == 7 and estado_tipo == 2: #Ultimo upd ct y fue rechazado
         return 'RH pendiente (rechazado por Controles técnicos)'
     
-    if tipo_perfil == 'gerencia' and estado_tipo == 'rechazado': #Ultimo upd gerencia y fue rechazado
+    if tipo_perfil == 8 and estado_tipo == 2: #Ultimo upd gerencia y fue rechazado
         return 'RH pendiente (rechazado por Gerencia)'
 
     return 'Estado no reconocido'
 
 @login_required(login_url='user-login')
 def filtrar_prenominas(request, pk):
-    user_filter = UserDatos.objects.get(user=request.user)
-    if user_filter.tipo.nombre == "Gerencia" or "Control Tecnico":
+    #obtener datos de la sesion y el usuario logeado
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    user_filter = UserDatos.objects.get(pk = usuario_id)
+        
+    if user_filter.tipo.id in [4,8,10,11,12]:
         prenomina = Prenomina.objects.get(id = pk)
-        verificado_rh = AutorizarPrenomina.objects.filter(prenomina_id=prenomina).first()
+        verificado_rh = AutorizarPrenomina.objects.filter(prenomina_id=prenomina.id).first()
         
         #Se crean las fechas para ser mostradas en el template
         fecha_inicio = prenomina.catorcena.fecha_inicial
@@ -840,8 +832,8 @@ def filtrar_prenominas(request, pk):
                 })
         
            
-        autorizacion1 = prenomina.autorizarprenomina_set.filter(tipo_perfil__nombre="Control Tecnico").first()
-        autorizacion2 = prenomina.autorizarprenomina_set.filter(tipo_perfil__nombre="Gerencia").first()
+        autorizacion1 = prenomina.autorizarprenomina_set.filter(tipo_perfil__id=7).first()#control tecnico
+        autorizacion2 = prenomina.autorizarprenomina_set.filter(tipo_perfil__id=8).first()#gerencia
 
         if request.method =='POST' and 'economico_pdf' in request.POST:
             fecha_economico = request.POST['economico_pdf']
@@ -855,27 +847,6 @@ def filtrar_prenominas(request, pk):
             solicitud = Solicitud_vacaciones.objects.filter(status=prenomina.empleado.status, fecha_inicio__lte=fecha_vacaciones, fecha_fin__gte=fecha_vacaciones).first()
             return PdfFormatoVacaciones(request, solicitud)
         
-        #Enviar autorizacion
-        if request.method == 'POST' and 'aprobar' or request.method == 'POST' and 'rechazar' in request.POST:
-            if 'aprobar' in request.POST:
-                estado = 'aprobado'
-            elif 'rechazar' in request.POST:
-                estado = 'rechazado'
-            else:
-                estado = None
-            if estado:
-                revisado, created = AutorizarPrenomina.objects.get_or_create(prenomina=prenomina, tipo_perfil=user_filter.tipo)
-                revisado.tipo_perfil=user_filter.tipo
-                revisado.estado = Estado.objects.get(tipo=estado)
-                nombre = Perfil.objects.get(numero_de_trabajador = user_filter.numero_de_trabajador, distrito = user_filter.distrito)
-                revisado.perfil=nombre
-                comentario = request.POST.get('comentario')
-                revisado.comentario=comentario
-                revisado.save()
-                messages.success(request, 'Cambios guardados exitosamente')
-                return redirect('Prenominas_solicitudes')
-            else:
-                messages.error(request,'No se pudo procesar el estado intentalo de nuevo')
         context = {
             'prenomina':prenomina,
             'verificado_rh':verificado_rh,
