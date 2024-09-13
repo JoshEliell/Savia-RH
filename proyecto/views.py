@@ -832,11 +832,15 @@ def BancariosUpdate(request, pk):
     
 @login_required(login_url='user-login')
 def FormularioCosto(request):
-    user_filter = UserDatos.objects.get(user=request.user)
+    #obtener datos de la sesion y el usuario logeado
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    user_filter = UserDatos.objects.get(pk = usuario_id)
+    
     if user_filter.tipo.id in [4,9,10,11]: #Perfil RH
         #revisar_perfil = Perfil.objects.get(distrito=user_filter.distrito,numero_de_trabajador=user_filter.numero_de_trabajador)
-        perfil = Perfil.objects.filter(distrito = user_filter.distrito, baja=False)
-        empleados= Status.objects.filter(~Q(fecha_ingreso=None), perfil__id__in=perfil.all(),complete = True, complete_costo = False)
+        perfil = Perfil.objects.filter(distrito = user_filter.distrito, baja=False).values_list('id', flat=True)
+        empleados= Status.objects.filter(~Q(fecha_ingreso=None), perfil__id__in=perfil,complete = True, complete_costo = False)
         tablas = DatosISR.objects.all()
         tabla_subsidio = TablaSubsidio.objects.all()
         tabla_vacaciones= TablaVacaciones.objects.all()
@@ -1067,8 +1071,7 @@ def FormularioCosto(request):
                                                                                     #total_carga_social = costo.impuesto_estatal + costo.imms_obrero_patronal + costo.sar + costo.cesantia + costo.infonavit + costo.isr
 
                                                                                     if form.is_valid():
-                                                                                        user_filter = UserDatos.objects.get(user=request.user)
-                                                                                        nombre = Perfil.objects.get(numero_de_trabajador = user_filter.numero_de_trabajador, distrito = user_filter.distrito)
+                                                                                        nombre = user_filter.perfil
                                                                                         costo.editado = str("U:"+nombre.nombres+" "+nombre.apellidos)
                                                                                         messages.success(request, f'Cambios guardados con éxito los costos de {costo.status.perfil.nombres} {costo.status.perfil.apellidos}')
                                                                                         costo = form.save(commit=False)
@@ -1091,8 +1094,13 @@ def FormularioCosto(request):
     
 @login_required(login_url='user-login')
 def CostoUpdate(request, pk):
-    user_filter = UserDatos.objects.get(user=request.user)
+    #obtener datos de la sesion y el usuario logeado
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    user_filter = UserDatos.objects.get(pk = usuario_id)
+    
     costo = Costo.objects.get(id=pk)
+    
     if user_filter.tipo.id in [4,9,10,11] and user_filter.distrito == costo.status.perfil.distrito: #Perfil RH
         tablas= DatosISR.objects.all()
         tabla_subsidio = TablaSubsidio.objects.all()
@@ -1319,9 +1327,8 @@ def CostoUpdate(request, pk):
                                                                                 costo.ingreso_mensual_neto_empleado= costo.sueldo_mensual_neto + costo.complemento_salario_mensual + costo.apoyo_de_pasajes + costo.total_apoyosbonos_empleadocomp + costo.total_apoyosbonos_agregcomis
                                                                                 #total_carga_social = costo.impuesto_estatal + costo.imms_obrero_patronal + costo.sar + costo.cesantia + costo.infonavit + costo.isr
 
-                                                                                if form.is_valid():
-                                                                                    user_filter = UserDatos.objects.get(user=request.user)
-                                                                                    nombre = Perfil.objects.get(numero_de_trabajador = user_filter.numero_de_trabajador, distrito = user_filter.distrito)
+                                                                                if form.is_valid():                                                                                    
+                                                                                    nombre = user_filter.perfil
                                                                                     costo.editado = str("U:"+nombre.nombres+" "+nombre.apellidos)
                                                                                     messages.success(request, f'Cambios guardados con éxito los costos de {costo.status.perfil.nombres} {costo.status.perfil.apellidos}')
                                                                                     costo = form.save(commit=False)
