@@ -73,6 +73,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.utils import ImageReader
 import os
 from django.db import transaction
+from django.db import IntegrityError
 
 
 @login_required(login_url='user-login')
@@ -142,7 +143,10 @@ def Tabla_dias_vacaciones(request):
 @perfil_session_seleccionado
 def Perfil_vista(request):
     ids = [9,10,11]
-    user_filter = UserDatos.objects.get(user=request.user)
+    #obtener datos de la sesion y el usuario logeado
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    user_filter = UserDatos.objects.get(pk = usuario_id)
     #revisar_perfil = Perfil.objects.get(distrito=user_filter.distrito,numero_de_trabajador=user_filter.numero_de_trabajador)
     try:
         if user_filter.tipo.id in [9,10,11]:
@@ -174,10 +178,14 @@ def Perfil_vista(request):
         return render(request, 'revisar/403.html')
     
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def Perfil_vista_baja(request):
     ids = [9,10,11]
-    user_filter = UserDatos.objects.get(user=request.user)
-    revisar_perfil = Perfil.objects.get(distrito=user_filter.distrito,numero_de_trabajador=user_filter.numero_de_trabajador)
+    #obtener datos de la sesion y el usuario logeado
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    user_filter = UserDatos.objects.get(pk = usuario_id)
+    #revisar_perfil = Perfil.objects.get(distrito=user_filter.distrito,numero_de_trabajador=user_filter.numero_de_trabajador)
     if user_filter.tipo.id in [4,9,10,11]: #Perfil RH
         if user_filter.tipo.id in [9,10,11]:
             perfiles_con_ultima_fecha = Datos_baja.objects.filter(perfil__complete=True,perfil__baja=True).values('perfil__numero_de_trabajador').annotate(max_fecha=Max('fecha'))
@@ -189,12 +197,12 @@ def Perfil_vista_baja(request):
             perfiles_con_ultima_fecha = Datos_baja.objects.filter(perfil__complete_status=True,perfil__distrito=user_filter.distrito,perfil__complete=True,perfil__baja=True).values('perfil__numero_de_trabajador').annotate(max_fecha=Max('fecha'))
             perfiles = Datos_baja.objects.filter(perfil__numero_de_trabajador__in=perfiles_con_ultima_fecha.values('perfil__numero_de_trabajador'),
                                                 fecha__in=perfiles_con_ultima_fecha.values('max_fecha')).order_by('perfil__numero_de_trabajador', '-fecha')
-
+            
         perfil_filter = PerfilFilter(request.GET, queryset=perfiles)
         perfiles = perfil_filter.qs
 
         if request.method =='POST' and 'Excel' in request.POST:
-            return convert_excel_perfil_baja(perfiles)
+            return convert_excel_perfil_baja(request,perfiles)
 
         p = Paginator(perfiles, 50)
         page = request.GET.get('page')
@@ -212,10 +220,15 @@ def Perfil_vista_baja(request):
         return render(request, 'revisar/403.html')
     
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def FormularioPerfil(request):
-    user_filter = UserDatos.objects.get(user=request.user)
+    #obtener datos de la sesion y el usuario logeado
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    user_filter = UserDatos.objects.get(pk = usuario_id)
+    
     if user_filter.tipo.id in [4,9,10,11]: #Perfil RH
-        empleado,created=Perfil.objects.get_or_create(complete=False)
+        empleado, created = Perfil.objects.get_or_create(complete=False)
         subproyectos = SubProyecto.objects.all()
 
         if user_filter.tipo.id in [9,10,11]:
@@ -225,7 +238,7 @@ def FormularioPerfil(request):
         ahora = datetime.date.today()
 
         if request.method == 'POST' and 'btnSend' in request.POST:
-            if user_filter.tipo.id in [9,10,11] :
+            if user_filter.tipo.id in [9,10,11]:
                 form = PerfilForm(request.POST, request.FILES, instance=empleado)
                 no_trabajador = request.POST.get('numero_de_trabajador')
             else:
@@ -234,45 +247,60 @@ def FormularioPerfil(request):
                 
             distrito_form = request.POST.get('distrito')
             
-            trabajador_existe = Perfil.objects.filter(numero_de_trabajador = no_trabajador, distrito_id = distrito_form).exists()
-            form.save(commit=False)
+            # Validar si ya existe un trabajador con los mismos datos
+            trabajador_existe = Perfil.objects.filter(numero_de_trabajador=no_trabajador, distrito_id=distrito_form).exists()
 
-            if empleado.foto and empleado.foto.size > 2097152:
-                messages.error(request,'El tamaño del archivo es mayor de 2 MB')
-            elif empleado.numero_de_trabajador < 0:
-                messages.error(request, '(Número empleado) El numero de empleado debe ser mayor o igual a 0')
-            elif empleado.fecha_nacimiento >= ahora:
-                messages.error(request, 'La fecha de nacimiento no puede ser mayor o igual a hoy')
-            elif trabajador_existe == True:
-                messages.error(request, '(Número empleado) El numero de empleado se repite con otro')
-            #elif form == PerfilDistritoForm() and Perfil.objects.filter(numero_de_trabajador=empleado.numero_de_trabajador, distrito = empleado.distrito).exists():
-            #    messages.error(request, '(Número empleado) El numero de empleado se repite con otro')
+            # Comprobar si el formulario es válido antes de guardar
+            if form.is_valid():
+                # Verificar tamaño de archivo, fecha de nacimiento, etc.
+                if empleado.foto and empleado.foto.size > 2097152:
+                    messages.error(request, 'El tamaño del archivo es mayor de 2 MB')
+                elif int(no_trabajador) < 0:
+                    messages.error(request, '(Número empleado) El número de empleado debe ser mayor o igual a 0')
+                elif form.cleaned_data.get('fecha_nacimiento') >= ahora:
+                    messages.error(request, 'La fecha de nacimiento no puede ser mayor o igual a hoy')
+                elif trabajador_existe:
+                    messages.error(request, '(Número empleado) El número de empleado se repite con otro')
+                else:
+                    try:
+                        # Asignar el distrito si el usuario es de tipo 4
+                        if user_filter.tipo.id == 4:
+                            empleado.distrito = user_filter.distrito
+                        # Obtener el nombre completo
+                        nombre = user_filter.perfil
+                        empleado.editado = f"C: {nombre.nombres} {nombre.apellidos}"
+                        empleado.complete = True
+                        
+                        # Guardar el formulario
+                        form.save()
+                        messages.success(request, 'Información capturada con éxito')
+                        return redirect('Perfil')
+                    except IntegrityError:
+                        messages.error(request, 'Ya existe un registro con ese número de empleado y distrito')
             else:
-                messages.success(request, 'Información capturada con éxito')
-                if form.is_valid():
-                    if user_filter.tipo.id == 4:
-                        empleado.distrito = user_filter.distrito
-                    nombre = Perfil.objects.get(numero_de_trabajador = user_filter.numero_de_trabajador, distrito = user_filter.distrito)
-                    empleado.editado = str("C:"+nombre.nombres+" "+nombre.apellidos)
-                    empleado.complete=True
-                    form.save()
-                    return redirect('Perfil')
-
+                messages.error(request, 'Por favor, corrija los errores en el formulario.')
+                
         context = {
-            'form':form,
-            'subproyectos':subproyectos
-            }
+            'form': form,
+            'subproyectos': subproyectos
+        }
+        return render(request, 'proyecto/PerfilForm.html', context)
+    else:
+        return render(request, 'revisar/403.html')
+   
 
-        return render(request, 'proyecto/PerfilForm.html',context)
-    else:   
-	    return render(request, 'revisar/403.html')
     
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def PerfilUpdate(request, pk):
-    user_filter = UserDatos.objects.get(user=request.user)
+    #obtener datos de la sesion y el usuario logeado
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    user_filter = UserDatos.objects.get(pk = usuario_id)
+    
     empleado = Perfil.objects.get(id=pk)
-    if user_filter.tipo.id in [4,9,10,11] and user_filter.distrito == empleado.distrito: #Perfil RH
-            
+    
+    if (user_filter.tipo.id in [4,9,11] and user_filter.distrito == empleado.distrito) or user_filter.tipo.id == 10:  #Perfil RH
         ahora = datetime.date.today()
         subproyectos = SubProyecto.objects.all()
         registros = empleado.history.filter(complete=True)
@@ -286,8 +314,7 @@ def PerfilUpdate(request, pk):
             elif empleado.fecha_nacimiento >= ahora:
                 messages.error(request, 'La fecha de nacimiento no puede ser mayor o igual a hoy')
             elif form.is_valid():
-                user_filter = UserDatos.objects.get(user=request.user)
-                nombre = Perfil.objects.get(numero_de_trabajador = user_filter.numero_de_trabajador, distrito = user_filter.distrito)
+                nombre = user_filter.perfil
                 empleado.editado = str("U:"+nombre.nombres+" "+nombre.apellidos)
                 messages.success(request, f'Cambios guardados con éxito en el perfil de {empleado.nombres} {empleado.apellidos}')
                 empleado = form.save(commit=False)
@@ -295,7 +322,7 @@ def PerfilUpdate(request, pk):
                 return redirect('Perfil')
         else:
             form = PerfilUpdateForm(instance=empleado)
-
+            
         context = {
             'form':form,
             'empleado':empleado,
@@ -308,8 +335,12 @@ def PerfilUpdate(request, pk):
     return render(request, 'proyecto/Perfil_update.html',context)
 
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def Perfil_revisar(request, pk):
-    user_filter = UserDatos.objects.get(user=request.user)   
+    #obtener datos de la sesion y el usuario logeado
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    user_filter = UserDatos.objects.get(pk = usuario_id)   
     #if user_filter.tipo.id in [4,9,10,11] or (user_filter.numero_de_trabajador == empleado.numero_de_trabajador and user_filter.distrito == empleado.distrito) or user_filter.tipo.id == 3:
     try:
         
@@ -318,7 +349,7 @@ def Perfil_revisar(request, pk):
         elif user_filter.tipo.id in [4,12,8]:
             empleado = Perfil.objects.get(id=pk, distrito_id = user_filter.distrito.id)  
         elif user_filter.tipo.id in [2,5,6,7]:
-            empleado = Perfil.objects.get(numero_de_trabajador = user_filter.numero_de_trabajador, distrito_id = user_filter.distrito.id) 
+            empleado = Perfil.objects.get(pk = user_filter.perfil.id, distrito_id = user_filter.distrito.id) 
         else:
             return render(request, 'revisar/403.html')
         
@@ -2794,7 +2825,8 @@ def convert_excel_perfil(request,perfiles):
     return(response)
 
 @login_required(login_url='user-login')
-def convert_excel_perfil_baja(perfiles):
+@perfil_session_seleccionado
+def convert_excel_perfil_baja(request,perfiles):
     #datos_baja = Datos_baja.objects.filter(perfil__in=perfiles).order_by("perfil__numero_de_trabajador")
     response= HttpResponse(content_type = "application/ms-excel")
     response['Content-Disposition'] = 'attachment; filename = Reporte_empleados_bajas_' + str(datetime.date.today())+'.xlsx'
@@ -6251,10 +6283,17 @@ def upload_batch_vacaciones_anteriores(request):
     return render(request, 'proyecto/upload_batch_vacaciones_anteriores.html', context)
 
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def Baja_empleado(request, pk):
-    user_filter = UserDatos.objects.get(user=request.user)
+    #obtener datos de la sesion y el usuario logeado
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    user_filter = UserDatos.objects.get(pk = usuario_id)
+    
     empleado = Perfil.objects.get(id=pk)
+    
     form = BajaEmpleadoForm()
+    
     if request.method == 'POST':
         form = BajaEmpleadoForm(request.POST)
         if form.is_valid():
@@ -6262,7 +6301,7 @@ def Baja_empleado(request, pk):
             form.instance.complete = True
             form.save()
             empleado.baja = True
-            nombre = Perfil.objects.get(numero_de_trabajador = user_filter.numero_de_trabajador, distrito = user_filter.distrito)
+            nombre = user_filter.perfil
             empleado.editado = str("B:"+nombre.nombres+" "+nombre.apellidos)
             empleado.save()
             messages.success(request, f'El empleado {empleado.nombres} {empleado.apellidos} se ha dado de baja en el Sistema')
@@ -6280,8 +6319,12 @@ def Baja_empleado(request, pk):
     return render(request, 'proyecto/Baja_empleado.html', context)
 
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def Baja_update(request, pk):
-    user_filter = UserDatos.objects.get(user=request.user)
+    #obtener datos de la sesion y el usuario logeado
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    user_filter = UserDatos.objects.get(pk = usuario_id)
 
     item = Datos_baja.objects.get(id=pk)
     form = BajaEmpleadoForm(instance=item)  # Aquí inicializamos el formulario con los datos del item
@@ -6289,7 +6332,7 @@ def Baja_update(request, pk):
     if request.method == 'POST':
         form = BajaEmpleadoForm(request.POST, instance=item)  # Aquí también debemos usar 'instance'
         if form.is_valid():
-            nombre = Perfil.objects.get(numero_de_trabajador=user_filter.numero_de_trabajador, distrito=user_filter.distrito)
+            nombre = user_filter.perfil
             item.editado = str("B:" + nombre.nombres + " " + nombre.apellidos)
             form.save()
             messages.success(request, f'Cambios guardados con éxito')
@@ -6553,7 +6596,13 @@ def Cv_agregar(request, pk):
     return render(request, 'proyecto/Cv_agregar.html', context)
 
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def Reingreso(request, pk):
+    #obtener datos de la sesion y el usuario logeado
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    user_filter = UserDatos.objects.get(pk = usuario_id)
+    
     empleado = Perfil.objects.get(id=pk)
     status = Status.objects.get(perfil=empleado)
     anterior = Datos_baja.objects.filter(perfil=empleado).last()
@@ -6572,8 +6621,7 @@ def Reingreso(request, pk):
         elif form.is_valid() and form2.is_valid():
             empleado = form.save(commit=False)
             status = form2.save(commit=False)
-            user_filter = UserDatos.objects.get(user=request.user)
-            nombre = Perfil.objects.get(numero_de_trabajador = user_filter.numero_de_trabajador, distrito = user_filter.distrito)
+            nombre = user_filter.perfil
             empleado.editado = str("Reingreso:"+nombre.nombres+" "+nombre.apellidos)
             status.editado = str("Reingreso:"+nombre.nombres+" "+nombre.apellidos)
             empleado.baja = False

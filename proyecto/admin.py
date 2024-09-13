@@ -62,6 +62,7 @@ class PerfilAdmin(admin.ModelAdmin):
     list_display = ('numero_de_trabajador','nombres','apellidos','id')
     search_fields = ('nombres'),
     list_filter = ('baja',)
+    list_filter = ['distrito']
 
 class StatusAdmin(admin.ModelAdmin):
     ordering = ['id']
@@ -119,6 +120,8 @@ class TipoPerfilAdmin(admin.ModelAdmin):
 class UserDatosAdmin(admin.ModelAdmin):
     list_display = ['id','perfil','distrito','tipo']
     raw_id_fields = ['perfil']
+    search_fields = ['perfil__nombres','perfil__apellidos']
+    list_filter = ['distrito']
 
     # Register your models here.
 admin.site.register(Empresa)
