@@ -59,11 +59,10 @@ admin.site.index_title = "Bienvenido a la administración del sistema"
 
 class PerfilAdmin(admin.ModelAdmin):
     ordering = ['numero_de_trabajador']
-    list_display = ('numero_de_trabajador','nombres','apellidos','id')
-    search_fields = ('nombres'),
-    list_filter = ('baja',)
-    list_filter = ['distrito']
-
+    list_display = ('numero_de_trabajador', 'nombres', 'apellidos', 'id')
+    search_fields = ('nombres', 'apellidos', 'numero_de_trabajador', 'id')
+    list_filter = ('baja', 'distrito')
+    
 class StatusAdmin(admin.ModelAdmin):
     ordering = ['id']
     list_display = ('id','perfil','perfil_id',)

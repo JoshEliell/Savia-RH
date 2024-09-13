@@ -363,15 +363,20 @@ def Perfil_revisar(request, pk):
         return render(request, 'revisar/403.html')
 
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def Status_vista(request):
     ids = [9,10,11]
-    user_filter = UserDatos.objects.get(user=request.user)
+    #obtener datos de la sesion y el usuario logeado
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    user_filter = UserDatos.objects.get(pk = usuario_id)
+    
     if user_filter.tipo.id in [4,9,10,11,12,8]: #Perfil RH o observador
         #revisar_perfil = Perfil.objects.get(distrito=user_filter.distrito,numero_de_trabajador=user_filter.numero_de_trabajador)
         if user_filter.tipo.id in [9,10,11]:
             status= Status.objects.filter(complete=True).order_by("perfil__numero_de_trabajador")
         else:
-            status = Status.objects.filter(perfil__distrito = user_filter.distrito, complete=True).order_by("perfil__numero_de_trabajador")
+            status = Status.objects.filter(perfil__distrito_id = user_filter.distrito.id, complete=True).order_by("perfil__numero_de_trabajador")
         
         status_filter = StatusFilter(request.GET, queryset=status)
 
@@ -398,14 +403,19 @@ def Status_vista(request):
         return render(request, 'revisar/403.html')
     
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def FormularioStatus(request):
-    user_filter = UserDatos.objects.get(user=request.user)
+    #obtener datos de la sesion y el usuario logeado
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    user_filter = UserDatos.objects.get(pk = usuario_id)
+    
     if user_filter.tipo.id in [4,9,10,11]: #Perfil RH
         #revisar_perfil = Perfil.objects.get(distrito=user_filter.distrito,numero_de_trabajador=user_filter.numero_de_trabajador)
         if user_filter.tipo.id in [9,10,11]:
             empleados = Perfil.objects.filter(complete=True, complete_status=False, baja=False)
         else:
-            empleados = Perfil.objects.filter(distrito=user_filter.distrito,complete=True, complete_status=False, baja=False)
+            empleados = Perfil.objects.filter(distrito_id=user_filter.distrito.id,complete=True, complete_status=False, baja=False)
 
         estado,created=Status.objects.get_or_create(complete=False)
         form = StatusForm()
@@ -441,7 +451,7 @@ def FormularioStatus(request):
                             valido=True
             empleado = Perfil.objects.get(id = estado.perfil.id)
             if form.is_valid() and valido  == True:
-                nombre = Perfil.objects.get(numero_de_trabajador = user_filter.numero_de_trabajador, distrito = user_filter.distrito)
+                nombre = user_filter.perfil
                 estado.editado = str("C:"+nombre.nombres+" "+nombre.apellidos)
                 messages.success(request, 'Información capturada con éxito')
                 estado.complete=True
@@ -462,10 +472,16 @@ def FormularioStatus(request):
         return render(request, 'revisar/403.html')
     
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def StatusUpdate(request, pk):
-    user_filter = UserDatos.objects.get(user=request.user)
+    #obtener datos de la sesion y el usuario logeado
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    user_filter = UserDatos.objects.get(pk = usuario_id)
+    
     estado = Status.objects.get(id=pk)
-    if user_filter.tipo.id in [4,9,10,11] and user_filter.distrito == estado.perfil.distrito: #Perfil RH
+    
+    if user_filter.tipo.id in [4,9,10,11] and user_filter.distrito.id == estado.perfil.distrito.id: #Perfil RH
         puestos = Puesto.objects.all()
         ahora = datetime.date.today()
         registros = estado.history.filter(complete=True)
@@ -519,12 +535,8 @@ def StatusUpdate(request, pk):
                 else:
                     valido=True
                 """
-                
-                
-            
             if form.is_valid() and valido == True:
-                user_filter = UserDatos.objects.get(user=request.user)
-                nombre = Perfil.objects.get(numero_de_trabajador = user_filter.numero_de_trabajador, distrito = user_filter.distrito)
+                nombre = user_filter.perfil
                 estado.editado = str("U:"+nombre.nombres+" "+nombre.apellidos)
                 messages.success(request, f'Cambios guardados con éxito en el Status de {estado.perfil.nombres} {estado.perfil.apellidos}')
                 estado = form.save(commit=False)
@@ -538,10 +550,14 @@ def StatusUpdate(request, pk):
         return render(request, 'proyecto/Status_update.html',context)
     else:
         return render(request, 'revisar/403.html')
+    
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def Status_revisar(request, pk):
-    user_filter = UserDatos.objects.get(user=request.user)
-    print(user_filter.numero_de_trabajador)
+    #obtener datos de la sesion y el usuario logeado
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    user_filter = UserDatos.objects.get(pk = usuario_id)
     try:
         if user_filter.tipo.id in [9,10,11]:
             estado = Status.objects.get(id=pk)
@@ -6385,6 +6401,7 @@ def Antiguedad(request, pk): #Comprobar que el empleado si puede entrar a los li
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def Cv_datos(request, pk):
 
     status = Status.objects.get(id=pk)
@@ -6567,15 +6584,20 @@ def generar_curp_pdf(datos,status):
     return FileResponse(buf, as_attachment=True, filename='CV_empleado.pdf')
 
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def Cv_agregar(request, pk):
-    user_filter = UserDatos.objects.get(user=request.user)
+    #obtener datos de la sesion y el usuario logeado
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    user_filter = UserDatos.objects.get(pk = usuario_id)
+    
     status = Status.objects.get(id=pk)
     puestos = Puesto.objects.all()
     form = CvAgregar()
     if request.method == 'POST':
         form = CvAgregar(request.POST)
         if form.is_valid():
-            nombre = Perfil.objects.get(numero_de_trabajador=user_filter.numero_de_trabajador, distrito=user_filter.distrito)
+            nombre = user_filter.perfil
             form.instance.editado = str("B:" + nombre.nombres + " " + nombre.apellidos)
             form.instance.status = status
             form.instance.complete = True
