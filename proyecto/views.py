@@ -770,13 +770,17 @@ def Uniformes_revisar_ordenes(request, pk):
     return render(request, 'proyecto/Uniformes_revisar_ordenes.html',context)
 
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def FormularioDatosBancarios(request):
-    user_filter = UserDatos.objects.get(user=request.user)
+    #obtener datos de la sesion y el usuario logeado
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    user_filter = UserDatos.objects.get(pk = usuario_id)
+    
     if user_filter.tipo.id in [4,9,10,11]: #Perfil RH
-        revisar_perfil = Perfil.objects.get(distrito=user_filter.distrito,numero_de_trabajador=user_filter.numero_de_trabajador)
-        perfil = Perfil.objects.filter(distrito = user_filter.distrito, baja=False)
-        empleados= Status.objects.filter(perfil__id__in=perfil.all(),complete = True, complete_bancarios=False)
-
+        
+        empleados = Status.objects.select_related('perfil').filter(perfil__distrito_id = user_filter.distrito.id, complete = True, complete_bancarios = False)
+        
         bancario,created=DatosBancarios.objects.get_or_create(complete=False)
         form = DatosBancariosForm()
         form.fields["status"].queryset = empleados
@@ -786,7 +790,7 @@ def FormularioDatosBancarios(request):
             form.save(commit=False)
 
             if form.is_valid():
-                nombre = Perfil.objects.get(numero_de_trabajador = user_filter.numero_de_trabajador, distrito = user_filter.distrito)
+                nombre = user_filter.perfil
                 bancario.editado = str("C:"+nombre.nombres+" "+nombre.apellidos)
                 empleado = Status.objects.get(id = bancario.status.id)
                 messages.success(request, 'Información capturada con éxito')
@@ -795,8 +799,7 @@ def FormularioDatosBancarios(request):
                 form.save()
                 empleado.save()
                 return redirect('Tabla_datosbancarios')
-
-
+            
         context = {'form':form,'empleados':empleados,}
 
         return render(request, 'proyecto/DatosBancariosForm.html',context)
@@ -804,9 +807,14 @@ def FormularioDatosBancarios(request):
         return render(request, 'revisar/403.html')
     
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def BancariosUpdate(request, pk):
     item = DatosBancarios.objects.get(id=pk)
-    user_filter = UserDatos.objects.get(user=request.user)
+    #obtener datos de la sesion y el usuario logeado
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    user_filter = UserDatos.objects.get(pk = usuario_id)
+    
     if user_filter.tipo.id in [4,9,10,11] and user_filter.distrito == item.status.perfil.distrito : #Perfil RH
         registros = item.history.filter(complete=True)
 
@@ -814,8 +822,7 @@ def BancariosUpdate(request, pk):
             form = BancariosUpdateForm(request.POST, instance=item)
 
             if form.is_valid():
-                user_filter = UserDatos.objects.get(user=request.user)
-                nombre = Perfil.objects.get(numero_de_trabajador = user_filter.numero_de_trabajador, distrito = user_filter.distrito)
+                nombre = user_filter.perfil
                 item.editado = str("U:"+nombre.nombres+" "+nombre.apellidos)
                 messages.success(request, f'Cambios guardados con éxito los datos bancarios de {item.status.perfil.nombres} {item.status.perfil.apellidos}')
                 item = form.save(commit=False)
@@ -2126,21 +2133,24 @@ def EconomicosRevisar(request, pk):
         return render(request, 'revisar/403.html')
 
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def Tabla_Datosbancarios(request):
     ids = [9,10,11]
-    user_filter = UserDatos.objects.get(user=request.user)
+    #obtener datos de la sesion y el usuario logeado
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    user_filter = UserDatos.objects.get(pk = usuario_id)
+    
     if user_filter.tipo.id in [4,8,9,10,11,12] or user_filter.tipo.id == 3: #Perfil RH o observador
         #revisar_perfil = Perfil.objects.get(distrito=user_filter.distrito,numero_de_trabajador=user_filter.numero_de_trabajador,baja = False)
         if user_filter.tipo.id in [9,10,11]:
             bancarios= DatosBancarios.objects.filter(complete=True).order_by("status__perfil__numero_de_trabajador")
         else:
-            perfil = Perfil.objects.filter(distrito = user_filter.distrito,complete=True)
-            bancarios = DatosBancarios.objects.filter(status__perfil__id__in=perfil.all(), complete=True).order_by("status__perfil__numero_de_trabajador")
+            perfil = Perfil.objects.filter(distrito = user_filter.distrito,complete=True).values_list('id',flat=True)
+            bancarios = DatosBancarios.objects.filter(status__perfil__id__in=perfil, complete=True).order_by("status__perfil__numero_de_trabajador")
         bancario_filter = BancariosFilter(request.GET, queryset=bancarios)
         bancarios = bancario_filter.qs
-        for bancario in bancarios:
-            bancario.numero_de_tarjeta = str(bancario.numero_de_tarjeta)
-            bancario.clabe_interbancaria = str(bancario.clabe_interbancaria)
+        
         if request.method =='POST' and 'Excel' in request.POST:
             return convert_excel_bancarios(request, bancarios)
 
@@ -2410,7 +2420,7 @@ def convert_excel_bancarios(request, bancarios):
     money_resumen_style.font = Font(name ='Calibri', size = 14, bold = True)
     wb.add_named_style(money_resumen_style)
 
-    columns = ['Empresa','Distrito','Nombre','No. de cuenta','No. de tarjeta','Clabe interbancaria','Banco','Bono de la catorcena', '#Trabajador']
+    columns = ['Empresa','Distrito','Nombre','No. de cuenta','No. de tarjeta','Clabe interbancaria','Banco','# Trabajador']
 
     for col_num in range(len(columns)):
         (ws.cell(row = row_num, column = col_num+1, value=columns[col_num])).style = head_style
