@@ -193,7 +193,6 @@ def registrar_rango_incidencias(request,pk):
             errores = dict(incidencias_form.errors.items())
             for field, error_list in errores.items():
                   for error in error_list:
-                      print(error)
                       validacion = error
                       
             # Prepara la respuesta JSON con los errores de validacion
@@ -884,6 +883,7 @@ def filtrar_prenominas(request, pk):
     
 
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def PdfFormatoEconomicos(request, solicitud):
     solicitud= Solicitud_economicos.objects.get(id=solicitud.id)
     now = date.today()

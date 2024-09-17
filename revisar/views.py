@@ -146,7 +146,7 @@ def autorizarSolicitud(request,solicitud):
                         autorizar.save()
                         
                         #rol control tecnico
-                        perfil_control_tenico = UserDatos.objects.get(distrito_id = usuario.distrito.id, tipo_id = 7)
+                        perfil_control_tenico = UserDatos.objects.get(distrito_id = usuario.distrito.id, tipo_id = 7, activo = True)
                                                     
                         #buscar o crea la autorizacion para el control tecnico
                         control_tecnico, created = AutorizarSolicitudes.objects.get_or_create(
@@ -171,7 +171,7 @@ def autorizarSolicitud(request,solicitud):
                         autorizar.save()
                         
                         #se busca el perfil del gerente correspondiente al distrito
-                        perfil_gerente = UserDatos.objects.get(distrito_id = usuario.distrito.id, tipo_id = 8)
+                        perfil_gerente = UserDatos.objects.get(distrito_id = usuario.distrito.id, tipo_id = 8, activo = True)
                         
                         #buscar o crea la autorizacion para el gerente
                         gerente, created = AutorizarSolicitudes.objects.get_or_create(

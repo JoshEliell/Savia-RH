@@ -273,7 +273,9 @@ def crearSolicitudBonos(request):
         empleados = Perfil.objects.filter(distrito_id = usuario.distrito.id).exclude(baja = 1).order_by('nombres')        
         solicitante = usuario.perfil
         #obtener los superintendentes operativos, administrativos
-        perfiles = Perfil.objects.filter(distrito_id = usuario.distrito.id, user_datos__tipo_id__in=[6,12])
+        perfiles = UserDatos.objects.select_related('perfil').filter(distrito_id = usuario.distrito.id, activo=True,tipo_id__in=[6,12])
+        perfiles_id = [p.perfil.id for p in perfiles]
+        
         bonoSolicitadoForm.fields["trabajador"].queryset = empleados 
         folio = Solicitud.objects.filter(complete=True).order_by('-folio').values_list('folio', flat=True).first() + 1
         solicitud, created = Solicitud.objects.get_or_create(complete = False, defaults={'complete': False, 'folio':folio,'solicitante_id':solicitante.id, 'total':0.00})
@@ -394,7 +396,7 @@ def crearSolicitudBonos(request):
                     messages.error(request, 'Falta adjuntar soportes')
                     return redirect(request.META.get('HTTP_REFERER'))
                 
-                autorizarSolicitudForm = AutorizarSolicitudForm(request.POST, user = usuario)
+                autorizarSolicitudForm = AutorizarSolicitudForm(request.POST)
                 
                 if autorizarSolicitudForm.is_valid():    
                     autorizar = autorizarSolicitudForm.save(commit=False)  
@@ -416,7 +418,7 @@ def crearSolicitudBonos(request):
                     return redirect('listarBonosVarilleros')
                 
         solicitudForm =  SolicitudForm(instance = solicitud)
-        autorizarSolicitudForm.fields['perfil'].queryset = perfiles
+        autorizarSolicitudForm.fields['perfil'].queryset = Perfil.objects.filter(id__in=perfiles_id)
     
         contexto = {
             'folio': folio,
@@ -904,7 +906,6 @@ def removerBonoVerificar(request,bono_id):
         
         if usuario.tipo.id in (4,5):
             try:
-                print("Este es el bono: ", bono_id)
                 bono = BonoSolicitado.objects.get(pk=bono_id)
                 solicitud = Solicitud.objects.get(pk=bono.solicitud_id)
                 if bono.puesto.id == 19: #ID puesto - todos los que participen en la actividad
@@ -1089,10 +1090,7 @@ def get_puestos(request):
         data = []
         
         if bono_id:
-            print("este es el bono subcategoria: ", bono_id)
             if int(bono_id) in (1,2):#IDS DEL MODELO ESQUEMA_SUBATEGORIA - evic extracion, evic introduccion
-                print("entramos aqui")
-                print("folio: ", folio)
                 bonos_solicitados = BonoSolicitado.objects.filter(solicitud__folio = folio).select_related('bono__puesto').values_list('bono__puesto_id',flat=True)
                 #Trae todos los bonos por puesto por distrito, estado 1 = baja | 0 = activo - se excluye el puesto para este caso
                 puestos_qs = Bono.objects.filter(esquema_subcategoria = bono_id,distrito_id = usuario.distrito.id,estado = 0).exclude(puesto_id__in = list(bonos_solicitados)).values('id','puesto__id','puesto__puesto','importe')

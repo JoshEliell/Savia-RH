@@ -242,9 +242,10 @@ Crear Solicitud - Bonos Varilleros
                                 <tr>
                                     <form action="{% url 'crearSolicitudBonos' %}" method="POST" id="form_enviar_solicitud">
                                         <td>
-                                          
+                                            <label for="" class="text-muted">Seleccionar perfil: </label>
                                         </td> 
                                         <td>
+                                            
                                             {{autorizarSolicitudForm.perfil|add_class:"form-control"}}
                                         </td>  
                                         <td>

@@ -77,6 +77,7 @@ from django.db import IntegrityError
 
 
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def Index(request):
     return render(request, 'proyecto/Inicio.html')
 
@@ -930,7 +931,7 @@ def FormularioCosto(request):
                                                                                     messages.error(request, '(Días laborados IMSS) La cantidad capturada debe ser menor a 31')
                                                                                 else:
                                                                                     actual = datetime.date.today()
-                                                                                    print("fecha actual: ",actual)
+                                                                                    
 
                                                                                     antiguedad_factor_integracion = relativedelta(actual, costo.status.fecha_ingreso)# calcular antiguedad
                                                                                     años_ingreso = antiguedad_factor_integracion.years #obtiene los años
@@ -1188,7 +1189,7 @@ def CostoUpdate(request, pk):
                                                                             else:
                                                                                 
                                                                                 actual = datetime.date.today()
-                                                                                print("fecha actual: ",actual)
+                                                                                
 
                                                                                 antiguedad_factor_integracion = relativedelta(actual, costo.status.fecha_ingreso)# calcular antiguedad
                                                                                 años_ingreso = antiguedad_factor_integracion.years #obtiene los años
@@ -1890,7 +1891,7 @@ def Tabla_Vacaciones(request): #Ya esta
             descansos = periodo1 | periodo3
             descansos = descansos.exclude(status__fecha_planta_anterior__isnull=True, status__fecha_planta__isnull=True)
 
-            print(descansos.count())
+           
 
         #elif user_filter.distrito.distrito == 'Poza Rica':
         #    perfil = Perfil.objects.filter(distrito = user_filter.distrito,complete=True, baja=False)
@@ -1914,7 +1915,7 @@ def Tabla_Vacaciones(request): #Ya esta
             descansos = periodo1 | periodo3
             #descansos = descansos.exclude(fecha_planta_anterior__isnull=True, fecha_planta__isnull=True)
 
-            print('proyecto: ',descansos.count())
+           
 
         vacaciones_filter = VacacionesFilter(request.GET, queryset=descansos)
         descansos = vacaciones_filter.qs
@@ -2220,6 +2221,7 @@ def Tabla_Datosbancarios(request):
         return render(request, 'revisar/403.html')
     
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def Empleado_Datosbancarios(request, pk):
     #obtener datos de la sesion y el usuario logeado
     userdatos = request.session.get('usuario_datos')        
@@ -2260,6 +2262,7 @@ def HistoryCosto(request, pk):
     return render(request, 'proyecto/Costo_history.html',context)
 
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def convert_excel_costo(request,costos):    
     response = HttpResponse(content_type="application/ms-excel")
     response['Content-Disposition'] = 'attachment; filename = Reporte_costos_' + str(datetime.date.today()) + '.xlsx'
@@ -2344,12 +2347,13 @@ def convert_excel_costo(request,costos):
     return response
 
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def convert_excel_costo_anterior(request,costos):
     #Fecha del reporte mensual
     from django.utils import formats
     from django.utils.translation import activate
     activate('es')
-    print(costos)
+ 
     if costos is not None:
         c = costos.first()
         fecha_reporte = formats.date_format(c.created_at, "F Y")
@@ -2441,6 +2445,7 @@ def convert_excel_costo_anterior(request,costos):
 
 
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def convert_excel_bancarios(request, bancarios):
     response= HttpResponse(content_type = "application/ms-excel")
     response['Content-Disposition'] = 'attachment; filename = Reporte_datos_bancarios_' + str(datetime.date.today())+'.xlsx'
@@ -2511,6 +2516,7 @@ def convert_excel_bancarios(request, bancarios):
     return(response)
 
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def convert_excel_bonos(bonos):
     response= HttpResponse(content_type = "application/ms-excel")
     response['Content-Disposition'] = 'attachment; filename = Reporte_bonos_' + str(datetime.date.today())+'.xlsx'
@@ -2590,6 +2596,7 @@ def convert_excel_bonos(bonos):
     return(response)
 
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def convert_excel_vacaciones(request, descansos):
     response= HttpResponse(content_type = "application/ms-excel")
     response['Content-Disposition'] = 'attachment; filename = Reporte_vacaciones_' + str(datetime.date.today())+'.xlsx'
@@ -2680,6 +2687,7 @@ def convert_excel_vacaciones(request, descansos):
     return(response)
 
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def convert_excel_uniformes(ropas):
     response= HttpResponse(content_type = "application/ms-excel")
     response['Content-Disposition'] = 'attachment; filename = Reporte_uniformes_' + str(datetime.date.today())+'.xlsx'
@@ -2757,6 +2765,7 @@ def convert_excel_uniformes(ropas):
     return(response)
 
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def convert_excel_economicos(request, economicos,economicoss):
     response= HttpResponse(content_type = "application/ms-excel")
     response['Content-Disposition'] = 'attachment; filename = Reporte_días_economicos_' + str(datetime.date.today())+'.xlsx'
@@ -2833,6 +2842,7 @@ def convert_excel_economicos(request, economicos,economicoss):
     return(response)
 
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def convert_excel_perfil(request,perfiles):
     response= HttpResponse(content_type = "application/ms-excel")
     response['Content-Disposition'] = 'attachment; filename = Reporte_empleados_' + str(datetime.date.today())+'.xlsx'
@@ -2996,6 +3006,7 @@ def convert_excel_perfil_baja(request,perfiles):
     return(response)
 
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def convert_excel_status(request, status):
     response= HttpResponse(content_type = "application/ms-excel")
     response['Content-Disposition'] = 'attachment; filename = Reporte_empleados_status_' + str(datetime.date.today())+'.xlsx'
@@ -3709,6 +3720,7 @@ def reporte_pdf_uniformes(uniformes, pk):
     return FileResponse(buf, as_attachment=True, filename='Uniforme_reporte.pdf')
 
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def reporte_pdf_costo_detalles(request,costo):
     now = datetime.date.today()
     fecha = str(now)
@@ -3876,6 +3888,7 @@ def reporte_pdf_costo_detalles(request,costo):
     return FileResponse(buf, as_attachment=True, filename='CostoDetalle.pdf')
 
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def reporte_pdf_costo_incidencias(request,costo,bonototal):
     costo = Costo.objects.get(id = costo.id)
     now = datetime.date.today()
@@ -3920,7 +3933,7 @@ def reporte_pdf_costo_incidencias(request,costo,bonototal):
         solicitud__fecha_autorizacion__range=(fecha_inicial, fecha_final)
     ).aggregate(total=Sum('cantidad'))['total'] or 0
 
-    print("Total Bonos:", total_bonos)
+  
         
     #calculo del infonavit
     if infonavit == 0:
@@ -3971,7 +3984,7 @@ def reporte_pdf_costo_incidencias(request,costo,bonototal):
         solicitud__fecha_autorizacion__range=(fecha_inicial, fecha_final)
     ).aggregate(total=Sum('cantidad'))['total'] or 0
 
-    print("Total Bonos:", total_bonos)
+   
         
     #calculo del infonavit
     if infonavit == 0:
@@ -3990,13 +4003,7 @@ def reporte_pdf_costo_incidencias(request,costo,bonototal):
         numero_catorcenas =  Catorcenas.objects.filter(fecha_final__range=(primer_dia_mes,ultimo_dia_mes)).count()
         prestamo_fonacot = prestamo_fonacot / numero_catorcenas
         
-        
-    print("infonavit", prestamo_infonavit)
-    print("fonacot", prestamo_fonacot)
-    
-    print(prenomina.empleado)
-    print("neto catorcenal: ",  neto_catorcenal)
-    print("salario: ",salario)
+
     
     #contar no. de incidencias 
     retardos = prenomina.retardos_set.filter(fecha__range=(catorcena_actual.fecha_inicial, catorcena_actual.fecha_final)).count()
@@ -4703,7 +4710,6 @@ def SolicitudVacaciones(request):
     try:
         datos= Vacaciones.objects.get(complete=True,status=status,periodo=periodo) #Para sacar el dato actual
     except ObjectDoesNotExist:
-        print("Aun no puedes solicitar vacaciones, no tienes la antiguedad")
         return render(request, 'error_pages/solicitud_vacaciones.html')
 
     if request.method == 'POST' and 'btnSend' in request.POST:
@@ -4913,7 +4919,6 @@ def solicitud_vacacion_verificar(request, pk):
                         solicitud.save()
                         #coment = request.POST.get('comentario')
                         
-                        print("status solicitud: ", solicitud.status)
                         vacacion = Vacaciones.objects.get(complete=True, status=solicitud.status, periodo=solicitud.periodo)
                         
                         if vacacion.dias_disfrutados is None:
@@ -5674,6 +5679,7 @@ def PdfFormatoEconomicos(request, pk):
 
     #Reportes generales
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def excel_reporte_general(request,perfil,status,bancarios,costo,bonos,vacaciones,economicos,):
     fecha_actual = date.today()
     año_actual = str(fecha_actual.year)
@@ -5795,6 +5801,7 @@ def excel_reporte_general(request,perfil,status,bancarios,costo,bonos,vacaciones
     return(response)
 
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def reporte_pdf_general(request,perfil,status,bancarios,costo,bonos,vacaciones,economicos,):
     #Configuration of the PDF object
     buf = io.BytesIO()
@@ -5939,6 +5946,7 @@ def reporte_pdf_general(request,perfil,status,bancarios,costo,bonos,vacaciones,e
     return FileResponse(buf, as_attachment=True, filename='Reporte_general.pdf')
 
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def excel_reporte_especifico(distrito_seleccionado,perfill,statuss,bancarioss,costoo,bonoss,vacacioness,economicoss,):
     hombres = statuss.filter(sexo__sexo = 'Masculino')
     hombres = hombres.count()
@@ -6059,6 +6067,7 @@ def excel_reporte_puestos():
     return(response)
 """
 @login_required(login_url='user-login')
+@perfil_session_seleccionado
 def reporte_pdf_especifico(distrito_seleccionado,perfill,statuss,bancarioss,costoo,bonoss,vacacioness,economicoss,):
     #Configuration of the PDF object
     buf = io.BytesIO()
@@ -6532,6 +6541,8 @@ def Cv_datos(request, pk):
 
     return render(request, 'proyecto/Cv_datos.html',context)
 
+@login_required(login_url='user-login')
+@perfil_session_seleccionado
 def generar_curp_pdf(datos,status):
     #Configuration of the PDF object
     buf = io.BytesIO()
@@ -7118,7 +7129,7 @@ def TablaPrenominas(request):
             prenominas= Prenomina.objects.all().order_by("empleado__status__perfil__numero_de_trabajador")
         else:
             perfil = Perfil.objects.filter(distrito_id = user_filter.distrito.id,complete=True).values_list('id',flat=True)
-            prenominas= Prenomina.objects.filter(empleado__status__perfil__id__in=perfil.all()).order_by("empleado__status__perfil__apellidos")
+            prenominas= Prenomina.objects.filter(empleado__status__perfil__id__in=perfil).order_by("empleado__status__perfil__apellidos")
 
         prenomina_filter = PrenominaFilter(request.GET, queryset=prenominas)
         prenominas = prenomina_filter.qs
