@@ -151,12 +151,16 @@
                     <td>{{solicitud.id}}</td>
                     <td>{{solicitud.fecha}}</td>
                     {% if economico_menu %}
-                        {% if solicitud.autorizar_jefe == True %}
-                            <td>autorizado</td>
-                        {% else %}
-                            <td> rechazado</td>
+                        {% if solicitud.autorizar_jefe == True or user_filter.tipo_id == 8 or user_filter.tipo_id == 4%}
+                            {% if solicitud.autorizar == True %}
+                                <td>autorizado</td>
+                            {% else %}
+                                <td> rechazado</td>
+                            {% endif %}
                         {% endif %}
                     {% endif %}
+
+                    {% comment %}            
                     {% if user_filter.tipo_id == 8 or user_filter.tipo_id == 4%}
                         {% if solicitud.autorizar == True %}
                             <td>autorizado</td>
@@ -164,6 +168,7 @@
                             <td> rechazado</td>
                         {% endif %}
                     {% endif %}
+                    {% endcomment %}
                     {% if user_filter.tipo_id == 8 or user_filter.tipo_id == 4%}
                         <td><a class="btn btn-outline-info" id="btnActualizar" type="button" href="{% url 'Solicitudes_economicos_formato' solicitud.id %}"><i class="fa-solid fa-file-pdf fa-2xl"></i></a></td>
                     {% endif %}

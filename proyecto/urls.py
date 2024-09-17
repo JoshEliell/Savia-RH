@@ -7,7 +7,7 @@ from proyecto import views
 
 urlpatterns = [
     path('', views.Index, name='Inicio'),
-
+    
     path('Perfil', views.Perfil_vista, name='Perfil'),
     path('Perfil_baja', views.Perfil_vista_baja, name='Perfil_baja'),
     path('Perfil/Reingreso/<int:pk>/', views.Reingreso, name='Reingreso'),  
