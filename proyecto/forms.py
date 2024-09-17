@@ -216,3 +216,4 @@ class Registro_patronal_form(forms.ModelForm):
     class Meta:
         model = RegistroPatronal
         fields = ['prima_anterior', 'prima']
+        

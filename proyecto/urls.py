@@ -7,10 +7,10 @@ from proyecto import views
 
 urlpatterns = [
     path('', views.Index, name='Inicio'),
-
+    
     path('Perfil', views.Perfil_vista, name='Perfil'),
     path('Perfil_baja', views.Perfil_vista_baja, name='Perfil_baja'),
-    path('Perfil/Reingreso<int:pk>/', views.Reingreso, name='Reingreso'),  
+    path('Perfil/Reingreso/<int:pk>/', views.Reingreso, name='Reingreso'),  
     path('Status', views.Status_vista, name='Status'),
     path('Formulario_Perfil', views.FormularioPerfil, name='Formulario_perfil'),
     path('Formulario_Status', views.FormularioStatus, name='Formulario_status'),
@@ -43,7 +43,7 @@ urlpatterns = [
     path('Costo/revisar/<int:pk>/', views.Costo_revisar, name='Costo_revisar'),
     path('Costo/History/<int:pk>/', views.HistoryCosto, name='Costo_history'),
     path('upload_Costos', views.upload_batch_costos, name='Upload_costos'),
-    path('Empleado/Costo/<int:pk>/', views.Empleado_Costo, name='Empleado_costo'),
+    path('Empleado/Costo/<int:pk>/', views.Empleado_Costo, name='Empleado_costo'),###
 
     #path('Formulario_Vacaciones', views.FormularioVacaciones, name='Formulario_vacaciones'),
     path('VacacionesEmpleados', views.Tabla_Vacaciones, name='Tabla_vacaciones_empleados'),
@@ -61,13 +61,11 @@ urlpatterns = [
     path('upload_Bancarios', views.upload_batch_bancarios, name='Upload_bancarios'),
     path('Empleado/Datos_bancarios/<int:pk>/', views.Empleado_Datosbancarios, name='Empleado_bancarios'),
     path('upload_Bonos_catorcena', views.upload_batch_bonos, name='Upload_bonos_catorcena'),
-
     path('DatosBancarios/update/<int:pk>/', views.BancariosUpdate, name='Bancarios_update'),
 
     path('Tabla/Uniformes', views.Tabla_uniformes, name='Tabla_uniformes'),
     path('Orden/Uniformes/<int:pk>/', views.Orden_uniformes, name='Orden_uniformes'),
     path('Orden/Uniformes/<int:pk>/update_uniformes/', views.update_uniformes, name='update-uniformes'),
-
     path('Uniformes/completados/revisar/<int:pk>/', views.Uniformes_revisar_completados, name='Uniformes_completados_revisar'),
     path('Uniformes/ordenes/revisar/<int:pk>/', views.Uniformes_revisar_ordenes, name='Uniformes_ordenes_revisar'),
     path('Uniformes/pdf/<int:pk>/', views.reporte_pdf_uniformes, name='reporte_pdf_uniformes'),
@@ -98,6 +96,7 @@ urlpatterns = [
     
     path('listar_tabulador_bonos', views.listar_tabulador_bonos, name='listar_tabulador_bonos'),
     
+
     
     
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

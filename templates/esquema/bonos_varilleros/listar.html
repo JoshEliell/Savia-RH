@@ -206,7 +206,7 @@
                         </th>
                       
                         {% comment %} edita la solicitud {% endcomment %}
-                        {% if autorizacion.estado.id == 4 and autorizacion.solicitud.solicitante.numero_de_trabajador == usuario.numero_de_trabajador %}
+                        {% if autorizacion.estado.id == 4 and autorizacion.solicitud.solicitante.id == usuario.perfil.id %}
                         <th>
                             <a href="{% url 'verificarSolicitudBonosVarilleros' autorizacion.solicitud.id %}" title="Aplicar cambios a la solicitud" class="btn btn-sm btn-success"><i class="fas fa-edit"></i></a>
                         </th>
