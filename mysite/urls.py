@@ -29,6 +29,9 @@ urlpatterns = [
     path('revisar/',include('revisar.urls')), #autorizaciones
     path('calculos/',include('calculos.urls')), #calculos
     path('proyecto/', include('proyecto.urls')),
+    path('apiapp/', include('apiapp.urls')),
+#    path('auth/', include('djoser.urls')),
+#    path('auth/', include('djoser.urls.authtoken')),
     path('user/', include('user.urls')),
     path('admin/', admin.site.urls),
     path('', auth_views.LoginView.as_view(template_name='user/login.html'), name='user-login'),

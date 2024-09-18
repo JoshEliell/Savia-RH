@@ -3,7 +3,7 @@ from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
 from proyecto import views
-
+from rest_framework import routers
 
 urlpatterns = [
     path('', views.Index, name='Inicio'),
@@ -97,7 +97,5 @@ urlpatterns = [
     path('Tabla_prenominas', views.TablaPrenominas, name='Tabla_prenominas'),
     
     path('listar_tabulador_bonos', views.listar_tabulador_bonos, name='listar_tabulador_bonos'),
-    
-    
-    
+
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -41,7 +41,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'dashboard.apps.DashboardConfig',
     'proyecto.apps.ProyectoConfig',
+    'apiapp.apps.ApiappConfig',
     'user.apps.UserConfig',
+    'rest_framework',
+    'rest_framework.authtoken',
+#    'djoser',
+
 
 # Extensions - installed with pip3 / requirements.txt
     'django_extensions',
@@ -210,3 +215,30 @@ LOGGING = {
         },
     },
 }
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',  # Cuando una vista de la API devuelve una respuesta, DRF la convierte en un formato JSON
+        'rest_framework.renderers.BrowsableAPIRenderer',  # Desactivar en producción este es principalmente para depurar la API
+        #'rest_framework_xml.renderers.XMLRenderer',  # Para respuestas en XML
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',  # Autenticación basada en token
+    #    'rest_framework.authentication.SessionAuthentication', #Luego de agregar el DJOSER
+    ],
+    #'DEFAULT_PERMISSION_CLASSES': [
+    #    'rest_framework.permissions.IsAuthenticated',  # Por defecto, requiere autenticación desactivar o activar para pedir que siempre esten autentificados
+    #],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon':'20/day',
+        'user':'5/minute',
+        'ten':'10/minute',
+    },
+
+}
+
+#DJOSER = {
+#    "USER_ID_FIELD": "username"
+
+#}
