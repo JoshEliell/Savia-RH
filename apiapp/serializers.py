@@ -29,8 +29,9 @@ class PerfilSerializer(serializers.ModelSerializer):
     proyecto = ProyectoSerializer()  # Anidamos Proyecto para obtener su nombre
     subproyecto = SubProyectoSerializer()  # Anidamos SubProyecto para obtener su nombre y el proyecto relacionado
     correo_vordcab = serializers.EmailField(source='usuario.email', read_only=True)  # Campo personalizado para correo de User
+    #activo = serializers.BooleanField(source='baja', read_only=True)  # Mapea 'baja' a 'activo'    No necesario como el boleano te dice si baja=True en vez si es activo
 
     class Meta:
         model = Perfil
-        fields = ['correo_vordcab','numero_de_trabajador', 'empresa', 'distrito', 'division', 'nombres', 'apellidos', 'fecha_nacimiento', 'correo_electronico', 'proyecto', 'subproyecto',]
+        fields = ['correo_vordcab','baja','numero_de_trabajador', 'empresa', 'distrito', 'division', 'nombres', 'apellidos', 'fecha_nacimiento', 'correo_electronico', 'proyecto', 'subproyecto',]
 
