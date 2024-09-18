@@ -232,9 +232,9 @@ REST_FRAMEWORK = {
     #    'rest_framework.permissions.IsAuthenticated',  # Por defecto, requiere autenticación desactivar o activar para pedir que siempre esten autentificados
     #],
     'DEFAULT_THROTTLE_RATES': {
-        'anon':'20/day',
-        'user':'5/minute',
-        'ten':'10/minute',
+        'anon':'5/day',
+        'user':'10/day',
+        'ten':'10/hour',
     },
 
 }
