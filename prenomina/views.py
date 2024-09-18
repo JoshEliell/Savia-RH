@@ -72,7 +72,8 @@ from user.decorators import perfil_session_seleccionado
 #funcion para obtener la catorcena actual
 def obtener_catorcena():
     fecha_actual = datetime.date.today()
-    fecha_actual = datetime.date.today() - datetime.timedelta(days=14)
+    fecha_actual = datetime.date.today() - datetime.timedelta(days=28) #cat 18 | 19 ago - 01 sep
+    #fecha_actual = datetime.date.today() - datetime.timedelta(days=16) #cat 02 sep | 02 sep - 15 sep
     print("fecha es: ", fecha_actual)
     #print("Esta es la fecha actual: ", fecha_actual)
     catorcena_actual = Catorcenas.objects.filter(fecha_inicial__lte=fecha_actual, fecha_final__gte=fecha_actual).first()
