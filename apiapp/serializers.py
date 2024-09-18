@@ -28,8 +28,9 @@ class PerfilSerializer(serializers.ModelSerializer):
     distrito = DistritoSerializer()  # Anidamos Distrito para obtener su nombre
     proyecto = ProyectoSerializer()  # Anidamos Proyecto para obtener su nombre
     subproyecto = SubProyectoSerializer()  # Anidamos SubProyecto para obtener su nombre y el proyecto relacionado
+    correo_vordcab = serializers.EmailField(source='usuario.email', read_only=True)  # Campo personalizado para correo de User
 
     class Meta:
         model = Perfil
-        fields = ['numero_de_trabajador', 'empresa', 'distrito', 'division', 'nombres', 'apellidos', 'fecha_nacimiento', 'correo_electronico', 'proyecto', 'subproyecto']
+        fields = ['correo_vordcab','numero_de_trabajador', 'empresa', 'distrito', 'division', 'nombres', 'apellidos', 'fecha_nacimiento', 'correo_electronico', 'proyecto', 'subproyecto',]
 
