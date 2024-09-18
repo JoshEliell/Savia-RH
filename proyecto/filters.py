@@ -113,6 +113,7 @@ class VacacionesFilter(django_filters.FilterSet):
         return queryset.annotate(nombres_apellidos_combined=Concat('status__perfil__nombres', Value(' '), 'status__perfil__apellidos', output_field=CharField())).filter(nombres_apellidos_combined__icontains=value)
 #Uniformes usa el filter de status
 class EconomicosFilter(django_filters.FilterSet):
+    no_trabajador = django_filters.NumberFilter(field_name="status__perfil__numero_de_trabajador")
     nombres_apellidos = CharFilter(method='nombres_apellidos_filter', label="Search")
     distrito = django_filters.ModelChoiceFilter(queryset=Distrito.objects.all(), field_name='status__perfil__distrito__distrito')
     BAJA_CHOICES = ((False, 'Activo'),(True, 'Dado de baja'))

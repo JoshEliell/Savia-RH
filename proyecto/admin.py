@@ -59,10 +59,10 @@ admin.site.index_title = "Bienvenido a la administración del sistema"
 
 class PerfilAdmin(admin.ModelAdmin):
     ordering = ['numero_de_trabajador']
-    list_display = ('numero_de_trabajador','nombres','apellidos','id')
-    search_fields = ('nombres'),
-    list_filter = ('baja',)
-
+    list_display = ('numero_de_trabajador', 'nombres', 'apellidos', 'id')
+    search_fields = ('nombres', 'apellidos', 'numero_de_trabajador', 'id')
+    list_filter = ('baja', 'distrito')
+    
 class StatusAdmin(admin.ModelAdmin):
     ordering = ['id']
     list_display = ('id','perfil','perfil_id',)
@@ -78,6 +78,7 @@ class BancariosAdmin(admin.ModelAdmin):
     ordering = ['id']
     list_display = ('id','status')
     search_fields = ('status__perfil__nombres'),
+    list_filter = ('status__perfil__distrito'),
 
 class VacacionAdmin(admin.ModelAdmin):
     ordering = ['id']
@@ -89,6 +90,7 @@ class EconoAdmin(admin.ModelAdmin):
     ordering = ['id']
     list_display = ('id','status')
     search_fields = ('status__perfil__nombres'),
+    list_filter = ('status__perfil__distrito'),
 
 class Dia_vacacionAdmin(admin.ModelAdmin):
     ordering = ['id']
@@ -115,6 +117,12 @@ class NivelAdmin(admin.ModelAdmin):
 
 class TipoPerfilAdmin(admin.ModelAdmin):
     list_display = ('id','nombre')
+    
+class UserDatosAdmin(admin.ModelAdmin):
+    list_display = ['id','perfil','distrito','tipo']
+    raw_id_fields = ['perfil']
+    search_fields = ['perfil__nombres','perfil__apellidos']
+    list_filter = ['distrito']
 
     # Register your models here.
 admin.site.register(Empresa)
@@ -137,7 +145,7 @@ admin.site.register(TablaSubsidio)
 admin.site.register(TablaVacaciones)
 admin.site.register(TablaFestivos)
 admin.site.register(RegistroPatronal, PatronalAdmin)
-admin.site.register(UserDatos)
+admin.site.register(UserDatos, UserDatosAdmin)
 admin.site.register(TipoPerfil,TipoPerfilAdmin)
 admin.site.register(Tallas, TallaAdmin)
 admin.site.register(Ropa)

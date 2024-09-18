@@ -77,6 +77,15 @@
                 {% csrf_token %}
                 <div class="col-lg-3 col-sm-12">
                     <div class="input-group mb-3">
+                    <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-hashtag"></i></span>
+                        <div class="form-floating form-floating-group flex-grow-1">   
+                            {{economico_filter.form.no_trabajador|add_class:"form-control"|append_attr:"placeholder= # trabajador"}}
+                            <label style="color: #121212;" for="id_id">No. de trabajador</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-sm-12">
+                    <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-user"></i></span>
                         <div class="form-floating form-floating-group flex-grow-1">   
                             {{economico_filter.form.nombres_apellidos|add_class:"form-control"|append_attr:"placeholder= Nombre"}}
