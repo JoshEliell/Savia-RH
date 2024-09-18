@@ -69,7 +69,8 @@ def perfil_list(request):
 
     return Response(response_data)"""
 
-@api_view(['GET', 'POST'])
+#@api_view(['GET', 'POST'])
+@api_view(['GET'])
 @permission_classes([IsAuthenticated])
 @throttle_classes({UserRateThrottle})
 def perfil_detail(request, pk):
