@@ -34,7 +34,13 @@ class StatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = Status
         fields = ['nivel']  # Solo queremos el campo 'nivel' en este serializador
-
+    def get_nivel(self, obj):
+        # Convertir el nivel a float si es posible, de lo contrario, devolver None
+        try:
+            return float(obj.nivel.nivel)
+        except (ValueError, TypeError):
+            return None  #Se puede regresar a return el charfield
+        
 class PerfilSerializer(serializers.ModelSerializer):
     empresa = EmpresaSerializer()  # Anidamos Empresa para obtener su nombre
     distrito = DistritoSerializer()  # Anidamos Distrito para obtener su nombre
