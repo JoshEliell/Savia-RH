@@ -60,5 +60,5 @@ class PerfilIngenieriaSerializer(serializers.ModelSerializer):
     correo_vordcab = serializers.EmailField(source='usuario.email', read_only=True)  # Campo personalizado para correo de User
     class Meta:
         model = Perfil
-        fields = ['correo_vordcab','baja','numero_de_trabajador', 'empresa', 'distrito','nombres', 'apellidos', 'fecha_nacimiento', 'correo_electronico',]
+        fields = ['id','correo_vordcab','baja','numero_de_trabajador', 'empresa', 'distrito','nombres', 'apellidos', 'fecha_nacimiento', 'correo_electronico',]
 
