@@ -4,12 +4,12 @@ from proyecto.models import Perfil, Empresa, Proyecto, SubProyecto, Distrito, St
 class EmpresaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Empresa
-        fields = ['empresa']
+        fields = ['id','empresa']
 
 class DistritoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Distrito
-        fields = ['distrito']
+        fields = ['id','distrito']
 
 class ProyectoSerializer(serializers.ModelSerializer):
     class Meta:
