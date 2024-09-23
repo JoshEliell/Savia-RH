@@ -14,6 +14,8 @@ urlpatterns = [
     path('bonos_varillero/<int:solicitud>/realizar-cambios-solicitud/', views.verificarSolicitudBonosVarilleros, name="verificarSolicitudBonosVarilleros"),
     path('bonos_varillero/bonos-aprobados', views.listarBonosVarillerosAprobados, name='listarBonosVarillerosAprobados'),
     path('bonos_varillero/generar-reporte', views.generarReporteBonosVarillerosAprobados, name="generarReporteBonosVarillerosAprobados"),
+    path('bonos/ver_todas_solicitudes', views.todasSolicitudesBonos, name="todasSolicitudesBonos"),
+    path('bono/<int:solicitud_id>/detalle_solicitud_autorizacion', views.detalleSolicitudAutorizacion, name="detalleSolicitudAutorizacion"),
     #Modulo crear bonos
     #path('bonos_varillero/tabulador_bonos',views.tabuladorBonos, name="tabuladorBonos"),
     #api

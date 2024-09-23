@@ -1,0 +1,193 @@
+{% extends 'partials/base.html' %}
+{% comment %}
+    SE UTILIZA PARA MOSTRAR LOS DETALLES DE LA SOLICITUD DEL BONO, Y ES PARA
+    QUE EL USUARIO PUEDA AUTORIZAR
+{% endcomment %}
+{% load widget_tweaks %}
+{% load static %}
+
+{% block title %}
+    Bonos Varilleros
+{% endblock title %}
+
+{% block css %}
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@x.x.x/dist/select2-bootstrap4.min.css">
+{% endblock css %}
+
+{% block content %}
+<div class="container-fluid margen-alto">
+    <div class="row">
+        
+        {% comment %}Solicitud{% endcomment %}
+        <div class="col-12">
+            <div class="card">
+              <div class="card-body">
+                <div class="row mb-3">
+                  <div class="col-12">
+                    <h5>Detalles de la solicitud</h5>
+                  </div>
+                </div>
+                <div class="d-flex flex-column flex-md-row justify-content-between mb-3">
+                  <div class="">
+                    <span class="fw-bold"><i class="fas fa-bookmark"></i> Folio: </span> {{autorizaciones.solicitud.folio}}
+                  </div>
+                  <div class="">
+                    <span class="fw-bold"><i class="fas fa-calendar-alt"></i> Fecha Registro: </span> {{autorizaciones.solicitud.fecha|date:'d/m/Y H:i'}}
+                  </div>
+                  <div class="">
+                  
+                  </div>
+                </div>
+                <hr>
+                <div class="d-flex flex-column flex-md-row justify-content-between mb-3">
+                  <div class="">
+                    <span class="fw-bold"><i class="fas fa-user"></i> {{rol}}: </span> {{autorizaciones.solicitud.solicitante}}
+                  </div>
+                  <div class="">
+                    <span class="fw-bold"><i class="fas fa-sack-dollar"></i> Bono: </span> {{autorizaciones.solicitud.bono}}
+                    </div>
+                  <div class="">
+                    <span class="fw-bold"><i class="fas fa-location-dot"></i> Distrito: </span> {{autorizaciones.solicitud.solicitante.distrito}}
+                  </div>
+                </div>
+                <hr>
+                <div class="d-flex flex-column flex-md-row justify-content-between mb-3">
+                    <div class="">
+                      <span class="fw-bold"><i class="fas fa-comment"></i> Comentario: </span> {{autorizaciones.solicitud.comentario}}
+                    </div>
+                    <div class="">
+                     
+                    </div>
+                    <div class="">
+                    
+                    </div>
+                  </div>
+              </div>
+            </div>
+          </div>
+       
+        {% comment %}Tabla bonos{% endcomment %}
+        <div class="col-12 mt-3">
+            <table class="table table-striped table-hover bg-white" style="max-height: 300px; overflow-y: auto;" id="tabla">
+                <thead>
+                    <tr class="tabla-encabezado">
+                        <th>Empleado</th>
+                        <th>Puesto</th>
+                        <th>Cantidad</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bono in autorizaciones.solicitud.bonos_solicitados.all %}
+                    <tr>
+                        <td>{{ bono.trabajador }}</td>
+                        <td>{{ bono.bono }}</td>
+                        <td>${{ bono.cantidad }}</td>
+                    </tr>
+                    {% endfor %}  
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td class="fw-bold">Total: $<span id="total">{{autorizaciones.solicitud.total}}</span> </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        {% comment %}Archivos - Soporte de Bono{% endcomment %}
+        <div class="col-12 col-md-12 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <ul class="list-group">
+                        <label for="" class="p-0 fw-bold">Soporte de Bono</label>
+                        {% for requerimiento in autorizaciones.solicitud.requerimientos.all %}
+                            <li class="list-group-item border-0" title="Descargar">
+                                <a href="{{requerimiento.url.url}}" class="link link-primary" download><i class="fas fa-download"></i> {{requerimiento.url}}</a>
+                            </li>
+                        {% endfor %}
+                      </ul>  
+                      <hr>
+                     
+                      <p>{{autorizaciones.solicitud.bono.soporte}}</p>
+
+                </div>
+            </div>
+        </div>
+        
+        
+        {% for flujo in flujo_autorizaciones  %}
+        <div class="col-12">
+            <div class="card mt-3">
+                <div class="card-body">
+                    <div class="row">
+                        <p><span class="fw-bold"><i class="fas fa-user"></i> {{flujo.tipo_perfil.nombre}}: </span> {{flujo.perfil}}</p>
+                        {% if flujo.estado.id != 3 %}
+                            <p><span class="fw-bold"><i class="fas fa-calendar-alt"></i> Fecha revisión </span>{{flujo.created_at|date:'d/m/Y H:i'}}</p>
+                        {% endif %}
+                        <p><span class="fw-bold"><i class="fas fa-comment"></i> Comentario: </span> 
+                            {% if flujo.comentario is None %} 
+                                <span class="text-muted">No hay comentarios</span> 
+                            {% else %}
+                                {{flujo.comentario}}
+                            {% endif %}
+                        </p>
+                        <div class="col-12 col-md-4 mb-md-0">
+                            <label for="" class="fw-bold"></label>
+                            <div class="input-group">                                        
+                                
+                                <p>
+                                    <span class="fw-bold"><i class="fas fa-stamp"></i> Autorización: </span>
+                                    {% if flujo.estado.id == 3  %}
+                                        <span class="badge bg-warning text-capitalize" style="color:black">{{flujo.estado}}</span>
+                                    {% elif flujo.estado.id == 1 %}
+                                        <span class="badge bg-success text-capitalize">{{flujo.estado}}</span>
+                                    {% elif flujo.estado.id == 2 %}
+                                        <span class="badge bg-danger text-capitalize">{{flujo.estado}}</span>
+                                    {% elif flujo.estado.id == 4 %}
+                                        <span class="badge text-white text-capitalize" style="background: #2A628F;">{{flujo.estado}}</span>
+                                    {% endif %}
+                                </p>  
+                            </div>
+                        </div>       
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+                    
+       
+
+        
+       
+
+
+        
+            
+        
+      
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block js %}
+    
+    {% comment %} select2 {% endcomment %}    
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    {% comment %} select 2 lang es {% endcomment %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/i18n/es.js"></script>
+    <script>
+        $(document).ready(function() {           
+            $('.select2-bootstrap').select2({
+                theme: 'bootstrap4',
+                language: "es",
+            });
+        });
+    </script>
+    <script>
+
+    </script>   
+{% endblock js %}
+    
+    

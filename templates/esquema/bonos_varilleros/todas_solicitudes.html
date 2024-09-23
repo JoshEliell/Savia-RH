@@ -1,11 +1,13 @@
 {% extends 'partials/base.html' %}
-
+{% comment %}
+    SE MUESTRAN TODAS LAS SOLICITUDES EN EL ESTADO QUE AUTORIZO LA PERSONA
+{% endcomment %}
 {% load static %}
 {% load widget_tweaks %}
 {% load tt_extras %}
 
 {% block title %}
-    Solicitudes | Bonos
+    Todas las Solicitudes | Bonos
 {% endblock title %}
     
 
@@ -41,7 +43,7 @@
         <div class="col-12">
             <div class="card shadow">
                 <div class="card-header d-flex justify-content-between">
-                    <div class="card-title"><h5>Solicitudes Bonos</h5></div>
+                    <div class="card-title"><h5>Ver todas las solicitudes de bonos</h5></div>
                     {% comment %} Solo el supervisor y RH puede crear solicitudes de Bonos{% endcomment %}
                     {% if usuario.tipo.id == 5 or usuario.tipo.id == 4 %}
                         <a href="{% url 'crearSolicitudBonos' %}" class="btn btn-azul" ><i class="fas fa-plus"></i> Crear solicitud de bono</a>
@@ -137,10 +139,7 @@
                             <div class="col-auto">
                                 <button type="search" class="btn btn-success"><i class="fas fa-search"></i></button>
                             </div>
-                            {% comment %} boton para listar todas las solicitudes de los bonos {% endcomment %}
-                            <div class="col-auto">
-                                <a href="{% url 'todasSolicitudesBonos' %}" class="btn btn-azul" ><i class="fas fa-plus"></i> Ver todas las solicitudes</a>
-                            </div>
+                            
                             
                         </div>
                     </form>
@@ -207,24 +206,10 @@
                         <td><span class="badge" style="background: #2A628F;">${{autorizacion.solicitud.total}}</span></td>
                         {% comment %} ver detalle de la solicitud {% endcomment %}
                         <th>
-                            <a href="{% url 'verDetalleSolicitud' autorizacion.solicitud.id %}" title="Ver detalles de la solicitud" class="btn btn-sm btn-success"><i class="fas fa-list"></i></a>
+                            <a href="{% url 'detalleSolicitudAutorizacion' autorizacion.solicitud.id %}" title="Ver detalles de la solicitud" class="btn btn-sm btn-success"><i class="fas fa-list"></i></a>
                         </th>
                       
-                        {% comment %} edita la solicitud {% endcomment %}
-                        {% if autorizacion.estado.id == 4 and autorizacion.solicitud.solicitante.id == usuario.perfil.id %}
-                        <th>
-                            <a href="{% url 'verificarSolicitudBonosVarilleros' autorizacion.solicitud.id %}" title="Aplicar cambios a la solicitud" class="btn btn-sm btn-success"><i class="fas fa-edit"></i></a>
-                        </th>
-                        {% else %}
-                            <th></th>
-                        {% endif %}
-                        {% if autorizacion.estado.id == 3 and usuario.tipo.id == autorizacion.tipo_perfil.id%}                      
-                        <th>
-                            <a href="{% url 'verDetalleSolicitud' autorizacion.solicitud.id %}" title="La soliciutd está pendiente" class="btn btn-sm btn-success"><i class="fas fa-edit"></i></a>
-                        </th>
-                        {% else %}
-                        <th></th>
-                        {% endif %}
+                       
                     </tr>
                     {% endfor %}
                 </tbody>

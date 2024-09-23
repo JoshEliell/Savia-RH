@@ -105,21 +105,24 @@ def listarBonosVarilleros(request):
             autorizaciones = AutorizarSolicitudes.objects.filter(
                 created_at=Subquery(subconsulta_ultima_fecha)
             ).select_related('solicitud', 'perfil').filter(
-                solicitud__solicitante__id = usuario.perfil_id, solicitud__distrito_id = usuario.distrito.id,solicitud__complete = 1 #mostrar solamente sus solicitudes y de nadie mas
+                solicitud__solicitante__id = usuario.perfil_id, solicitud__distrito_id = usuario.distrito.id,solicitud__complete = 1, #mostrar solamente sus solicitudes y de nadie mas
+            ).filter(
+                Q(estado_id = 3) | Q(estado_id = 4)
             ).order_by("-created_at")
         elif usuario.tipo.id in [8]: #GE puede ver todas las solicitudes creadas y en el flujo en el que se encuentran
-            #obtiene la ultima autorizacion independientemente en el flujo que se encuentre            
+            #obtiene la ultima autorizacion independientemente en el flujo que se encuentre     
+            print("se ejecuta GE")       
             autorizaciones = AutorizarSolicitudes.objects.filter(
                 created_at=Subquery(subconsulta_ultima_fecha)
             ).select_related('solicitud', 'perfil').filter(
-                solicitud__distrito_id = usuario.distrito.id, solicitud__complete = 1
+                solicitud__distrito_id = usuario.distrito.id, solicitud__complete = 1, estado_id = 3,tipo_perfil_id = usuario.tipo.id
             ).order_by("-created_at")
         else:
-            #solo obtiene la solicitud que le pertenece          
+            #solo obtiene la solicitud que le pertenece    
             autorizaciones = AutorizarSolicitudes.objects.filter(
                 created_at=Subquery(subconsulta_ultima_fecha)
             ).select_related('solicitud', 'perfil').filter(
-                perfil_id = usuario.perfil.id, tipo_perfil_id = usuario.tipo.id, solicitud__distrito_id = usuario.distrito.id, solicitud__complete = 1
+                perfil_id = usuario.perfil.id, tipo_perfil_id = usuario.tipo.id, solicitud__distrito_id = usuario.distrito.id, solicitud__complete = 1, estado_id = 3
             ).order_by("-created_at")
         
         autorizaciones_filter = AutorizarSolicitudesFilter(request.GET, queryset=autorizaciones)
@@ -620,7 +623,7 @@ def verificarSolicitudBonosVarilleros(request,solicitud):
     else:
         return render(request, 'revisar/403.html')
         
-#para ver detalles de la solicitud
+#para ver detalles de la solicitud cuando se debe realizar la autorizacion 
 @login_required(login_url='user-login')
 @perfil_session_seleccionado
 def verDetallesSolicitud(request,solicitud_id):  
@@ -667,6 +670,130 @@ def verDetallesSolicitud(request,solicitud_id):
     
     else:
         return render(request, 'revisar/403.html')
+
+@login_required(login_url='user-login')
+@perfil_session_seleccionado
+def detalleSolicitudAutorizacion(request,solicitud_id):
+    #obtener datos de la sesion y el usuario logeado
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    usuario = UserDatos.objects.get(pk = usuario_id)
+    
+    if usuario.tipo not in [1,2,3]:
+        #busca la ultima solicitud con relacion a sus modelos     
+        autorizaciones = AutorizarSolicitudes.objects.filter(
+            #solicitud_id=solicitud_id, perfil_id = usuario.perfil.id, tipo_perfil_id = usuario.tipo.id
+            solicitud_id=solicitud_id
+        ).select_related(
+            'solicitud',  # Relación con Solicitud
+            'solicitud__solicitante',  # Relación a Perfil desde Solicitud
+            'solicitud__bono',  # Relación a Subcategoria desde Solicitud
+            'solicitud__distrito',  # Relación a Distrito desde Solicitud
+        ).prefetch_related(
+            'solicitud__bonos_solicitados',  # Relación a BonoSolicitado desde Solicitud (usa related_name si está definido)
+            'solicitud__requerimientos',  # Relación a Requerimiento desde Solicitud (usa related_name si está definido)
+        ).order_by()
+        
+        #for auto in autorizaciones:
+        #    print("solicutud: ", auto.solicitud.solicitante.perfil)
+        
+        flujo_autorizaciones = autorizaciones
+        autorizaciones = autorizaciones.first()
+        print("autorizaciones: ",autorizaciones)
+        print("autorizaciones: ",autorizaciones.solicitud)
+        print("autorizaciones: ",autorizaciones.solicitud.distrito.id)
+        #print("valor: ",autorizaciones.solicitud.solicitante.distrito.id)
+        #exit()
+               
+        if usuario.tipo.id not in [9,10,11] and usuario.distrito.id != autorizaciones.solicitud.distrito.id:
+            return render(request, 'revisar/403.html')
+                
+        #obtener el rol del solicitante    
+        rol = UserDatos.objects.get(perfil_id = autorizaciones.solicitud.solicitante.id, distrito_id = autorizaciones.solicitud.distrito.id, tipo_id__in=[4,5], activo = True)
+        
+        #se carga el formulario con datos iniciales
+        autorizarSolicitudesUpdateForm = AutorizarSolicitudesUpdateForm(initial={'estado':autorizaciones.estado.id,'comentario':autorizaciones.comentario})
+        autorizarSolicitudesGerenteUpdateForm = AutorizarSolicitudesGerenteUpdateForm(initial={'estado':autorizaciones.estado.id,'comentario':autorizaciones.comentario})
+            
+        contexto = {
+            "usuario":usuario,
+            "autorizaciones":autorizaciones,
+            "autorizarSolicitudesUpdateForm":autorizarSolicitudesUpdateForm,
+            "autorizarSolicitudesGerenteUpdateForm":autorizarSolicitudesGerenteUpdateForm,
+            "rol":rol,
+            "flujo_autorizaciones":flujo_autorizaciones,
+        }
+        
+        return render(request,'esquema/bonos_varilleros/detalle_solicitud_autorizada.html',contexto)
+    
+    else:
+        return render(request, 'revisar/403.html')    
+    
+
+#Listar todas las solicitudes de los bonos
+@login_required(login_url='user-login')
+@perfil_session_seleccionado
+def todasSolicitudesBonos(request):
+    ids = [9,10,11]   
+    
+    #obtener datos de la sesion y el usuario logeado
+    userdatos = request.session.get('usuario_datos')        
+    usuario_id = userdatos.get('usuario_id')
+    usuario = UserDatos.objects.get(pk = usuario_id)
+    
+    if usuario.tipo not in [1,2,3]:
+          
+        subconsulta_ultima_fecha = AutorizarSolicitudes.objects.values('solicitud_id').annotate(
+                ultima_fecha=Max('created_at')
+            ).filter(solicitud_id=OuterRef('solicitud_id')).values('ultima_fecha')[:1]
+        
+        if usuario.tipo.id in [9,10,11]:
+            #obtiene todas las ultimas autorizaciones de todos los distritos y roles independientemente en el flujo que se encuentre
+            autorizaciones = AutorizarSolicitudes.objects.filter(
+                created_at=Subquery(subconsulta_ultima_fecha)
+            ).select_related('solicitud', 'perfil').filter(
+                solicitud__complete = 1
+            ).order_by("-created_at")
+        elif usuario.tipo.id in [4,5]: #rh, supervisor - Ve todas sus solicitudes creadas y en el flujo en que se encuentran
+            #obtiene todas las ultimas autorizaciones de su distrito y roles
+            autorizaciones = AutorizarSolicitudes.objects.filter(
+                created_at=Subquery(subconsulta_ultima_fecha)
+            ).select_related('solicitud', 'perfil').filter(
+                solicitud__solicitante__id = usuario.perfil_id, solicitud__distrito_id = usuario.distrito.id,solicitud__complete = 1, #mostrar solamente sus solicitudes y de nadie mas
+            ).order_by("-created_at")
+        elif usuario.tipo.id in [8]: #GE puede ver todas las solicitudes creadas y en el flujo en el que se encuentran
+            #obtiene la ultima autorizacion independientemente en el flujo que se encuentre           
+            autorizaciones = AutorizarSolicitudes.objects.select_related('solicitud', 'perfil').filter(
+                solicitud__distrito_id = usuario.distrito.id, solicitud__complete = 1,tipo_perfil_id = usuario.tipo.id
+            ).order_by("-created_at")
+        else:
+            #solo obtiene la solicitud que le pertenece    
+            autorizaciones = AutorizarSolicitudes.objects.select_related('solicitud', 'perfil').filter(
+                perfil_id = usuario.perfil.id, tipo_perfil_id = usuario.tipo.id, solicitud__distrito_id = usuario.distrito.id, solicitud__complete = 1
+            ).order_by("-created_at")
+        
+        autorizaciones_filter = AutorizarSolicitudesFilter(request.GET, queryset=autorizaciones)
+        autorizaciones = autorizaciones_filter.qs
+            
+        p = Paginator(autorizaciones, 50)
+        page = request.GET.get('page')
+        salidas_list = p.get_page(page)
+        autorizaciones= p.get_page(page)
+        
+        contexto = {
+            #'usuario':usuario,
+            'autorizaciones':autorizaciones,
+            'autorizaciones_filter': autorizaciones_filter,
+            'salidas_list':salidas_list,
+            'ids': ids
+        }
+        
+        return render(request,'esquema/bonos_varilleros/todas_solicitudes.html',contexto)
+    
+    else:
+        return render(request, 'revisar/403.html')
+    
+   
 
 #lista bonos aprobados
 @login_required(login_url='user-login')
