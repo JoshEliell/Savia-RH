@@ -360,7 +360,7 @@ def crearSolicitudBonos(request):
                             BonoSolicitado.objects.filter(solicitud_id = solicitud.id).update(cantidad=reparto)
                         
                         elif bono_solicitado.bono.esquema_subcategoria.id == 21: # Bono ó Subcategoria ID - TOMA DE REGISTROS ECO Y/O DINA - 9 soportes se paga, 30% ayudante, 70% tecnico
-                            servicios = Requerimiento.objects.filter(solicitud_id = solicitud.id).count()
+                            servicios = Requerimiento.objects.filter(solicitud_id = solicitud.id,url__iendswith='.pdf').count() # solo se cuenta el numero de pdfs
                             if servicios >= 9: #9 valor, Paga el novevo servicio - soporte
                                 bono_solicitado.save()
                                 cantidad = bono_solicitado.cantidad * (servicios - 8) #8 valor
@@ -559,7 +559,7 @@ def verificarSolicitudBonosVarilleros(request,solicitud):
                             BonoSolicitado.objects.filter(solicitud_id = solicitud.id).update(cantidad=reparto)
                         
                         elif bono_solicitado.bono.esquema_subcategoria.id == 21: # Bono ó Subcategoria ID - TOMA DE REGISTROS ECO Y/O DINA - 9 soportes se paga, 30% ayudante, 70% tecnico
-                            servicios = Requerimiento.objects.filter(solicitud_id = solicitud.id).count()
+                            servicios = Requerimiento.objects.filter(solicitud_id = solicitud.id,url__iendswith='.pdf').count()
                             if servicios >= 9: #Paga el novevo servicio - soporte
                                 bono_solicitado.save()
                                 cantidad = bono_solicitado.cantidad * (servicios - 8)
@@ -645,9 +645,16 @@ def verDetallesSolicitud(request,solicitud_id):
             'solicitud__bonos_solicitados',  # Relación a BonoSolicitado desde Solicitud (usa related_name si está definido)
             'solicitud__requerimientos',  # Relación a Requerimiento desde Solicitud (usa related_name si está definido)
         ).annotate(
-            ultima_fecha=Max('created_at')
+            ultima_fecha=Max('created_at'),
         ).order_by('-ultima_fecha').first()
-            
+        
+        
+        #Se cuenta el numero de soportes y el tipo de extension
+        archivos_pdf = autorizaciones.solicitud.requerimientos.filter(url__iendswith='.pdf').count()
+        archivos_excel = autorizaciones.solicitud.requerimientos.filter(Q(url__iendswith='.xls') | Q(url__iendswith='.xlsx')).count()
+        archivos_imagenes = autorizaciones.solicitud.requerimientos.filter(Q(url__iendswith='.png') | Q(url__iendswith='.jpeg') | Q(url__iendswith='.jpeg')).count()
+        total_archivos = archivos_pdf + archivos_excel + archivos_imagenes
+             
         if usuario.tipo.id not in [9,10,11] and usuario.distrito.id != autorizaciones.solicitud.solicitante.distrito.id:
             return render(request, 'revisar/403.html')
                 
@@ -663,7 +670,11 @@ def verDetallesSolicitud(request,solicitud_id):
             "autorizaciones":autorizaciones,
             "autorizarSolicitudesUpdateForm":autorizarSolicitudesUpdateForm,
             "autorizarSolicitudesGerenteUpdateForm":autorizarSolicitudesGerenteUpdateForm,
-            "rol":rol
+            "rol":rol,
+            "archivos_pdf":archivos_pdf,
+            "archivos_excel":archivos_excel,
+            "archivos_imagenes":archivos_imagenes,
+            "total_archivos":total_archivos
         }
         
         return render(request,'esquema/bonos_varilleros/detalles_solicitud.html',contexto)
@@ -680,6 +691,7 @@ def detalleSolicitudAutorizacion(request,solicitud_id):
     usuario = UserDatos.objects.get(pk = usuario_id)
     
     if usuario.tipo not in [1,2,3]:
+        
         #busca la ultima solicitud con relacion a sus modelos     
         autorizaciones = AutorizarSolicitudes.objects.filter(
             #solicitud_id=solicitud_id, perfil_id = usuario.perfil.id, tipo_perfil_id = usuario.tipo.id
@@ -693,18 +705,17 @@ def detalleSolicitudAutorizacion(request,solicitud_id):
             'solicitud__bonos_solicitados',  # Relación a BonoSolicitado desde Solicitud (usa related_name si está definido)
             'solicitud__requerimientos',  # Relación a Requerimiento desde Solicitud (usa related_name si está definido)
         ).order_by()
-        
-        #for auto in autorizaciones:
-        #    print("solicutud: ", auto.solicitud.solicitante.perfil)
-        
+         
         flujo_autorizaciones = autorizaciones
         autorizaciones = autorizaciones.first()
-        print("autorizaciones: ",autorizaciones)
-        print("autorizaciones: ",autorizaciones.solicitud)
-        print("autorizaciones: ",autorizaciones.solicitud.distrito.id)
-        #print("valor: ",autorizaciones.solicitud.solicitante.distrito.id)
-        #exit()
-               
+        
+        #Se cuenta el numero de soportes y el tipo de extension
+        archivos_pdf = autorizaciones.solicitud.requerimientos.filter(url__iendswith='.pdf').count()
+        archivos_excel = autorizaciones.solicitud.requerimientos.filter(Q(url__iendswith='.xls') | Q(url__iendswith='.xlsx')).count()
+        archivos_imagenes = autorizaciones.solicitud.requerimientos.filter(Q(url__iendswith='.png') | Q(url__iendswith='.jpeg') | Q(url__iendswith='.jpeg')).count()
+        total_archivos = archivos_pdf + archivos_excel + archivos_imagenes
+        
+        #Permiso - solo el usuario perteneciente al distrito puede ver los bonos
         if usuario.tipo.id not in [9,10,11] and usuario.distrito.id != autorizaciones.solicitud.distrito.id:
             return render(request, 'revisar/403.html')
                 
@@ -714,7 +725,7 @@ def detalleSolicitudAutorizacion(request,solicitud_id):
         #se carga el formulario con datos iniciales
         autorizarSolicitudesUpdateForm = AutorizarSolicitudesUpdateForm(initial={'estado':autorizaciones.estado.id,'comentario':autorizaciones.comentario})
         autorizarSolicitudesGerenteUpdateForm = AutorizarSolicitudesGerenteUpdateForm(initial={'estado':autorizaciones.estado.id,'comentario':autorizaciones.comentario})
-            
+        
         contexto = {
             "usuario":usuario,
             "autorizaciones":autorizaciones,
@@ -722,6 +733,10 @@ def detalleSolicitudAutorizacion(request,solicitud_id):
             "autorizarSolicitudesGerenteUpdateForm":autorizarSolicitudesGerenteUpdateForm,
             "rol":rol,
             "flujo_autorizaciones":flujo_autorizaciones,
+            "archivos_pdf":archivos_pdf,
+            "archivos_excel":archivos_excel,
+            "archivos_imagenes":archivos_imagenes,
+            "total_archivos":total_archivos,
         }
         
         return render(request,'esquema/bonos_varilleros/detalle_solicitud_autorizada.html',contexto)

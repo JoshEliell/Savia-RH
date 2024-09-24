@@ -105,8 +105,12 @@
                             <li class="list-group-item border-0" title="Descargar">
                                 <a href="{{requerimiento.url.url}}" class="link link-primary" download><i class="fas fa-download"></i> {{requerimiento.url}}</a>
                             </li>
-                        {% endfor %}
+                        {% endfor %} 
+                        <li class="list-group-item border-0" title="Descargar">
+                            Soportes: {{total_archivos}}, PDF: {{archivos_pdf}}, Excel: {{archivos_excel}}, Imagenes: {{archivos_imagenes}}
+                        </li>
                       </ul>  
+                     
                       <hr>
                      
                       <p>{{autorizaciones.solicitud.bono.soporte}}</p>
@@ -118,7 +122,7 @@
         
         {% for flujo in flujo_autorizaciones  %}
         <div class="col-12">
-            <div class="card mt-3">
+            <div class="card mb-3">
                 <div class="card-body">
                     <div class="row">
                         <p><span class="fw-bold"><i class="fas fa-user"></i> {{flujo.tipo_perfil.nombre}}: </span> {{flujo.perfil}}</p>

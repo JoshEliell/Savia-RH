@@ -103,9 +103,12 @@
                         <label for="" class="p-0 fw-bold">Soporte de Bono</label>
                         {% for requerimiento in autorizaciones.solicitud.requerimientos.all %}
                             <li class="list-group-item border-0" title="Descargar">
-                                <a href="{{requerimiento.url.url}}" class="link link-primary" download><i class="fas fa-download"></i> {{requerimiento.url}}</a>
+                                <a href="{{requerimiento.url.url}}" class="link link-primary" download><i class="fas fa-download"></i> {{requerimiento.url}} </a>
                             </li>
                         {% endfor %}
+                        <li class="list-group-item border-0" title="Descargar">
+                            Soportes: {{total_archivos}}, PDF: {{archivos_pdf}}, Excel: {{archivos_excel}}, Imagenes: {{archivos_imagenes}}
+                        </li>
                       </ul>  
                       <hr>
                      
