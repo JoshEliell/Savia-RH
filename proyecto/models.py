@@ -126,6 +126,8 @@ class DatosISR(models.Model):
     g_ingresos = models.DecimalField(max_digits=14, decimal_places=2,null=True)
     subsidio = models.DecimalField(max_digits=14, decimal_places=2,null=True)
     complete = models.BooleanField(default=False)
+    activo = models.BooleanField(default=False, blank=True, null=True)
+    indicador = models.IntegerField(null=True,blank=True)
 
     def __str__(self):
         if self.complete == False:
@@ -319,6 +321,7 @@ class SalarioDatos(models.Model):
     dias_mes = models.DecimalField(max_digits=10, decimal_places=2,null=True, default=0)
     comision_bonos = models.DecimalField(max_digits=10, decimal_places=2,null=True, default=0)
     prima_vacacional = models.DecimalField(max_digits=10, decimal_places=2,null=True, default=0)
+    activo = models.BooleanField(null=True, blank=True)
 
     def __str__(self):
         return f'Salario minimo {self.Salario_minimo}, UMA: {self.UMA}, quincena: {self.dias_quincena}, mes: {self.dias_mes}, comision_bonos: {self.comision_bonos}'
@@ -328,6 +331,7 @@ class Variables_carga_social(models.Model):
     sar = models.DecimalField(max_digits=10, decimal_places=2,null=True, default=0)
     cesantia = models.DecimalField(max_digits=10, decimal_places=2,null=True, default=0)
     infonavit = models.DecimalField(max_digits=10, decimal_places=2,null=True, default=0)
+   
 
 
     def __str__(self):
@@ -344,7 +348,8 @@ class Variables_imss_patronal(models.Model):
     iv_patron = models.DecimalField(max_digits=10, decimal_places=4,null=True, default=0) #Invalidez y vida
     iv_obrero = models.DecimalField(max_digits=10, decimal_places=4,null=True, default=0)
     gps_patron = models.DecimalField(max_digits=10, decimal_places=4,null=True, default=0) #Guarderias y prestaciones sociales
-    cav_patron = models.DecimalField(max_digits=10, decimal_places=4,null=True, default=0) # Cesantía en edad avanzada y vejez 
+    cav_patron = models.DecimalField(max_digits=10, decimal_places=4,null=True, default=0) # Cesantía en edad avanzada y vejez
+    activo = models.IntegerField(null=True, blank=True) 
 
     def __str__(self):
         return f'pd_patron {self.pd_patron}, gmp_patron: {self.gmp_patron}, iv_patron: {self.iv_patron}, gps_patron: {self.gps_patron}'

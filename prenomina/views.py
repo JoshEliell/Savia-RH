@@ -203,6 +203,27 @@ def registrar_rango_incidencias(request,pk):
             
             #Se envia los errores de validaciones al cliente
             return JsonResponse(response_data, status=422)
+
+def actualizar_prenominas():
+    prenominas = Prenomina.objects.all()
+    
+    for p in prenominas:
+        #obtener los datos de la prenomina
+        #print("empleado: ",p.empleado.status.perfil.nombres + ' ' + p.empleado.status.perfil.apellidos),
+        salario = p.empleado.sueldo_diario
+        sdi_imss = p.empleado.sdi_imss
+        infonavit = p.empleado.amortizacion_infonavit #amortizacion infonavit
+        fonacot = p.empleado.fonacot
+        tipo_contrato =  p.empleado.status.tipo_de_contrato.id
+        apoyo_pasajes = p.apoyo_pasajes
+        #actualizar los datos de la prenomina
+        p.fonacot = fonacot
+        p.infonavit = infonavit
+        p.salario = salario
+        p.sdi_imss = sdi_imss
+        p.tipo_contrato_id = tipo_contrato
+        p.apoyo_pasajes = apoyo_pasajes
+        p.save()
         
 @login_required(login_url='user-login')
 @perfil_session_seleccionado
@@ -211,6 +232,8 @@ def Tabla_prenomina(request):
     userdatos = request.session.get('usuario_datos')        
     usuario_id = userdatos.get('usuario_id')
     user_filter = UserDatos.objects.get(pk = usuario_id)
+
+    actualizar_prenominas()
 
     if user_filter.tipo.id in [4,9,10,11]: #Perfil RH
 

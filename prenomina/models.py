@@ -5,7 +5,7 @@ from django.db import models
 from proyecto.models import Costo, Catorcenas, Dia_vacacion
 from django.core.validators import FileExtensionValidator
 from django.core.exceptions import ValidationError
-from proyecto.models import Distrito
+from proyecto.models import Distrito, SalarioDatos, Contrato, Variables_imss_patronal
 
 class Prenomina(models.Model):
     empleado = models.ForeignKey(Costo, on_delete = models.CASCADE, null=True)
@@ -15,6 +15,15 @@ class Prenomina(models.Model):
     updated_at=models.DateTimeField(auto_now=True)
     editado = models.CharField(max_length=100,blank=True)
     distrito = models.ForeignKey(Distrito, on_delete=models.CASCADE,null=True, blank=True)
+    salario = models.DecimalField(max_digits=14, decimal_places=2,null=True, default=0) #datos de la prenomina
+    sdi_imss = models.DecimalField(max_digits=14, decimal_places=2,null=True, default=0)
+    salario_datos = models.ForeignKey(SalarioDatos, on_delete=models.CASCADE, null=True)
+    infonavit = models.DecimalField(max_digits=14, decimal_places=2,null=True, default=0) #amortizacion infonavit
+    fonacot = models.DecimalField(max_digits=14, decimal_places=2,null=True, default=0)
+    tipo_contrato = models.ForeignKey(Contrato, on_delete=models.CASCADE, null=True)
+    indicador_isr = models.IntegerField(null=True, blank=True) #se utiliza para la tabla de indicator de ISR 
+    imss_patronal = models.ForeignKey(Variables_imss_patronal, on_delete=models.CASCADE, null=True)
+    apoyo_pasajes = models.DecimalField(max_digits=14, decimal_places=2,null=True, default=0)
 
     def __str__(self):
         return f'Empleado: {self.empleado}, Cartocena: {self.catorcena}'
