@@ -22,6 +22,7 @@ class Prenomina(models.Model):
     fonacot = models.DecimalField(max_digits=14, decimal_places=2,null=True, default=0)
     tipo_contrato = models.ForeignKey(Contrato, on_delete=models.CASCADE, null=True)
     indicador_isr = models.IntegerField(null=True, blank=True) #se utiliza para la tabla de indicator de ISR 
+    indicador_tablavaciones = models.IntegerField(null=True, blank=True) # se utiliza para la tabla de indicador de la tabla vacaciones
     imss_patronal = models.ForeignKey(Variables_imss_patronal, on_delete=models.CASCADE, null=True)
     apoyo_pasajes = models.DecimalField(max_digits=14, decimal_places=2,null=True, default=0)
 

@@ -71,8 +71,8 @@ from user.decorators import perfil_session_seleccionado
 
 #funcion para obtener la catorcena actual
 def obtener_catorcena():
-    fecha_actual = datetime.date.today()
-    fecha_actual = datetime.date.today() - datetime.timedelta(days=28) #cat 18 | 19 ago - 01 sep
+    #fecha_actual = datetime.date.today()
+    fecha_actual = datetime.date.today() - datetime.timedelta(days=30) #cat 18 | 19 ago - 01 sep
     #fecha_actual = datetime.date.today() - datetime.timedelta(days=16) #cat 02 sep | 02 sep - 15 sep
     print("fecha es: ", fecha_actual)
     #print("Esta es la fecha actual: ", fecha_actual)
@@ -203,10 +203,9 @@ def registrar_rango_incidencias(request,pk):
             
             #Se envia los errores de validaciones al cliente
             return JsonResponse(response_data, status=422)
-
+        
 def actualizar_prenominas():
     prenominas = Prenomina.objects.all()
-    
     for p in prenominas:
         #obtener los datos de la prenomina
         #print("empleado: ",p.empleado.status.perfil.nombres + ' ' + p.empleado.status.perfil.apellidos),
@@ -215,7 +214,7 @@ def actualizar_prenominas():
         infonavit = p.empleado.amortizacion_infonavit #amortizacion infonavit
         fonacot = p.empleado.fonacot
         tipo_contrato =  p.empleado.status.tipo_de_contrato.id
-        apoyo_pasajes = p.apoyo_pasajes
+        apoyo_pasajes = p.empleado.apoyo_de_pasajes
         #actualizar los datos de la prenomina
         p.fonacot = fonacot
         p.infonavit = infonavit
@@ -224,7 +223,8 @@ def actualizar_prenominas():
         p.tipo_contrato_id = tipo_contrato
         p.apoyo_pasajes = apoyo_pasajes
         p.save()
-        
+    print("Prenominas con la informacion actualizada")
+    
 @login_required(login_url='user-login')
 @perfil_session_seleccionado
 def Tabla_prenomina(request):
@@ -233,26 +233,52 @@ def Tabla_prenomina(request):
     usuario_id = userdatos.get('usuario_id')
     user_filter = UserDatos.objects.get(pk = usuario_id)
 
-    actualizar_prenominas()
-
+    #actualizar_prenominas()
+    
     if user_filter.tipo.id in [4,9,10,11]: #Perfil RH
 
         #llamar la fucion para obtener la catorcena actual
         catorcena_actual = obtener_catorcena()
-        
-        costo = Costo.objects.filter(status__perfil__distrito_id=user_filter.distrito.id, complete=True, status__perfil__baja=False).order_by("status__perfil__numero_de_trabajador").values_list('id',flat=True)
+                
+        costo = Costo.objects.filter(status__perfil__distrito_id=user_filter.distrito.id, complete=True, status__perfil__baja=False).order_by("status__perfil__numero_de_trabajador")
         prenominas = Prenomina.objects.filter(empleado__in=costo,catorcena_id=catorcena_actual.id, distrito_id = user_filter.distrito_id).order_by("empleado__status__perfil__apellidos")
         
         #crear las prenominas actuales si es que ya es nueva catorcena
         nuevas_prenominas = []
         for empleado in costo:
             #checar si existe prenomina para el empleado en la catorcena actual
-            prenomina_existente = prenominas.filter(empleado_id=empleado).exists()
+            prenomina_existente = prenominas.filter(empleado_id=empleado.id).exists()
             #si no existe crear una nueva prenomina
             if not prenomina_existente:
-                nueva_prenomina = Prenomina(empleado_id=empleado, catorcena_id=catorcena_actual.id, distrito_id = user_filter.distrito.id)
+                #se obtienen los valores actuales para registrarlos en la prenomina y posteriormente realizar los calculos y generar reportes
+                valor_isr = DatosISR.objects.filter(indicador = 1, activo = True)
+                valor_isr = valor_isr.first()
+                valor_salariodatos = SalarioDatos.objects.get(activo = True)
+                valor_imss_patronal = Variables_imss_patronal.objects.get(activo = True)    
+                valor_tablavacaciones = TablaVacaciones.objects.filter(indicador = 1, activo = True)
+                valor_tablavacaciones = valor_tablavacaciones.first()   
+                
+                #se crea el objecto prenomina con los valores 
+                nueva_prenomina = Prenomina(
+                    empleado_id=empleado.id, 
+                    catorcena_id=catorcena_actual.id, 
+                    distrito_id = user_filter.distrito.id,
+                    fonacot = empleado.fonacot,
+                    indicador_isr = valor_isr.indicador,
+                    infonavit = empleado.infonavit,
+                    salario = empleado.sueldo_diario,
+                    sdi_imss = empleado.sdi_imss,
+                    tipo_contrato_id = empleado.status.tipo_de_contrato_id,
+                    salario_datos_id = valor_salariodatos.id,
+                    imss_patronal_id = valor_imss_patronal.id,
+                    apoyo_pasajes = empleado.apoyo_de_pasajes,
+                    indicador_tablavaciones = valor_tablavacaciones.indicador       
+                )
+                
+                #se agregan los objectos a un 
                 nuevas_prenominas.append(nueva_prenomina) 
-        if nuevas_prenominas:
+        
+        if nuevas_prenominas:              
             Prenomina.objects.bulk_create(nuevas_prenominas)              
             
         prenomina_filter = PrenominaFilter(request.GET, queryset=prenominas)
@@ -538,8 +564,6 @@ def PrenominaRevisar(request, pk):
         if request.method == 'POST':
             #Para guardar los datos en la prenomina
             if 'guardar_cambios' in request.POST:
-                #calcular_prima_vacacional(prenomina)REVISAR - NO ES NECESARIO
-                calcular_aguinaldo(prenomina)
                 prenomina_form = PrenominaIncidenciasFormSet(request.POST) #se obtienen instacias de formularios (14)
                 if prenomina_form.is_valid():
                     for form in prenomina_form:
@@ -597,7 +621,7 @@ def PrenominaRevisar(request, pk):
             #es para guardar la autorizacion - enviar la prenomina para revisión
             if 'enviar_prenomina' in request.POST:
                 
-                #Se ejecutan los aguinaldos
+                #Se ejecutan los aguinaldos - se ejecutan las funciones para realizar el calculo, se ejecuta cuando se envia la preanomina una vez y el resultado es guardado
                 calcular_aguinaldo_eventual(prenomina)
                 calcular_aguinaldo(prenomina)
                 

@@ -9,6 +9,8 @@ class TablaVacaciones(models.Model):
     years = models.IntegerField(null=True)
     days = models.IntegerField(null=True)
     complete = models.BooleanField(default=False)
+    activo = models.BooleanField(default = False,blank=True, null=True)
+    indicador = models.IntegerField(null=True,blank=True)
 
     def __str__(self):
         return f'Años: {self.years}, dias de vacaciones: {self.days}'
