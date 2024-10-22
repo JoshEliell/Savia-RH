@@ -60,7 +60,6 @@ def contadores_processor(request):
                 status_fijo = Status.objects.get(perfil__id = usuario_perfil)
                 
             #bonos autorizaciones
-            print("perfil: ", usuario.perfil)
             if usuario_tipo in [5,4]:
                 #perfil = Perfil.objects.filter(numero_de_trabajador = usuario.numero_de_trabajador,distrito_id = usuario.distrito.id).values_list('id',flat=True)
                 bonos_count = AutorizarSolicitudes.objects.filter(solicitud__solicitante__id = usuario_perfil, estado_id = 4, solicitud__distrito_id = usuario.distrito.id).count()

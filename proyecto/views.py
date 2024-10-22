@@ -7129,7 +7129,7 @@ def TablaPrenominas(request):
             prenominas= Prenomina.objects.all().order_by("empleado__status__perfil__numero_de_trabajador")
         else:
             perfil = Perfil.objects.filter(distrito_id = user_filter.distrito.id,complete=True).values_list('id',flat=True)
-            prenominas= Prenomina.objects.filter(empleado__status__perfil__id__in=perfil).order_by("empleado__status__perfil__apellidos")
+            prenominas= Prenomina.objects.filter(empleado__status__perfil__id__in=perfil,distrito_id = user_filter.distrito.id).order_by("empleado__status__perfil__apellidos")
 
         prenomina_filter = PrenominaFilter(request.GET, queryset=prenominas)
         prenominas = prenomina_filter.qs
