@@ -1,1 +1,2 @@
-# SAVIA-RH 29-10-23
+# SAVIA-RH
+Create in entire administation system in Django mostly, HTML, JS
