@@ -951,50 +951,32 @@ def FormularioCosto(request):
                                                                                     costo.sdi = factor_integracion*costo.sueldo_diario
                                                                 
                                                                                     sdi = costo.sdi
-                                                                                    #print("sdi: ",sdi)
                                                                                     prima_riesgo = costo.status.registro_patronal.prima
-                                                                                    #print("prima RT: ",prima_riesgo)
                                                                                     excedente = dato.UMA*3
-                                                                                    #print("excedente: ",excedente)
                                                                                     cuotafija = (dato.UMA*Decimal(variables_patronal.cuota_fija/100))*costo.laborados_imss
-                                                                                    #print("cuota fija: ", cuotafija)
 
                                                                                     excedente_patronal = (costo.sdi_imss-excedente)*Decimal(variables_patronal.cf_patron/100)*costo.laborados_imss
-                                                                                    #print("excedente patronal",excedente_patronal)
                                                                                     excedente_obrero = (costo.sdi_imss-excedente)*Decimal(variables_patronal.cf_obrero/100)*costo.laborados_imss
-                                                                                    #print('excedente_obrero',excedente_obrero)
                                                                                     
                                                                                     if excedente_patronal < 0:
                                                                                         excedente_patronal = 0
                                                                                     if excedente_obrero < 0:
                                                                                         excedente_obrero = 0
-                                                                                        
-                                                                                    #print("excedente patronal",excedente_patronal)
-                                                                                    #print('excedente_obrero',excedente_obrero)
-
                                                                                     prestaciones_patronal = (costo.sdi_imss*Decimal(variables_patronal.pd_patron/100))*costo.laborados_imss
-                                                                                    #print("prestaciones patronal: ", prestaciones_patronal)
                                                                                     
                                                                                     prestaciones_obrero = (costo.sdi_imss*Decimal(variables_patronal.pd_obrero/100))*costo.laborados_imss
-                                                                                    #print("prestaciones obrero", prestaciones_obrero)
                                                                                     
                                                                                     gastosmp_patronal = (costo.sdi_imss*Decimal(variables_patronal.gmp_patron/100))*costo.laborados_imss
-                                                                                    #print("gastosmp patronal",gastosmp_patronal)
                                                                                     
                                                                                     gastosmp_obrero = (costo.sdi_imss*Decimal(variables_patronal.gmp_obrero/100))*costo.laborados_imss
-                                                                                    #print("gastosmp obrero",gastosmp_obrero )
                                                                                     
                                                                                     riesgo_trabajo = (costo.sdi_imss*(prima_riesgo/100))*costo.laborados_imss
-                                                                                    #print("riesgo trabajo", riesgo_trabajo)
                                                                                     
                                                                                     invalidezvida_patronal = (costo.sdi_imss*Decimal(variables_patronal.iv_patron/100))*costo.laborados_imss
-                                                                                    #print("invalidez patronal", invalidezvida_patronal )
                                                                                     
                                                                                     invalidezvida_obrero = (costo.sdi_imss*Decimal(variables_patronal.iv_obrero/100))*costo.laborados_imss
-                                                                                    #print("invalidaz obrero", invalidezvida_obrero)
                                                                                     
                                                                                     guarderias_prestsociales = (costo.sdi_imss*Decimal(variables_patronal.gps_patron/100))*costo.laborados_imss
-                                                                                    #print("guarderias prest sociales", guarderias_prestsociales)
 
                                                                                     costo.imms_obrero_patronal = (cuotafija+excedente_patronal+excedente_obrero+prestaciones_patronal
                                                                                                     +prestaciones_obrero+gastosmp_patronal+gastosmp_obrero+riesgo_trabajo+invalidezvida_patronal
